@@ -1,6 +1,6 @@
 # Amazon EKS Bottlerocket and Fargate
 
-[![Build Status](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/workflows/vuepress-build/badge.svg)](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate)
+[![Build Status](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/workflows/vuepress-build-check-deploy/badge.svg)](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate)
 
 * Demo GitHub repository: [https://github.com/ruzickap/k8s-eks-bottlerocket-fargate](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate)
 * Demo Web Pages: [https://ruzickap.github.io/k8s-eks-bottlerocket-fargate](https://ruzickap.github.io/k8s-eks-bottlerocket-fargate)
