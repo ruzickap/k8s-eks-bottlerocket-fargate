@@ -22,7 +22,8 @@ export TYPE_SPEED=600
 export PROMPT_TIMEOUT=0
 
 # No wait
-export NO_WAIT=false
+#export NO_WAIT=false
+export NO_WAIT=true
 
 #
 # custom prompt
@@ -38,9 +39,9 @@ clear
 ### Please run these commands before running the script
 
 # if [ -n "$SSH_AUTH_SOCK" ]; then
-#  docker run -it --rm -e USER="$USER" -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e SSH_AUTH_SOCK -v $SSH_AUTH_SOCK:$SSH_AUTH_SOCK -v $PWD:/mnt -v $HOME/.ssh:/root/.ssh:ro ubuntu
+#  docker run -it --rm -e USER="$USER" -e MY_GOOGLE_OAUTH_CLIENT_ID -e MY_GOOGLE_OAUTH_CLIENT_SECRET -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e SSH_AUTH_SOCK -v $SSH_AUTH_SOCK:$SSH_AUTH_SOCK -v $PWD:/mnt -v $HOME/.ssh:/root/.ssh:ro ubuntu
 # else
-#  docker run -it --rm -e USER="$USER" -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -v $PWD:/mnt -v $HOME/.ssh:/root/.ssh:ro -v $HOME/.aws:/root/.aws ubuntu
+#  docker run -it --rm -e USER="$USER" -e MY_GOOGLE_OAUTH_CLIENT_ID -e MY_GOOGLE_OAUTH_CLIENT_SECRET -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -v $PWD:/mnt -v $HOME/.ssh:/root/.ssh:ro -v $HOME/.aws:/root/.aws ubuntu
 # fi
 # echo $(hostname -I) $(hostname) >> /etc/hosts
 # apt-get update -qq && apt-get install -qq -y curl git pv > /dev/null
@@ -53,7 +54,7 @@ clear
 
 [ ! -d .git ] && git clone --quiet https://github.com/ruzickap/k8s-eks-bottlerocket-fargate && cd k8s-eks-bottlerocket-fargate
 
-sed docs/part-0{1,2}/README.md \
+sed docs/part-0{1..3}/README.md \
   -e '/^## Configure AWS/,/^## Create Amazon EKS/d' \
 | \
 sed -n "/^\`\`\`bash.*/,/^\`\`\`$/p;/^-----$/p" \
