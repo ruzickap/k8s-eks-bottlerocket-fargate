@@ -15,9 +15,19 @@ The `LETSENCRYPT_ENVIRONMENT` variable should be one of:
 * `production` - Let’s Encrypt will create valid certificate (use with care)
 
 ```bash
-export MY_DOMAIN=${MY_DOMAIN:-mylabs.dev}
+export MY_DOMAIN=${MY_DOMAIN:-kube1.mylabs.dev}
 export LETSENCRYPT_ENVIRONMENT=${LETSENCRYPT_ENVIRONMENT:-staging}
 echo "${MY_DOMAIN} | ${LETSENCRYPT_ENVIRONMENT}"
+```
+
+Prepare Google OAuth 2.0 Client IDs and AWS variables for access. You can find
+the description how to do it here: [https://oauth2-proxy.github.io/oauth2-proxy/auth-configuration#google-auth-provider](https://oauth2-proxy.github.io/oauth2-proxy/auth-configuration#google-auth-provider)
+
+```shell
+export AWS_ACCESS_KEY_ID="AxxxxxxxxxxxxxxxxxxY"
+export AWS_SECRET_ACCESS_KEY="txxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxh"
+export MY_GOOGLE_OAUTH_CLIENT_ID="2xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx5.apps.googleusercontent.com"
+export MY_GOOGLE_OAUTH_CLIENT_SECRET="OxxxxxxxxxxxxxxxxxxxxxxF"
 ```
 
 ## Prepare the local working environment
@@ -83,7 +93,7 @@ Create DNS zone:
 
 ```bash
 aws route53 create-hosted-zone --output json \
-  --name ruzickap-k8s-01.${MY_DOMAIN} \
+  --name ${MY_DOMAIN} \
   --caller-reference "$(date)" \
   --hosted-zone-config="{\"Comment\": \"Created by petr.ruzicka@gmail.com\", \"PrivateZone\": false}" | jq
 ```
@@ -93,7 +103,7 @@ Use your domain registrar to change the nameservers for your zone (for example
 can find out the the Route 53 nameservers:
 
 ```bash
-NEW_ZONE_ID=$(aws route53 list-hosted-zones --query "HostedZones[?Name==\`ruzickap-k8s-01.mylabs.dev.\`].Id" --output text)
+NEW_ZONE_ID=$(aws route53 list-hosted-zones --query "HostedZones[?Name==\`${MY_DOMAIN}.\`].Id" --output text)
 NEW_ZONE_NS=$(aws route53 get-hosted-zone --output json --id ${NEW_ZONE_ID} --query "DelegationSet.NameServers")
 NEW_ZONE_NS1=$(echo ${NEW_ZONE_NS} | jq -r '.[0]')
 NEW_ZONE_NS2=$(echo ${NEW_ZONE_NS} | jq -r '.[1]')
@@ -104,8 +114,8 @@ This step depends on your domain registrar - I'm using CloudFlare and using
 Ansible to automate it:
 
 ```shell
-ansible -m cloudflare_dns -c local -i "localhost," localhost -a "zone=mylabs.dev record=ruzickap-k8s-01 type=NS value=${NEW_ZONE_NS1} solo=true proxied=no account_email=${CLOUDFLARE_EMAIL} account_api_token=${CLOUDFLARE_API_KEY}"
-ansible -m cloudflare_dns -c local -i "localhost," localhost -a "zone=mylabs.dev record=ruzickap-k8s-01 type=NS value=${NEW_ZONE_NS2} solo=false proxied=no account_email=${CLOUDFLARE_EMAIL} account_api_token=${CLOUDFLARE_API_KEY}"
+ansible -m cloudflare_dns -c local -i "localhost," localhost -a "zone=mylabs.dev record=$(echo ${MY_DOMAIN} | cut -f 1 -d .) type=NS value=${NEW_ZONE_NS1} solo=true proxied=no account_email=${CLOUDFLARE_EMAIL} account_api_token=${CLOUDFLARE_API_KEY}"
+ansible -m cloudflare_dns -c local -i "localhost," localhost -a "zone=mylabs.dev record=$(echo ${MY_DOMAIN} | cut -f 1 -d .) type=NS value=${NEW_ZONE_NS2} solo=false proxied=no account_email=${CLOUDFLARE_EMAIL} account_api_token=${CLOUDFLARE_API_KEY}"
 ```
 
 ## Create Amazon EKS
@@ -129,6 +139,74 @@ if [ ! -d .git ]; then
 fi
 ```
 
+Create AWS IAM Policy `AllowDNSUpdates` which allows `cert-manager` and
+`external-dns` to modify the Route 53 entries.
+
+Details with examples are described on these links:
+
+* [https://aws.amazon.com/blogs/opensource/introducing-fine-grained-iam-roles-service-accounts/](https://aws.amazon.com/blogs/opensource/introducing-fine-grained-iam-roles-service-accounts/)
+* [https://cert-manager.io/docs/configuration/acme/dns01/route53/](https://cert-manager.io/docs/configuration/acme/dns01/route53/)
+* [https://github.com/kubernetes-sigs/external-dns/blob/master/docs/tutorials/aws.md](https://github.com/kubernetes-sigs/external-dns/blob/master/docs/tutorials/aws.md)
+
+```bash
+test -d tmp || mkdir -v tmp
+cat > tmp/route_53_change_policy.json << EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "route53:GetChange",
+      "Resource": "arn:aws:route53:::change/*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "route53:ChangeResourceRecordSets",
+        "route53:ListResourceRecordSets"
+      ],
+      "Resource": "arn:aws:route53:::hostedzone/*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "route53:ListHostedZones",
+        "route53:ListHostedZonesByName"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+EOF
+
+aws iam create-policy \
+  --policy-name ${MY_DOMAIN}-AmazonRoute53Domains \
+  --description "Policy required by cert-manager to be able to modify Route 53 when generating wildcard certificates using Lets Encrypt" \
+  --policy-document file://tmp/route_53_change_policy.json \
+| jq
+
+ROUTE53_POLICY_ARN=$(aws iam list-policies --query "Policies[?PolicyName==\`${MY_DOMAIN}-AmazonRoute53Domains\`].{ARN:Arn}" --output text)
+```
+
+Output:
+
+```json
+{
+  "Policy": {
+    "PolicyName": "kube1.mylabs.dev-AmazonRoute53Domains",
+    "PolicyId": "ANPA2TXJQ2JHX755B25NW",
+    "Arn": "arn:aws:iam::729560437327:policy/kube1.mylabs.dev-AmazonRoute53Domains",
+    "Path": "/",
+    "DefaultVersionId": "v1",
+    "AttachmentCount": 0,
+    "PermissionsBoundaryUsageCount": 0,
+    "IsAttachable": true,
+    "CreateDate": "2020-10-20T09:44:42Z",
+    "UpdateDate": "2020-10-20T09:44:42Z"
+  }
+}
+```
+
 Create [Amazon EKS](https://aws.amazon.com/eks/) in AWS by using [eksctl](https://eksctl.io/).
 It's a tool from [Weaveworks](https://weave.works/) based on official
 AWS CloudFormation templates which will be used to launch and configure our
@@ -137,65 +215,73 @@ EKS cluster and nodes.
 ![eksctl](https://raw.githubusercontent.com/weaveworks/eksctl/c365149fc1a0b8d357139cbd6cda5aee8841c16c/logo/eksctl.png
 "eksctl")
 
-Create the configuration file for `eksctl`:
+Create the Amazon EKS cluster using `eksctl`:
 
 ```bash
-test -d tmp || mkdir tmp
-cat > tmp/bottlerocket.yaml << EOF
+cat << EOF | eksctl create cluster --config-file - --kubeconfig kubeconfig.conf
+# https://eksctl.io/usage/schema/
 apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
 
 metadata:
-  name: ruzickap-k8s-01
+  name: $(echo ${MY_DOMAIN} | cut -f 1 -d .)
   region: eu-central-1
-  version: "1.17"
-  tags:
+  version: "1.18"
+  tags: &tags
     Owner: petr.ruzicka@gmail.com
     Environment: Dev
     Tribe: Cloud Native
     Squad: Cloud Container Platform
 
+availabilityZones:
+  - eu-central-1a
+  - eu-central-1b
+
+iam:
+  withOIDC: true
+  serviceAccounts:
+    - metadata:
+        name: cert-manager
+        namespace: cert-manager
+        labels:
+          build: "eksctl"
+      attachPolicyARNs:
+        - ${ROUTE53_POLICY_ARN}
+    - metadata:
+        name: external-dns
+        namespace: external-dns
+        labels:
+          build: "eksctl"
+      attachPolicyARNs:
+        - ${ROUTE53_POLICY_ARN}
+
 nodeGroups:
   - name: ng01
-    availabilityZones: ["eu-central-1a"] # use single AZ to optimise data transfer between instances
+    amiFamily: Bottlerocket
     instanceType: t3.large
     desiredCapacity: 2
     minSize: 2
     maxSize: 2
-    volumeSize: 20
-    volumeType: standard
-    volumeEncrypted: true
-    amiFamily: Bottlerocket
-    labels:
-      node-class: "my-worker-node"
-    tags:
-      Owner: petr.ruzicka@gmail.com
-      Environment: Dev
-      Tribe: Cloud Native
-      Squad: Cloud Container Platform
-    iam:
-      attachPolicyARNs:
-        - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
-        - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
-        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
-        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
-      withAddonPolicies:
-      #   albIngress: true
-      #   autoScaler: true
-      #   cloudWatch: true
-        ebs: true
-      #   fsx: true
-      #   efs: true
-      #   externalDNS: true
-      #   certManager: true
-    bottlerocket:
-      enableAdminContainer: true
-      settings:
-        motd: "Hello, eksctl!"
+    volumeSize: 0
     ssh:
       # Enable ssh access (via the admin container)
       allow: true
       publicKeyPath: ~/.ssh/id_rsa.pub
+    labels:
+      role: worker
+    tags: *tags
+    iam:
+      withAddonPolicies:
+        autoScaler: true
+        cloudWatch: true
+        ebs: true
+        efs: true
+    volumeType: standard
+    volumeEncrypted: true
+    bottlerocket:
+      enableAdminContainer: true
+      settings:
+        motd: "Hello, eksctl!"
 fargateProfiles:
   - name: fp-default
     selectors:
@@ -204,35 +290,107 @@ fargateProfiles:
       - namespace: default
         labels:
           fargate: "true"
+    tags: *tags
   - name: fp-fargate-workload
     selectors:
       # All workloads in the "fargate-workload" Kubernetes namespace will be
       # scheduled onto Fargate:
       - namespace: fargate-workload
+    tags: *tags
 
 cloudWatch:
-    clusterLogging:
-      # enable specific types of cluster control plane logs
-      enableTypes: ["audit", "authenticator", "controllerManager"]
-      # all supported types: "api", "audit", "authenticator", "controllerManager", "scheduler"
-      # supported special values: "*" and "all"
+  clusterLogging:
+    # enable specific types of cluster control plane logs
+    enableTypes: ["audit", "authenticator", "controllerManager"]
+    # all supported types: "api", "audit", "authenticator", "controllerManager", "scheduler"
+    # supported special values: "*" and "all"
 EOF
 ```
 
-Create the Amazon EKS cluster using `eksctl`:
+Output:
 
-```bash
-eksctl create cluster --config-file tmp/bottlerocket.yaml --kubeconfig kubeconfig.conf
+```text
+[ℹ]  eksctl version 0.30.0
+[ℹ]  using region eu-central-1
+[ℹ]  subnets for eu-central-1a - public:192.168.0.0/19 private:192.168.64.0/19
+[ℹ]  subnets for eu-central-1b - public:192.168.32.0/19 private:192.168.96.0/19
+[ℹ]  nodegroup "ng01" will use "ami-0ddc60f44ed5ce8d9" [Bottlerocket/1.18]
+[ℹ]  using SSH public key "/root/.ssh/id_rsa.pub" as "eksctl-kube1-nodegroup-ng01-a3:84:e4:0d:af:5f:c8:40:da:71:68:8a:74:c7:ba:16"
+[ℹ]  using Kubernetes version 1.18
+[ℹ]  creating EKS cluster "kube1" in "eu-central-1" region with Fargate profile and un-managed nodes
+[ℹ]  1 nodegroup (ng01) was included (based on the include/exclude rules)
+[ℹ]  will create a CloudFormation stack for cluster itself and 1 nodegroup stack(s)
+[ℹ]  will create a CloudFormation stack for cluster itself and 0 managed nodegroup stack(s)
+[ℹ]  if you encounter any issues, check CloudFormation console or try 'eksctl utils describe-stacks --region=eu-central-1 --cluster=kube1'
+[ℹ]  Kubernetes API endpoint access will use default of {publicAccess=true, privateAccess=false} for cluster "kube1" in "eu-central-1"
+[ℹ]  2 sequential tasks: { create cluster control plane "kube1", 2 sequential sub-tasks: { 6 sequential sub-tasks: { tag cluster, update CloudWatch logging configuration, create fargate profiles, associate IAM OIDC provider, 3 parallel sub-tasks: { 2 sequential sub-tasks: { create IAM role for serviceaccount "cert-manager/cert-manager", create serviceaccount "cert-manager/cert-manager" }, 2 sequential sub-tasks: { create IAM role for serviceaccount "external-dns/external-dns", create serviceaccount "external-dns/external-dns" }, 2 sequential sub-tasks: { create IAM role for serviceaccount "kube-system/aws-node", create serviceaccount "kube-system/aws-node" } }, restart daemonset "kube-system/aws-node" }, create nodegroup "ng01" } }
+[ℹ]  building cluster stack "eksctl-kube1-cluster"
+[ℹ]  deploying stack "eksctl-kube1-cluster"
+[✔]  tagged EKS cluster (Owner=petr.ruzicka@gmail.com, Squad=Cloud Container Platform, Tribe=Cloud Native, Environment=Dev)
+[✔]  configured CloudWatch logging for cluster "kube1" in "eu-central-1" (enabled types: audit, authenticator, controllerManager & disabled types: api, scheduler)
+[ℹ]  creating Fargate profile "fp-default" on EKS cluster "kube1"
+[ℹ]  created Fargate profile "fp-default" on EKS cluster "kube1"
+[ℹ]  creating Fargate profile "fp-fargate-workload" on EKS cluster "kube1"
+[ℹ]  created Fargate profile "fp-fargate-workload" on EKS cluster "kube1"
+[ℹ]  building iamserviceaccount stack "eksctl-kube1-addon-iamserviceaccount-kube-system-aws-node"
+[ℹ]  building iamserviceaccount stack "eksctl-kube1-addon-iamserviceaccount-external-dns-external-dns"
+[ℹ]  building iamserviceaccount stack "eksctl-kube1-addon-iamserviceaccount-cert-manager-cert-manager"
+[ℹ]  deploying stack "eksctl-kube1-addon-iamserviceaccount-kube-system-aws-node"
+[ℹ]  deploying stack "eksctl-kube1-addon-iamserviceaccount-cert-manager-cert-manager"
+[ℹ]  deploying stack "eksctl-kube1-addon-iamserviceaccount-external-dns-external-dns"
+[ℹ]  serviceaccount "kube-system/aws-node" already exists
+[ℹ]  updated serviceaccount "kube-system/aws-node"
+[ℹ]  created namespace "external-dns"
+[ℹ]  created serviceaccount "external-dns/external-dns"
+[ℹ]  created namespace "cert-manager"
+[ℹ]  created serviceaccount "cert-manager/cert-manager"
+[ℹ]  daemonset "kube-system/aws-node" restarted
+[ℹ]  building nodegroup stack "eksctl-kube1-nodegroup-ng01"
+[ℹ]  deploying stack "eksctl-kube1-nodegroup-ng01"
+[ℹ]  waiting for the control plane availability...
+[✔]  saved kubeconfig as "kubeconfig.conf"
+[ℹ]  no tasks
+[✔]  all EKS cluster resources for "kube1" have been created
+[ℹ]  adding identity "arn:aws:iam::729560437327:role/eksctl-kube1-nodegroup-ng01-NodeInstanceRole-VB8GXVHLFNX3" to auth ConfigMap
+[ℹ]  nodegroup "ng01" has 0 node(s)
+[ℹ]  waiting for at least 2 node(s) to become ready in "ng01"
+[ℹ]  nodegroup "ng01" has 2 node(s)
+[ℹ]  node "ip-192-168-22-40.eu-central-1.compute.internal" is ready
+[ℹ]  node "ip-192-168-52-38.eu-central-1.compute.internal" is ready
+[ℹ]  kubectl command should work with "kubeconfig.conf", try 'kubectl --kubeconfig=kubeconfig.conf get nodes'
+[✔]  EKS cluster "kube1" in "eu-central-1" region is ready
 ```
 
 Set `KUBECONFIG`:
 
 ```bash
-export KUBECONFIG=kubeconfig.conf
+export KUBECONFIG=${PWD}/kubeconfig.conf
+```
+
+Remove namespaces with serviceaccounts created by `eksctl`:
+
+```bash
+kubectl delete serviceaccount -n cert-manager cert-manager
+kubectl delete serviceaccount -n external-dns external-dns
+```
+
+Output:
+
+```text
+serviceaccount "cert-manager" deleted
+serviceaccount "external-dns" deleted
 ```
 
 Check the nodes:
 
 ```bash
 kubectl get nodes -o wide
+```
+
+Output:
+
+```text
+NAME                                             STATUS   ROLES    AGE     VERSION   INTERNAL-IP     EXTERNAL-IP     OS-IMAGE                KERNEL-VERSION   CONTAINER-RUNTIME
+ip-192-168-22-40.eu-central-1.compute.internal   Ready    <none>   2m44s   v1.18.9   192.168.22.40   18.192.50.167   Bottlerocket OS 1.0.2   5.4.58           containerd://1.3.7+unknown
+ip-192-168-52-38.eu-central-1.compute.internal   Ready    <none>   2m41s   v1.18.9   192.168.52.38   18.197.155.37   Bottlerocket OS 1.0.2   5.4.58           containerd://1.3.7+unknown
 ```

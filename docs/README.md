@@ -11,10 +11,13 @@
 * [AWS IAM Authenticator for Kubernetes](https://github.com/kubernetes-sigs/aws-iam-authenticator)
 * [AWS account](https://aws.amazon.com/account/)
 * [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
+* [Helm](https://helm.sh/)
 * [eksctl](https://eksctl.io/)
 * Kubernetes and AWS knowledge required
 
 ## Content
 
 * [Part 01 - Create Amazon EKS Bottlerocket + Fargate cluster](part-01/README.md)
-* [Part 02 - Workload](part-02/README.md)
+* [Part 02 - K8s tools](part-02/README.md)
+* [Part 03 - Workload](part-03/README.md)
+* [Part 04 - Cleanup](part-04/README.md)
