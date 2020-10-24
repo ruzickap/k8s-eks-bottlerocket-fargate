@@ -105,8 +105,8 @@ can find out the the Route 53 nameservers:
 ```bash
 NEW_ZONE_ID=$(aws route53 list-hosted-zones --query "HostedZones[?Name==\`${MY_DOMAIN}.\`].Id" --output text)
 NEW_ZONE_NS=$(aws route53 get-hosted-zone --output json --id ${NEW_ZONE_ID} --query "DelegationSet.NameServers")
-NEW_ZONE_NS1=$(echo ${NEW_ZONE_NS} | jq -r '.[0]')
-NEW_ZONE_NS2=$(echo ${NEW_ZONE_NS} | jq -r '.[1]')
+NEW_ZONE_NS1=$(echo ${NEW_ZONE_NS} | jq -r ".[0]")
+NEW_ZONE_NS2=$(echo ${NEW_ZONE_NS} | jq -r ".[1]")
 ```
 
 Create the NS record in "mylabs.dev" for proper zone delegation.
@@ -218,7 +218,7 @@ EKS cluster and nodes.
 Create the Amazon EKS cluster using `eksctl`:
 
 ```bash
-cat << EOF | eksctl create cluster --config-file - --kubeconfig kubeconfig.conf
+eksctl create cluster --config-file - --kubeconfig kubeconfig.conf << EOF
 # https://eksctl.io/usage/schema/
 apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
@@ -230,8 +230,8 @@ metadata:
   tags: &tags
     Owner: petr.ruzicka@gmail.com
     Environment: Dev
-    Tribe: Cloud Native
-    Squad: Cloud Container Platform
+    Tribe: Cloud_Native
+    Squad: Cloud_Container_Platform
 
 availabilityZones:
   - eu-central-1a
@@ -257,7 +257,9 @@ iam:
 
 nodeGroups:
   - name: ng01
-    amiFamily: Bottlerocket
+    # Bottlerocket can not be used because of https://github.com/kubernetes-sigs/aws-efs-csi-driver/issues/246
+    # amiFamily: Bottlerocket
+    amiFamily: AmazonLinux2
     instanceType: t3.large
     desiredCapacity: 2
     minSize: 2
@@ -276,12 +278,13 @@ nodeGroups:
         cloudWatch: true
         ebs: true
         efs: true
+        xRay: true
     volumeType: standard
     volumeEncrypted: true
-    bottlerocket:
-      enableAdminContainer: true
-      settings:
-        motd: "Hello, eksctl!"
+    # bottlerocket:
+    #   enableAdminContainer: true
+    #   settings:
+    #     motd: "Hello, eksctl!"
 fargateProfiles:
   - name: fp-default
     selectors:
@@ -314,8 +317,8 @@ Output:
 [ℹ]  using region eu-central-1
 [ℹ]  subnets for eu-central-1a - public:192.168.0.0/19 private:192.168.64.0/19
 [ℹ]  subnets for eu-central-1b - public:192.168.32.0/19 private:192.168.96.0/19
-[ℹ]  nodegroup "ng01" will use "ami-0ddc60f44ed5ce8d9" [Bottlerocket/1.18]
-[ℹ]  using SSH public key "/root/.ssh/id_rsa.pub" as "eksctl-kube1-nodegroup-ng01-a3:84:e4:0d:af:5f:c8:40:da:71:68:8a:74:c7:ba:16"
+[ℹ]  nodegroup "ng01" will use "ami-045e4ecd708ac12ba" [AmazonLinux2/1.18]
+[ℹ]  using SSH public key "/Users/petr_ruzicka/.ssh/id_rsa.pub" as "eksctl-kube1-nodegroup-ng01-a3:84:e4:0d:af:5f:c8:40:da:71:68:8a:74:c7:ba:16"
 [ℹ]  using Kubernetes version 1.18
 [ℹ]  creating EKS cluster "kube1" in "eu-central-1" region with Fargate profile and un-managed nodes
 [ℹ]  1 nodegroup (ng01) was included (based on the include/exclude rules)
@@ -326,17 +329,17 @@ Output:
 [ℹ]  2 sequential tasks: { create cluster control plane "kube1", 2 sequential sub-tasks: { 6 sequential sub-tasks: { tag cluster, update CloudWatch logging configuration, create fargate profiles, associate IAM OIDC provider, 3 parallel sub-tasks: { 2 sequential sub-tasks: { create IAM role for serviceaccount "cert-manager/cert-manager", create serviceaccount "cert-manager/cert-manager" }, 2 sequential sub-tasks: { create IAM role for serviceaccount "external-dns/external-dns", create serviceaccount "external-dns/external-dns" }, 2 sequential sub-tasks: { create IAM role for serviceaccount "kube-system/aws-node", create serviceaccount "kube-system/aws-node" } }, restart daemonset "kube-system/aws-node" }, create nodegroup "ng01" } }
 [ℹ]  building cluster stack "eksctl-kube1-cluster"
 [ℹ]  deploying stack "eksctl-kube1-cluster"
-[✔]  tagged EKS cluster (Owner=petr.ruzicka@gmail.com, Squad=Cloud Container Platform, Tribe=Cloud Native, Environment=Dev)
+[✔]  tagged EKS cluster (Environment=Dev, Owner=petr.ruzicka@gmail.com, Squad=Cloud_Container_Platform, Tribe=Cloud_Native)
 [✔]  configured CloudWatch logging for cluster "kube1" in "eu-central-1" (enabled types: audit, authenticator, controllerManager & disabled types: api, scheduler)
 [ℹ]  creating Fargate profile "fp-default" on EKS cluster "kube1"
 [ℹ]  created Fargate profile "fp-default" on EKS cluster "kube1"
 [ℹ]  creating Fargate profile "fp-fargate-workload" on EKS cluster "kube1"
 [ℹ]  created Fargate profile "fp-fargate-workload" on EKS cluster "kube1"
-[ℹ]  building iamserviceaccount stack "eksctl-kube1-addon-iamserviceaccount-kube-system-aws-node"
 [ℹ]  building iamserviceaccount stack "eksctl-kube1-addon-iamserviceaccount-external-dns-external-dns"
 [ℹ]  building iamserviceaccount stack "eksctl-kube1-addon-iamserviceaccount-cert-manager-cert-manager"
-[ℹ]  deploying stack "eksctl-kube1-addon-iamserviceaccount-kube-system-aws-node"
+[ℹ]  building iamserviceaccount stack "eksctl-kube1-addon-iamserviceaccount-kube-system-aws-node"
 [ℹ]  deploying stack "eksctl-kube1-addon-iamserviceaccount-cert-manager-cert-manager"
+[ℹ]  deploying stack "eksctl-kube1-addon-iamserviceaccount-kube-system-aws-node"
 [ℹ]  deploying stack "eksctl-kube1-addon-iamserviceaccount-external-dns-external-dns"
 [ℹ]  serviceaccount "kube-system/aws-node" already exists
 [ℹ]  updated serviceaccount "kube-system/aws-node"
@@ -351,12 +354,12 @@ Output:
 [✔]  saved kubeconfig as "kubeconfig.conf"
 [ℹ]  no tasks
 [✔]  all EKS cluster resources for "kube1" have been created
-[ℹ]  adding identity "arn:aws:iam::729560437327:role/eksctl-kube1-nodegroup-ng01-NodeInstanceRole-VB8GXVHLFNX3" to auth ConfigMap
+[ℹ]  adding identity "arn:aws:iam::729560437327:role/eksctl-kube1-nodegroup-ng01-NodeInstanceRole-IYLKEG3R62OG" to auth ConfigMap
 [ℹ]  nodegroup "ng01" has 0 node(s)
 [ℹ]  waiting for at least 2 node(s) to become ready in "ng01"
 [ℹ]  nodegroup "ng01" has 2 node(s)
-[ℹ]  node "ip-192-168-22-40.eu-central-1.compute.internal" is ready
-[ℹ]  node "ip-192-168-52-38.eu-central-1.compute.internal" is ready
+[ℹ]  node "ip-192-168-53-81.eu-central-1.compute.internal" is ready
+[ℹ]  node "ip-192-168-7-193.eu-central-1.compute.internal" is ready
 [ℹ]  kubectl command should work with "kubeconfig.conf", try 'kubectl --kubeconfig=kubeconfig.conf get nodes'
 [✔]  EKS cluster "kube1" in "eu-central-1" region is ready
 ```
@@ -374,13 +377,6 @@ kubectl delete serviceaccount -n cert-manager cert-manager
 kubectl delete serviceaccount -n external-dns external-dns
 ```
 
-Output:
-
-```text
-serviceaccount "cert-manager" deleted
-serviceaccount "external-dns" deleted
-```
-
 Check the nodes:
 
 ```bash
@@ -390,7 +386,7 @@ kubectl get nodes -o wide
 Output:
 
 ```text
-NAME                                             STATUS   ROLES    AGE     VERSION   INTERNAL-IP     EXTERNAL-IP     OS-IMAGE                KERNEL-VERSION   CONTAINER-RUNTIME
-ip-192-168-22-40.eu-central-1.compute.internal   Ready    <none>   2m44s   v1.18.9   192.168.22.40   18.192.50.167   Bottlerocket OS 1.0.2   5.4.58           containerd://1.3.7+unknown
-ip-192-168-52-38.eu-central-1.compute.internal   Ready    <none>   2m41s   v1.18.9   192.168.52.38   18.197.155.37   Bottlerocket OS 1.0.2   5.4.58           containerd://1.3.7+unknown
+NAME                                             STATUS   ROLES    AGE   VERSION              INTERNAL-IP     EXTERNAL-IP     OS-IMAGE         KERNEL-VERSION                  CONTAINER-RUNTIME
+ip-192-168-53-81.eu-central-1.compute.internal   Ready    <none>   44s   v1.18.8-eks-7c9bda   192.168.53.81   52.59.224.70    Amazon Linux 2   4.14.198-152.320.amzn2.x86_64   docker://19.3.6
+ip-192-168-7-193.eu-central-1.compute.internal   Ready    <none>   47s   v1.18.8-eks-7c9bda   192.168.7.193   18.184.53.104   Amazon Linux 2   4.14.198-152.320.amzn2.x86_64   docker://19.3.6
 ```

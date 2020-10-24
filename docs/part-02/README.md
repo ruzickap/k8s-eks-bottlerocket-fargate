@@ -14,7 +14,7 @@ export MY_GOOGLE_OAUTH_CLIENT_ID_BASE64=$(echo -n "${MY_GOOGLE_OAUTH_CLIENT_ID}"
 export MY_GOOGLE_OAUTH_CLIENT_SECRET_BASE64=$(echo -n "${MY_GOOGLE_OAUTH_CLIENT_SECRET}" | base64 -w 0)
 
 kubectl create namespace kube-prometheus-stack
-cat << EOF | kubectl apply -f -
+kubectl apply -f - << EOF
 apiVersion: v1
 kind: Secret
 metadata:
@@ -30,8 +30,8 @@ EOF
 Create config file for `kube-prometheus-stack` Helm chart:
 
 ```bash
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-cat << EOF | helm install --version 10.1.0 --namespace kube-prometheus-stack --create-namespace --values - kube-prometheus-stack prometheus-community/kube-prometheus-stack
+helm repo add --force-update prometheus-community https://prometheus-community.github.io/helm-charts ; helm repo update > /dev/null
+helm install --version 10.1.2 --namespace kube-prometheus-stack --create-namespace --values - kube-prometheus-stack prometheus-community/kube-prometheus-stack << EOF
 # https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/values.yaml
 defaultRules:
   rules:
@@ -185,7 +185,7 @@ manifest_sorter.go:192: info: skipping unknown hook: "crd-install"
 manifest_sorter.go:192: info: skipping unknown hook: "crd-install"
 manifest_sorter.go:192: info: skipping unknown hook: "crd-install"
 NAME: kube-prometheus-stack
-LAST DEPLOYED: Tue Oct 20 10:07:56 2020
+LAST DEPLOYED: Sat Oct 24 16:46:18 2020
 NAMESPACE: kube-prometheus-stack
 STATUS: deployed
 REVISION: 1
@@ -204,7 +204,7 @@ service account:
 ```bash
 ROUTE53_ROLE_ARN=$(eksctl get iamserviceaccount --region eu-central-1 --cluster=$(echo ${MY_DOMAIN} | cut -f 1 -d .) --namespace cert-manager -o json  | jq -r ".iam.serviceAccounts[] | select(.metadata.name==\"cert-manager\") .status.roleARN")
 
-helm repo add jetstack https://charts.jetstack.io
+helm repo add --force-update jetstack https://charts.jetstack.io ; helm repo update > /dev/null
 helm install --version v1.0.3 --namespace cert-manager --create-namespace --wait cert-manager jetstack/cert-manager \
   --set installCRDs="true" \
   --set prometheus.servicemonitor.enabled="true" \
@@ -218,7 +218,7 @@ Output:
 ```text
 "jetstack" has been added to your repositories
 NAME: cert-manager
-LAST DEPLOYED: Tue Oct 20 10:08:05 2020
+LAST DEPLOYED: Sat Oct 24 16:46:41 2020
 NAMESPACE: cert-manager
 STATUS: deployed
 REVISION: 1
@@ -244,7 +244,7 @@ https://cert-manager.io/docs/usage/ingress/
 Add ClusterIssuers for Let's Encrypt staging and production:
 
 ```bash
-cat << EOF | kubectl apply -f -
+kubectl apply -f - << EOF
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
@@ -288,7 +288,7 @@ EOF
 Create wildcard certificate using `cert-manager`:
 
 ```bash
-cat << EOF | kubectl apply -f -
+kubectl apply -f - << EOF
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
@@ -312,7 +312,7 @@ Install `external-dns`:
 ```bash
 ROUTE53_ROLE_ARN=$(eksctl get iamserviceaccount --region eu-central-1 --cluster=$(echo ${MY_DOMAIN} | cut -f 1 -d .) --namespace external-dns -o json  | jq -r ".iam.serviceAccounts[] | select(.metadata.name==\"external-dns\") .status.roleARN")
 
-helm repo add bitnami https://charts.bitnami.com/bitnami
+helm repo add --force-update bitnami https://charts.bitnami.com/bitnami ; helm repo update > /dev/null
 helm install --version 3.4.9 --namespace external-dns --create-namespace external-dns bitnami/external-dns \
   --set aws.region="eu-central-1" \
   --set domainFilters="{${MY_DOMAIN}}" \
@@ -333,7 +333,7 @@ Output:
 ```text
 "bitnami" has been added to your repositories
 NAME: external-dns
-LAST DEPLOYED: Tue Oct 20 10:08:29 2020
+LAST DEPLOYED: Sat Oct 24 16:47:31 2020
 NAMESPACE: external-dns
 STATUS: deployed
 REVISION: 1
@@ -357,7 +357,7 @@ See the details:
 * [https://appscode.com/products/kubed/v0.12.0/guides/config-syncer/intra-cluster/](https://appscode.com/products/kubed/v0.12.0/guides/config-syncer/intra-cluster/)
 
 ```bash
-helm repo add appscode https://charts.appscode.com/stable/
+helm repo add --force-update appscode https://charts.appscode.com/stable/ ; helm repo update > /dev/null
 helm install --version v0.12.0 --namespace kubed --create-namespace kubed appscode/kubed \
   --set config.clusterName="${MY_DOMAIN}"
 ```
@@ -367,7 +367,7 @@ Output:
 ```text
 "appscode" has been added to your repositories
 NAME: kubed
-LAST DEPLOYED: Tue Oct 20 10:08:31 2020
+LAST DEPLOYED: Sat Oct 24 16:47:37 2020
 NAMESPACE: kubed
 STATUS: deployed
 REVISION: 1
@@ -391,7 +391,7 @@ kubectl annotate secret ingress-cert-${LETSENCRYPT_ENVIRONMENT} -n cert-manager 
 Install the Ingress:
 
 ```bash
-helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm repo add --force-update ingress-nginx https://kubernetes.github.io/ingress-nginx ; helm repo update > /dev/null
 helm install --version 3.7.1 --namespace ingress-nginx --create-namespace --wait ingress-nginx ingress-nginx/ingress-nginx \
   --set controller.extraArgs.default-ssl-certificate=cert-manager/ingress-cert-${LETSENCRYPT_ENVIRONMENT} \
   --set controller.replicaCount="1" \
@@ -404,7 +404,7 @@ Output:
 ```text
 "ingress-nginx" has been added to your repositories
 NAME: ingress-nginx
-LAST DEPLOYED: Tue Oct 20 10:10:11 2020
+LAST DEPLOYED: Sat Oct 24 16:48:52 2020
 NAMESPACE: ingress-nginx
 STATUS: deployed
 REVISION: 1
@@ -458,8 +458,8 @@ the endpoints like (`prometheus.`, `alertmanager.`).
 
 ```bash
 kubectl create namespace oauth2-proxy
-helm repo add stable https://charts.helm.sh/stable
-cat << EOF | helm install --version 3.2.3 --namespace oauth2-proxy --create-namespace --values - oauth2-proxy stable/oauth2-proxy
+helm repo add --force-update stable https://charts.helm.sh/stable ; helm repo update > /dev/null
+helm install --version 3.2.3 --namespace oauth2-proxy --create-namespace --values - oauth2-proxy stable/oauth2-proxy << EOF
 # https://github.com/helm/charts/blob/master/stable/oauth2-proxy/values.yaml
 config:
   clientID: "${MY_GOOGLE_OAUTH_CLIENT_ID}"
@@ -490,7 +490,7 @@ Output:
 namespace/oauth2-proxy created
 "stable" has been added to your repositories
 NAME: oauth2-proxy
-LAST DEPLOYED: Tue Oct 20 10:10:46 2020
+LAST DEPLOYED: Sat Oct 24 16:50:14 2020
 NAMESPACE: oauth2-proxy
 STATUS: deployed
 REVISION: 1
@@ -499,4 +499,29 @@ NOTES:
 To verify that oauth2-proxy has started, run:
 
   kubectl --namespace=oauth2-proxy get pods -l "app=oauth2-proxy"
+```
+
+## metrics-server
+
+Enable Horizontal Pod Autoscaler by installing `metrics-server`:
+
+```bash
+helm install --version 2.11.2 --namespace metrics --create-namespace metrics-server stable/metrics-server
+```
+
+Output:
+
+```text
+NAME: metrics-server
+LAST DEPLOYED: Sat Oct 24 16:50:18 2020
+NAMESPACE: metrics
+STATUS: deployed
+REVISION: 1
+NOTES:
+The metric server has been deployed.
+
+In a few minutes you should be able to list metrics using the following
+command:
+
+  kubectl get --raw "/apis/metrics.k8s.io/v1beta1/nodes"
 ```
