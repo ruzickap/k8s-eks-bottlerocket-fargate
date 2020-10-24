@@ -1,14 +1,19 @@
+
 Ansible
+Autoscaler
 Bottlerocket
 Cleanup
 CloudFlare
 CloudFormation
 ClusterIssuers
+Drupal
 Fargate
 Grafana
 K8s
 Kubernetes
+MariaDB
 OAuth
+ReadWriteMany
 Weaveworks
 awscli
 config
@@ -22,5 +27,6 @@ kubed
 mylabs.dev
 nameservers
 oauth2-proxy
+phpMyAdmin
 podinfo
 serviceaccounts

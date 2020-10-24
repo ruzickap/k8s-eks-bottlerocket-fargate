@@ -34,6 +34,14 @@ ingress.extensions "kube-prometheus-stack-alertmanager" deleted
 ingress.extensions "kube-prometheus-stack-grafana" deleted
 ingress.extensions "kube-prometheus-stack-prometheus" deleted
 ingress.extensions "oauth2-proxy" deleted
+ingress.extensions "phpmyadmin" deleted
+```
+
+Remove RDS CloudFormation:
+
+```bash
+aws --region eu-central-1 cloudformation delete-stack --stack-name "$(echo ${MY_DOMAIN} | cut -f 1 -d .)-rds"
+aws --region eu-central-1 cloudformation delete-stack --stack-name "$(echo ${MY_DOMAIN} | cut -f 1 -d .)-efs"
 ```
 
 Remove EKS cluster:
@@ -55,20 +63,18 @@ Output:
 [ℹ]  deleted 2 Fargate profile(s)
 [✔]  kubeconfig has been updated
 [ℹ]  cleaning up AWS load balancers created by Kubernetes objects of Kind Service or Ingress
-[!]  retryable error (Throttling: Rate exceeded
 [ℹ]  3 sequential tasks: { delete nodegroup "ng01", 2 sequential sub-tasks: { 3 parallel sub-tasks: { 2 sequential sub-tasks: { delete IAM role for serviceaccount "cert-manager/cert-manager", delete serviceaccount "cert-manager/cert-manager" }, 2 sequential sub-tasks: { delete IAM role for serviceaccount "external-dns/external-dns", delete serviceaccount "external-dns/external-dns" }, 2 sequential sub-tasks: { delete IAM role for serviceaccount "kube-system/aws-node", delete serviceaccount "kube-system/aws-node" } }, delete IAM OIDC provider }, delete cluster control plane "kube1" }
 [ℹ]  will delete stack "eksctl-kube1-nodegroup-ng01"
 [ℹ]  waiting for stack "eksctl-kube1-nodegroup-ng01" to get deleted
-[!]  retryable error (Throttling: Rate exceeded
-[ℹ]  will delete stack "eksctl-kube1-addon-iamserviceaccount-cert-manager-cert-manager"
-[ℹ]  waiting for stack "eksctl-kube1-addon-iamserviceaccount-cert-manager-cert-manager" to get deleted
 [ℹ]  will delete stack "eksctl-kube1-addon-iamserviceaccount-kube-system-aws-node"
 [ℹ]  waiting for stack "eksctl-kube1-addon-iamserviceaccount-kube-system-aws-node" to get deleted
+[ℹ]  will delete stack "eksctl-kube1-addon-iamserviceaccount-cert-manager-cert-manager"
+[ℹ]  waiting for stack "eksctl-kube1-addon-iamserviceaccount-cert-manager-cert-manager" to get deleted
 [ℹ]  will delete stack "eksctl-kube1-addon-iamserviceaccount-external-dns-external-dns"
 [ℹ]  waiting for stack "eksctl-kube1-addon-iamserviceaccount-external-dns-external-dns" to get deleted
 [ℹ]  deleted serviceaccount "external-dns/external-dns"
-[ℹ]  deleted serviceaccount "kube-system/aws-node"
 [ℹ]  deleted serviceaccount "cert-manager/cert-manager"
+[ℹ]  deleted serviceaccount "kube-system/aws-node"
 [ℹ]  will delete stack "eksctl-kube1-cluster"
 [ℹ]  waiting for stack "eksctl-kube1-cluster" to get deleted
 [✔]  all cluster resources were deleted
@@ -79,14 +85,16 @@ Clean Policy, User, Access Key in AWS:
 ```bash
 # aws route53 delete-hosted-zone --id $(aws route53 list-hosted-zones --query "HostedZones[?Name==\`${MY_DOMAIN}.\`].Id" --output text)
 
-ROUTE53_POLICY_ARN=$(aws iam list-policies --query "Policies[?PolicyName==\`${MY_DOMAIN}-AmazonRoute53Domains\`].{ARN:Arn}" --output text) && \
+ROUTE53_POLICY_ARN=$(aws iam list-policies --query "Policies[?PolicyName==\`${MY_DOMAIN}-AmazonRoute53Domains\`].{ARN:Arn}" --output text)
 aws iam delete-policy --policy-arn ${ROUTE53_POLICY_ARN}
 ```
 
 Cleanup + Remove Helm:
 
 ```bash
-# rm -rf ~/.helm
+if [[ -d ~/Library/Caches/helm ]]; then rm -rf ~/Library/Caches/helm; fi
+if [[ -d ~/Library/Preferences/helm ]]; then rm -rf ~/Library/Preferences/helm; fi
+if [[ -d ~/.helm ]]; then rm -rf ~/.helm; fi
 ```
 
 Remove `tmp` directory:
