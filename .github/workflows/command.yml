@@ -1,0 +1,28 @@
+name: command
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - .github/workflows/command.yml
+      - docs/**
+      - tests/**
+  push:
+    branches:
+      - master
+    paths:
+      - .github/workflows/command.yml
+      - docs/**
+      - tests/**
+
+jobs:
+  command-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install requirements
+        run: sudo apt install -y pv
+
+      - name: Run tests/tests.sh
+        run: script -e -c tests/tests.sh
