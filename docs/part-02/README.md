@@ -264,6 +264,7 @@ spec:
           route53:
             region: eu-central-1
 ---
+# Create ClusterIssuer for production to get real signed certificates
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
