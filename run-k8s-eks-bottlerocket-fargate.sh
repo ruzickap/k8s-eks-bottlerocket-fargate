@@ -54,7 +54,7 @@ clear
 
 [ ! -d .git ] && git clone --quiet https://github.com/ruzickap/k8s-eks-bottlerocket-fargate && cd k8s-eks-bottlerocket-fargate
 
-sed docs/part-0{1..3}/README.md \
+sed docs/part-0{1..4}/README.md \
   -e '/^## Configure AWS/,/^## Create Amazon EKS/d' \
 | \
 sed -n "/^\`\`\`bash.*/,/^\`\`\`$/p;/^-----$/p" \
