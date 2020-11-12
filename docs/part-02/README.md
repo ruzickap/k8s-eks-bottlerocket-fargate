@@ -31,7 +31,7 @@ Create config file for `kube-prometheus-stack` Helm chart:
 
 ```bash
 helm repo add --force-update prometheus-community https://prometheus-community.github.io/helm-charts ; helm repo update > /dev/null
-helm install --version 10.1.2 --namespace kube-prometheus-stack --create-namespace --values - kube-prometheus-stack prometheus-community/kube-prometheus-stack << EOF
+helm install --version 11.1.1 --namespace kube-prometheus-stack --create-namespace --values - kube-prometheus-stack prometheus-community/kube-prometheus-stack << EOF
 # https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/values.yaml
 defaultRules:
   rules:
@@ -177,15 +177,8 @@ Output:
 
 ```text
 "prometheus-community" has been added to your repositories
-manifest_sorter.go:192: info: skipping unknown hook: "crd-install"
-manifest_sorter.go:192: info: skipping unknown hook: "crd-install"
-manifest_sorter.go:192: info: skipping unknown hook: "crd-install"
-manifest_sorter.go:192: info: skipping unknown hook: "crd-install"
-manifest_sorter.go:192: info: skipping unknown hook: "crd-install"
-manifest_sorter.go:192: info: skipping unknown hook: "crd-install"
-manifest_sorter.go:192: info: skipping unknown hook: "crd-install"
 NAME: kube-prometheus-stack
-LAST DEPLOYED: Sat Oct 24 16:46:18 2020
+LAST DEPLOYED: Thu Nov 12 14:16:48 2020
 NAMESPACE: kube-prometheus-stack
 STATUS: deployed
 REVISION: 1
@@ -202,7 +195,7 @@ Install `cert-manager` and use the previously created Role ARN to annotate
 service account:
 
 ```bash
-ROUTE53_ROLE_ARN=$(eksctl get iamserviceaccount --region eu-central-1 --cluster=$(echo ${MY_DOMAIN} | cut -f 1 -d .) --namespace cert-manager -o json  | jq -r ".iam.serviceAccounts[] | select(.metadata.name==\"cert-manager\") .status.roleARN")
+ROUTE53_ROLE_ARN=$(eksctl get iamserviceaccount --region eu-central-1 --cluster=${CLUSTER_NAME} --namespace cert-manager -o json  | jq -r ".iam.serviceAccounts[] | select(.metadata.name==\"cert-manager\") .status.roleARN")
 
 helm repo add --force-update jetstack https://charts.jetstack.io ; helm repo update > /dev/null
 helm install --version v1.0.3 --namespace cert-manager --create-namespace --wait cert-manager jetstack/cert-manager \
@@ -218,7 +211,7 @@ Output:
 ```text
 "jetstack" has been added to your repositories
 NAME: cert-manager
-LAST DEPLOYED: Sat Oct 24 16:46:41 2020
+LAST DEPLOYED: Thu Nov 12 14:16:58 2020
 NAMESPACE: cert-manager
 STATUS: deployed
 REVISION: 1
@@ -311,10 +304,10 @@ EOF
 Install `external-dns`:
 
 ```bash
-ROUTE53_ROLE_ARN=$(eksctl get iamserviceaccount --region eu-central-1 --cluster=$(echo ${MY_DOMAIN} | cut -f 1 -d .) --namespace external-dns -o json  | jq -r ".iam.serviceAccounts[] | select(.metadata.name==\"external-dns\") .status.roleARN")
+ROUTE53_ROLE_ARN=$(eksctl get iamserviceaccount --region eu-central-1 --cluster=${CLUSTER_NAME} --namespace external-dns -o json  | jq -r ".iam.serviceAccounts[] | select(.metadata.name==\"external-dns\") .status.roleARN")
 
 helm repo add --force-update bitnami https://charts.bitnami.com/bitnami ; helm repo update > /dev/null
-helm install --version 3.4.9 --namespace external-dns --create-namespace external-dns bitnami/external-dns \
+helm install --version 4.0.0 --namespace external-dns --create-namespace external-dns bitnami/external-dns \
   --set aws.region="eu-central-1" \
   --set domainFilters="{${MY_DOMAIN}}" \
   --set interval="10s" \
@@ -334,7 +327,7 @@ Output:
 ```text
 "bitnami" has been added to your repositories
 NAME: external-dns
-LAST DEPLOYED: Sat Oct 24 16:47:31 2020
+LAST DEPLOYED: Thu Nov 12 14:17:32 2020
 NAMESPACE: external-dns
 STATUS: deployed
 REVISION: 1
@@ -368,7 +361,7 @@ Output:
 ```text
 "appscode" has been added to your repositories
 NAME: kubed
-LAST DEPLOYED: Sat Oct 24 16:47:37 2020
+LAST DEPLOYED: Thu Nov 12 14:17:37 2020
 NAMESPACE: kubed
 STATUS: deployed
 REVISION: 1
@@ -405,7 +398,7 @@ Output:
 ```text
 "ingress-nginx" has been added to your repositories
 NAME: ingress-nginx
-LAST DEPLOYED: Sat Oct 24 16:48:52 2020
+LAST DEPLOYED: Thu Nov 12 14:19:03 2020
 NAMESPACE: ingress-nginx
 STATUS: deployed
 REVISION: 1
@@ -467,8 +460,9 @@ config:
   clientSecret: "${MY_GOOGLE_OAUTH_CLIENT_SECRET}"
   cookieSecret: "$(openssl rand -base64 32 | head -c 32 | base64 )"
   configFile: |-
-    email_domains = [ ]
+    email_domains = [ "*" ]
     upstreams = [ "file:///dev/null" ]
+    whitelist_domains = ".${MY_DOMAIN}"
     cookie_domain = ".${MY_DOMAIN}"
 authenticatedEmailsFile:
   enabled: true
@@ -491,7 +485,7 @@ Output:
 namespace/oauth2-proxy created
 "stable" has been added to your repositories
 NAME: oauth2-proxy
-LAST DEPLOYED: Sat Oct 24 16:50:14 2020
+LAST DEPLOYED: Thu Nov 12 14:19:50 2020
 NAMESPACE: oauth2-proxy
 STATUS: deployed
 REVISION: 1
@@ -502,20 +496,50 @@ To verify that oauth2-proxy has started, run:
   kubectl --namespace=oauth2-proxy get pods -l "app=oauth2-proxy"
 ```
 
+## cluster-autoscaler
+
+```bash
+helm repo add autoscaler https://kubernetes.github.io/autoscaler
+helm install --version 1.1.0 --namespace kube-system --values - cluster-autoscaler autoscaler/cluster-autoscaler-chart << EOF
+autoDiscovery:
+  clusterName: ${CLUSTER_NAME}
+awsRegion: eu-central-1
+serviceMonitor:
+  enabled: true
+  namespace: kube-prometheus-stack
+EOF
+```
+
+Output:
+
+```text
+"autoscaler" has been added to your repositories
+NAME: cluster-autoscaler
+LAST DEPLOYED: Thu Nov 12 14:19:53 2020
+NAMESPACE: kube-system
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+To verify that cluster-autoscaler has started, run:
+
+  kubectl --namespace=kube-system get pods -l "app.kubernetes.io/name=aws-cluster-autoscaler-chart,app.kubernetes.io/instance=cluster-autoscaler"
+```
+
 ## metrics-server
 
 Enable Horizontal Pod Autoscaler by installing `metrics-server`:
 
 ```bash
-helm install --version 2.11.2 --namespace metrics --create-namespace metrics-server stable/metrics-server
+helm install --version 2.11.2 --namespace kube-system metrics-server stable/metrics-server
 ```
 
 Output:
 
 ```text
 NAME: metrics-server
-LAST DEPLOYED: Sat Oct 24 16:50:18 2020
-NAMESPACE: metrics
+LAST DEPLOYED: Thu Nov 12 14:19:57 2020
+NAMESPACE: kube-system
 STATUS: deployed
 REVISION: 1
 NOTES:
@@ -525,4 +549,59 @@ In a few minutes you should be able to list metrics using the following
 command:
 
   kubectl get --raw "/apis/metrics.k8s.io/v1beta1/nodes"
+```
+
+## HashiCorp Vault
+
+Install HashiCorp Vault:
+
+```bash
+kubectl create namespace vault
+helm repo add --force-update hashicorp https://helm.releases.hashicorp.com ; helm repo update > /dev/null
+# https://github.com/hashicorp/vault-helm/blob/master/values.yaml
+helm install --version 0.8.0 --namespace vault --values - vault hashicorp/vault << EOF
+injector:
+  metrics:
+    enabled: false
+server:
+  ingress:
+    enabled: true
+    annotations:
+      nginx.ingress.kubernetes.io/auth-url: https://auth.${MY_DOMAIN}/oauth2/auth
+      nginx.ingress.kubernetes.io/auth-signin: https://auth.${MY_DOMAIN}/oauth2/start?rd=\$scheme://\$host\$request_uri
+    hosts:
+      - host: vault.${MY_DOMAIN}
+    tls:
+      - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
+        hosts:
+          - vault.${MY_DOMAIN}
+  dataStorage:
+    size: 1Gi
+EOF
+```
+
+Output:
+
+```text
+namespace/vault created
+"hashicorp" has been added to your repositories
+NAME: vault
+LAST DEPLOYED: Thu Nov 12 14:20:04 2020
+NAMESPACE: vault
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+Thank you for installing HashiCorp Vault!
+
+Now that you have deployed Vault, you should look over the docs on using
+Vault with Kubernetes available here:
+
+https://www.vaultproject.io/docs/
+
+
+Your release is named vault. To learn more about the release, try:
+
+  $ helm status vault
+  $ helm get manifest vault
 ```

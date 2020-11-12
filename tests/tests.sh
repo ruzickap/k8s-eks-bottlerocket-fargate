@@ -60,7 +60,7 @@ export NO_WAIT=true
 export DEMO_PROMPT="${GREEN}➜ ${CYAN}$ "
 
 # shellcheck disable=SC1004
-sed docs/part-02/README.md \
+sed docs/part-0{2,3}/README.md \
   -e 's/^ROUTE53_ROLE_ARN.*/ROUTE53_ROLE_ARN="test_arn"/' \
   -e '/^# Create ClusterIssuer for production/i \
 apiVersion: cert-manager.io/v1 \
@@ -83,5 +83,8 @@ sed \
 # shellcheck disable=SC1091
 source README.sh
 
-kubectl wait --timeout=1m --for=condition=Ready pods --all --all-namespaces
-kubectl get pods --all-namespaces
+rm demo-magic.sh
+
+kind delete cluster --name "${CLUSTER_NAME}"
+
+rm kubeconfig.conf

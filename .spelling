@@ -9,6 +9,7 @@ ClusterIssuers
 Drupal
 Fargate
 Grafana
+HashiCorp
 K8s
 Kubernetes
 MariaDB
@@ -16,6 +17,7 @@ OAuth
 ReadWriteMany
 Weaveworks
 awscli
+cluster-autoscaler
 config
 eksctl
 external-dns

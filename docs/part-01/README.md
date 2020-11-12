@@ -17,11 +17,12 @@ The `LETSENCRYPT_ENVIRONMENT` variable should be one of:
 ```bash
 export MY_DOMAIN=${MY_DOMAIN:-kube1.mylabs.dev}
 export LETSENCRYPT_ENVIRONMENT=${LETSENCRYPT_ENVIRONMENT:-staging}
+export CLUSTER_NAME=$(echo ${MY_DOMAIN} | cut -f 1 -d .)
 echo "${MY_DOMAIN} | ${LETSENCRYPT_ENVIRONMENT}"
 ```
 
 Prepare Google OAuth 2.0 Client IDs and AWS variables for access. You can find
-the description how to do it here: [https://oauth2-proxy.github.io/oauth2-proxy/auth-configuration#google-auth-provider](https://oauth2-proxy.github.io/oauth2-proxy/auth-configuration#google-auth-provider)
+the description how to do it here: [https://oauth2-proxy.github.io/oauth2-proxy/docs/configuration/oauth_provider#google-auth-provider](https://oauth2-proxy.github.io/oauth2-proxy/docs/configuration/oauth_provider#google-auth-provider)
 
 ```shell
 export AWS_ACCESS_KEY_ID="AxxxxxxxxxxxxxxxxxxY"
@@ -50,7 +51,7 @@ Install [kubectl](https://github.com/kubernetes/kubectl) binary:
 
 ```bash
 if [[ ! -x /usr/local/bin/kubectl ]]; then
-  sudo curl -s -Lo /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/v1.18.10/bin/linux/amd64/kubectl
+  sudo curl -s -Lo /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/v1.19.3/bin/$(uname | tr '[:upper:]' '[:lower:]')/amd64/kubectl
   sudo chmod a+x /usr/local/bin/kubectl
 fi
 ```
@@ -59,7 +60,7 @@ Install [Helm](https://helm.sh/):
 
 ```bash
 if [[ ! -x /usr/local/bin/helm ]]; then
-  curl https://raw.githubusercontent.com/helm/helm/master/scripts/get | bash -s -- --version v3.3.4
+  curl https://raw.githubusercontent.com/helm/helm/master/scripts/get | bash -s -- --version v3.4.0
 fi
 ```
 
@@ -67,7 +68,7 @@ Install [eksctl](https://eksctl.io/):
 
 ```bash
 if [[ ! -x /usr/local/bin/eksctl ]]; then
-  curl -s -L "https://github.com/weaveworks/eksctl/releases/download/0.30.0/eksctl_Linux_amd64.tar.gz" | sudo tar xz -C /usr/local/bin/
+  curl -s -L "https://github.com/weaveworks/eksctl/releases/download/0.31.0/eksctl_$(uname)_amd64.tar.gz" | sudo tar xz -C /usr/local/bin/
 fi
 ```
 
@@ -75,7 +76,7 @@ Install [AWS IAM Authenticator for Kubernetes](https://github.com/kubernetes-sig
 
 ```bash
 if [[ ! -x /usr/local/bin/aws-iam-authenticator ]]; then
-  sudo curl -s -Lo /usr/local/bin/aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.18.8/2020-09-18/bin/linux/amd64/aws-iam-authenticator
+  sudo curl -s -Lo /usr/local/bin/aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.18.8/2020-09-18/bin/$(uname | tr '[:upper:]' '[:lower:]')/amd64/aws-iam-authenticator
   sudo chmod a+x /usr/local/bin/aws-iam-authenticator
 fi
 ```
@@ -114,8 +115,8 @@ This step depends on your domain registrar - I'm using CloudFlare and using
 Ansible to automate it:
 
 ```shell
-ansible -m cloudflare_dns -c local -i "localhost," localhost -a "zone=mylabs.dev record=$(echo ${MY_DOMAIN} | cut -f 1 -d .) type=NS value=${NEW_ZONE_NS1} solo=true proxied=no account_email=${CLOUDFLARE_EMAIL} account_api_token=${CLOUDFLARE_API_KEY}"
-ansible -m cloudflare_dns -c local -i "localhost," localhost -a "zone=mylabs.dev record=$(echo ${MY_DOMAIN} | cut -f 1 -d .) type=NS value=${NEW_ZONE_NS2} solo=false proxied=no account_email=${CLOUDFLARE_EMAIL} account_api_token=${CLOUDFLARE_API_KEY}"
+ansible -m cloudflare_dns -c local -i "localhost," localhost -a "zone=mylabs.dev record=${CLUSTER_NAME} type=NS value=${NEW_ZONE_NS1} solo=true proxied=no account_email=${CLOUDFLARE_EMAIL} account_api_token=${CLOUDFLARE_API_KEY}"
+ansible -m cloudflare_dns -c local -i "localhost," localhost -a "zone=mylabs.dev record=${CLUSTER_NAME} type=NS value=${NEW_ZONE_NS2} solo=false proxied=no account_email=${CLOUDFLARE_EMAIL} account_api_token=${CLOUDFLARE_API_KEY}"
 ```
 
 ## Create Amazon EKS
@@ -224,7 +225,7 @@ apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
 
 metadata:
-  name: $(echo ${MY_DOMAIN} | cut -f 1 -d .)
+  name: ${CLUSTER_NAME}
   region: eu-central-1
   version: "1.18"
   tags: &tags
@@ -313,7 +314,7 @@ EOF
 Output:
 
 ```text
-[ℹ]  eksctl version 0.30.0
+[ℹ]  eksctl version 0.31.0
 [ℹ]  using region eu-central-1
 [ℹ]  subnets for eu-central-1a - public:192.168.0.0/19 private:192.168.64.0/19
 [ℹ]  subnets for eu-central-1b - public:192.168.32.0/19 private:192.168.96.0/19
@@ -329,24 +330,24 @@ Output:
 [ℹ]  2 sequential tasks: { create cluster control plane "kube1", 2 sequential sub-tasks: { 6 sequential sub-tasks: { tag cluster, update CloudWatch logging configuration, create fargate profiles, associate IAM OIDC provider, 3 parallel sub-tasks: { 2 sequential sub-tasks: { create IAM role for serviceaccount "cert-manager/cert-manager", create serviceaccount "cert-manager/cert-manager" }, 2 sequential sub-tasks: { create IAM role for serviceaccount "external-dns/external-dns", create serviceaccount "external-dns/external-dns" }, 2 sequential sub-tasks: { create IAM role for serviceaccount "kube-system/aws-node", create serviceaccount "kube-system/aws-node" } }, restart daemonset "kube-system/aws-node" }, create nodegroup "ng01" } }
 [ℹ]  building cluster stack "eksctl-kube1-cluster"
 [ℹ]  deploying stack "eksctl-kube1-cluster"
-[✔]  tagged EKS cluster (Environment=Dev, Owner=petr.ruzicka@gmail.com, Squad=Cloud_Container_Platform, Tribe=Cloud_Native)
+[✔]  tagged EKS cluster (Squad=Cloud_Container_Platform, Tribe=Cloud_Native, Environment=Dev, Owner=petr.ruzicka@gmail.com)
 [✔]  configured CloudWatch logging for cluster "kube1" in "eu-central-1" (enabled types: audit, authenticator, controllerManager & disabled types: api, scheduler)
 [ℹ]  creating Fargate profile "fp-default" on EKS cluster "kube1"
 [ℹ]  created Fargate profile "fp-default" on EKS cluster "kube1"
 [ℹ]  creating Fargate profile "fp-fargate-workload" on EKS cluster "kube1"
 [ℹ]  created Fargate profile "fp-fargate-workload" on EKS cluster "kube1"
 [ℹ]  building iamserviceaccount stack "eksctl-kube1-addon-iamserviceaccount-external-dns-external-dns"
-[ℹ]  building iamserviceaccount stack "eksctl-kube1-addon-iamserviceaccount-cert-manager-cert-manager"
 [ℹ]  building iamserviceaccount stack "eksctl-kube1-addon-iamserviceaccount-kube-system-aws-node"
+[ℹ]  building iamserviceaccount stack "eksctl-kube1-addon-iamserviceaccount-cert-manager-cert-manager"
+[ℹ]  deploying stack "eksctl-kube1-addon-iamserviceaccount-external-dns-external-dns"
 [ℹ]  deploying stack "eksctl-kube1-addon-iamserviceaccount-cert-manager-cert-manager"
 [ℹ]  deploying stack "eksctl-kube1-addon-iamserviceaccount-kube-system-aws-node"
-[ℹ]  deploying stack "eksctl-kube1-addon-iamserviceaccount-external-dns-external-dns"
-[ℹ]  serviceaccount "kube-system/aws-node" already exists
-[ℹ]  updated serviceaccount "kube-system/aws-node"
 [ℹ]  created namespace "external-dns"
 [ℹ]  created serviceaccount "external-dns/external-dns"
 [ℹ]  created namespace "cert-manager"
 [ℹ]  created serviceaccount "cert-manager/cert-manager"
+[ℹ]  serviceaccount "kube-system/aws-node" already exists
+[ℹ]  updated serviceaccount "kube-system/aws-node"
 [ℹ]  daemonset "kube-system/aws-node" restarted
 [ℹ]  building nodegroup stack "eksctl-kube1-nodegroup-ng01"
 [ℹ]  deploying stack "eksctl-kube1-nodegroup-ng01"
@@ -354,12 +355,12 @@ Output:
 [✔]  saved kubeconfig as "kubeconfig.conf"
 [ℹ]  no tasks
 [✔]  all EKS cluster resources for "kube1" have been created
-[ℹ]  adding identity "arn:aws:iam::729560437327:role/eksctl-kube1-nodegroup-ng01-NodeInstanceRole-IYLKEG3R62OG" to auth ConfigMap
+[ℹ]  adding identity "arn:aws:iam::729560437327:role/eksctl-kube1-nodegroup-ng01-NodeInstanceRole-WIYP7ZUP59HD" to auth ConfigMap
 [ℹ]  nodegroup "ng01" has 0 node(s)
 [ℹ]  waiting for at least 2 node(s) to become ready in "ng01"
 [ℹ]  nodegroup "ng01" has 2 node(s)
-[ℹ]  node "ip-192-168-53-81.eu-central-1.compute.internal" is ready
-[ℹ]  node "ip-192-168-7-193.eu-central-1.compute.internal" is ready
+[ℹ]  node "ip-192-168-16-150.eu-central-1.compute.internal" is ready
+[ℹ]  node "ip-192-168-62-101.eu-central-1.compute.internal" is ready
 [ℹ]  kubectl command should work with "kubeconfig.conf", try 'kubectl --kubeconfig=kubeconfig.conf get nodes'
 [✔]  EKS cluster "kube1" in "eu-central-1" region is ready
 ```
@@ -386,7 +387,7 @@ kubectl get nodes -o wide
 Output:
 
 ```text
-NAME                                             STATUS   ROLES    AGE   VERSION              INTERNAL-IP     EXTERNAL-IP     OS-IMAGE         KERNEL-VERSION                  CONTAINER-RUNTIME
-ip-192-168-53-81.eu-central-1.compute.internal   Ready    <none>   44s   v1.18.8-eks-7c9bda   192.168.53.81   52.59.224.70    Amazon Linux 2   4.14.198-152.320.amzn2.x86_64   docker://19.3.6
-ip-192-168-7-193.eu-central-1.compute.internal   Ready    <none>   47s   v1.18.8-eks-7c9bda   192.168.7.193   18.184.53.104   Amazon Linux 2   4.14.198-152.320.amzn2.x86_64   docker://19.3.6
+NAME                                              STATUS   ROLES    AGE   VERSION              INTERNAL-IP      EXTERNAL-IP    OS-IMAGE         KERNEL-VERSION                  CONTAINER-RUNTIME
+ip-192-168-16-150.eu-central-1.compute.internal   Ready    <none>   43s   v1.18.8-eks-7c9bda   192.168.16.150   18.194.44.5    Amazon Linux 2   4.14.198-152.320.amzn2.x86_64   docker://19.3.6
+ip-192-168-62-101.eu-central-1.compute.internal   Ready    <none>   42s   v1.18.8-eks-7c9bda   192.168.62.101   3.121.42.182   Amazon Linux 2   4.14.198-152.320.amzn2.x86_64   docker://19.3.6
 ```

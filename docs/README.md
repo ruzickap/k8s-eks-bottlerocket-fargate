@@ -20,4 +20,5 @@
 * [Part 01 - Create Amazon EKS Bottlerocket + Fargate cluster](part-01/README.md)
 * [Part 02 - K8s tools](part-02/README.md)
 * [Part 03 - Workload](part-03/README.md)
-* [Part 04 - Cleanup](part-04/README.md)
+* [Part 04 - Drupal](part-04/README.md)
+* [Part 05 - Cleanup](part-05/README.md)
