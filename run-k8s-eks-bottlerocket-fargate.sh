@@ -54,17 +54,13 @@ clear
 
 [ ! -d .git ] && git clone --quiet https://github.com/ruzickap/k8s-eks-bottlerocket-fargate && cd k8s-eks-bottlerocket-fargate
 
-sed docs/part-0{1..4}/README.md \
-  -e '/^## Configure AWS/,/^## Create Amazon EKS/d' \
-| \
-sed -n "/^\`\`\`bash.*/,/^\`\`\`$/p;/^-----$/p" \
+sed -n "/^\`\`\`bash.*/,/^\`\`\`$/p;/^-----$/p" docs/part-0{1..4}/README.md \
 | \
 sed \
   -e 's/^-----$/\np  ""\np  "################################################################################################### Press <ENTER> to continue"\nwait\n/' \
   -e 's/^```bash.*/\npe '"'"'/' \
   -e 's/^```$/'"'"'/' \
 > README.sh
-
 
 if [ "$#" -eq 0 ]; then
   # shellcheck disable=SC1091
