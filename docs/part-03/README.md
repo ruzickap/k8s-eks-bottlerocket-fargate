@@ -16,11 +16,11 @@ ingress:
   enabled: true
   path: /
   hosts:
-    - podinfo.${MY_DOMAIN}
+    - podinfo.${CLUSTER_FQDN}
   tls:
     - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
       hosts:
-        - podinfo.${MY_DOMAIN}
+        - podinfo.${CLUSTER_FQDN}
 EOF
 ```
 
@@ -29,13 +29,13 @@ Output:
 ```text
 "sp" has been added to your repositories
 NAME: podinfo
-LAST DEPLOYED: Thu Nov 12 14:20:14 2020
+LAST DEPLOYED: Fri Nov 13 16:52:30 2020
 NAMESPACE: default
 STATUS: deployed
 REVISION: 1
 NOTES:
 1. Get the application URL by running these commands:
-  https://podinfo.kube1.mylabs.dev/
+  https://podinfo.k1.k8s.mylabs.dev/
 ```
 
 Install `podinfo` secured by `oauth2`:
@@ -48,15 +48,15 @@ serviceMonitor:
 ingress:
   enabled: true
   annotations:
-    nginx.ingress.kubernetes.io/auth-url: https://auth.${MY_DOMAIN}/oauth2/auth
-    nginx.ingress.kubernetes.io/auth-signin: https://auth.${MY_DOMAIN}/oauth2/start?rd=\$scheme://\$host\$request_uri
+    nginx.ingress.kubernetes.io/auth-url: https://auth.${CLUSTER_FQDN}/oauth2/auth
+    nginx.ingress.kubernetes.io/auth-signin: https://auth.${CLUSTER_FQDN}/oauth2/start?rd=\$scheme://\$host\$request_uri
   path: /
   hosts:
-    - podinfo-oauth.${MY_DOMAIN}
+    - podinfo-oauth.${CLUSTER_FQDN}
   tls:
     - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
       hosts:
-        - podinfo-oauth.${MY_DOMAIN}
+        - podinfo-oauth.${CLUSTER_FQDN}
 EOF
 ```
 
@@ -64,11 +64,11 @@ Output:
 
 ```text
 NAME: podinfo-oauth
-LAST DEPLOYED: Thu Nov 12 14:20:17 2020
+LAST DEPLOYED: Fri Nov 13 16:52:33 2020
 NAMESPACE: default
 STATUS: deployed
 REVISION: 1
 NOTES:
 1. Get the application URL by running these commands:
-  https://podinfo-oauth.kube1.mylabs.dev/
+  https://podinfo-oauth.k1.k8s.mylabs.dev/
 ```

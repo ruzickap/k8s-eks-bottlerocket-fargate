@@ -10,8 +10,8 @@ or certificate management ([cert-manager](https://cert-manager.io/)).
 Create Grafana secret with Google OAuth 2.0 Client IDs:
 
 ```bash
-export MY_GOOGLE_OAUTH_CLIENT_ID_BASE64=$(echo -n "${MY_GOOGLE_OAUTH_CLIENT_ID}" | base64 -w 0)
-export MY_GOOGLE_OAUTH_CLIENT_SECRET_BASE64=$(echo -n "${MY_GOOGLE_OAUTH_CLIENT_SECRET}" | base64 -w 0)
+MY_GOOGLE_OAUTH_CLIENT_ID_BASE64=$(echo -n "${MY_GOOGLE_OAUTH_CLIENT_ID}" | base64 -w 0)
+MY_GOOGLE_OAUTH_CLIENT_SECRET_BASE64=$(echo -n "${MY_GOOGLE_OAUTH_CLIENT_SECRET}" | base64 -w 0)
 
 kubectl create namespace kube-prometheus-stack
 kubectl apply -f - << EOF
@@ -43,16 +43,16 @@ alertmanager:
   ingress:
     enabled: true
     annotations:
-      nginx.ingress.kubernetes.io/auth-url: https://auth.${MY_DOMAIN}/oauth2/auth
-      nginx.ingress.kubernetes.io/auth-signin: https://auth.${MY_DOMAIN}/oauth2/start?rd=\$scheme://\$host\$request_uri
+      nginx.ingress.kubernetes.io/auth-url: https://auth.${CLUSTER_FQDN}/oauth2/auth
+      nginx.ingress.kubernetes.io/auth-signin: https://auth.${CLUSTER_FQDN}/oauth2/start?rd=\$scheme://\$host\$request_uri
     hosts:
-      - alertmanager.${MY_DOMAIN}
+      - alertmanager.${CLUSTER_FQDN}
     paths:
       - /
     tls:
       - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
         hosts:
-          - alertmanager.${MY_DOMAIN}
+          - alertmanager.${CLUSTER_FQDN}
   alertmanagerSpec:
     storage:
       volumeClaimTemplate:
@@ -62,23 +62,23 @@ alertmanager:
           resources:
             requests:
               storage: 1Gi
-    externalUrl: https://alertmanager.${MY_DOMAIN}
+    externalUrl: https://alertmanager.${CLUSTER_FQDN}
 
 # https://github.com/grafana/helm-charts/blob/main/charts/grafana/values.yaml
 grafana:
   ingress:
     enabled: true
     hosts:
-      - grafana.${MY_DOMAIN}
+      - grafana.${CLUSTER_FQDN}
     tls:
       - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
         hosts:
-          - grafana.${MY_DOMAIN}
+          - grafana.${CLUSTER_FQDN}
   sidecar:
     dashboards:
       enabled: true
   env:
-    GF_SERVER_ROOT_URL: "https://grafana.${MY_DOMAIN}"
+    GF_SERVER_ROOT_URL: "https://grafana.${CLUSTER_FQDN}"
     GF_ANALYTICS_REPORTING_ENABLED: "false"
     GF_AUTH_DISABLE_LOGIN_FORM: "true"
     GF_USERS_ALLOW_SIGN_UP: "false"
@@ -138,26 +138,25 @@ kubeScheduler:
 kubeProxy:
   enabled: false
 prometheusOperator:
-  tlsProxy:
+  tls:
     enabled: false
   admissionWebhooks:
     enabled: false
-  cleanupCustomResource: false
 
 prometheus:
   ingress:
     annotations:
-      nginx.ingress.kubernetes.io/auth-url: https://auth.${MY_DOMAIN}/oauth2/auth
-      nginx.ingress.kubernetes.io/auth-signin: https://auth.${MY_DOMAIN}/oauth2/start?rd=\$scheme://\$host\$request_uri
+      nginx.ingress.kubernetes.io/auth-url: https://auth.${CLUSTER_FQDN}/oauth2/auth
+      nginx.ingress.kubernetes.io/auth-signin: https://auth.${CLUSTER_FQDN}/oauth2/start?rd=\$scheme://\$host\$request_uri
     enabled: true
     hosts:
-      - prometheus.${MY_DOMAIN}
+      - prometheus.${CLUSTER_FQDN}
     tls:
       - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
         hosts:
-          - prometheus.${MY_DOMAIN}
+          - prometheus.${CLUSTER_FQDN}
   prometheusSpec:
-    externalUrl: https://prometheus.${MY_DOMAIN}
+    externalUrl: https://prometheus.${CLUSTER_FQDN}
     ruleSelectorNilUsesHelmValues: false
     podMonitorSelectorNilUsesHelmValues: false
     retentionSize: 1GB
@@ -178,7 +177,7 @@ Output:
 ```text
 "prometheus-community" has been added to your repositories
 NAME: kube-prometheus-stack
-LAST DEPLOYED: Thu Nov 12 14:16:48 2020
+LAST DEPLOYED: Fri Nov 13 16:45:33 2020
 NAMESPACE: kube-prometheus-stack
 STATUS: deployed
 REVISION: 1
@@ -198,12 +197,19 @@ service account:
 ROUTE53_ROLE_ARN=$(eksctl get iamserviceaccount --region eu-central-1 --cluster=${CLUSTER_NAME} --namespace cert-manager -o json  | jq -r ".iam.serviceAccounts[] | select(.metadata.name==\"cert-manager\") .status.roleARN")
 
 helm repo add --force-update jetstack https://charts.jetstack.io ; helm repo update > /dev/null
-helm install --version v1.0.3 --namespace cert-manager --create-namespace --wait cert-manager jetstack/cert-manager \
-  --set installCRDs="true" \
-  --set prometheus.servicemonitor.enabled="true" \
-  --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"="${ROUTE53_ROLE_ARN}" \
-  --set "extraArgs[0]=--enable-certificate-owner-ref=true" \
-  --set securityContext.enabled="true"
+helm install --version v1.0.3 --namespace cert-manager --create-namespace --wait --values - cert-manager jetstack/cert-manager << EOF
+installCRDs: true
+prometheus:
+  servicemonitor:
+    enabled: true
+serviceAccount:
+  annotations:
+    eks.amazonaws.com/role-arn: ${ROUTE53_ROLE_ARN}
+extraArgs:
+  - --enable-certificate-owner-ref=true
+securityContext:
+  enabled: true
+EOF
 ```
 
 Output:
@@ -211,7 +217,7 @@ Output:
 ```text
 "jetstack" has been added to your repositories
 NAME: cert-manager
-LAST DEPLOYED: Thu Nov 12 14:16:58 2020
+LAST DEPLOYED: Fri Nov 13 16:45:46 2020
 NAMESPACE: cert-manager
 STATUS: deployed
 REVISION: 1
@@ -246,13 +252,13 @@ metadata:
 spec:
   acme:
     server: https://acme-staging-v02.api.letsencrypt.org/directory
-    email: petr.ruzicka@gmail.com
+    email: ${MY_EMAIL}
     privateKeySecretRef:
       name: letsencrypt-staging-dns
     solvers:
       - selector:
           dnsZones:
-            - ${MY_DOMAIN}
+            - ${CLUSTER_FQDN}
         dns01:
           route53:
             region: eu-central-1
@@ -266,13 +272,13 @@ metadata:
 spec:
   acme:
     server: https://acme-v02.api.letsencrypt.org/directory
-    email: petr.ruzicka@gmail.com
+    email: ${MY_EMAIL}
     privateKeySecretRef:
       name: letsencrypt-production-dns
     solvers:
       - selector:
           dnsZones:
-            - ${MY_DOMAIN}
+            - ${CLUSTER_FQDN}
         dns01:
           route53:
             region: eu-central-1
@@ -293,9 +299,10 @@ spec:
   issuerRef:
     name: letsencrypt-${LETSENCRYPT_ENVIRONMENT}-dns
     kind: ClusterIssuer
-  commonName: "*.${MY_DOMAIN}"
+  commonName: "*.${CLUSTER_FQDN}"
   dnsNames:
-    - "*.${MY_DOMAIN}"
+    - "*.${CLUSTER_FQDN}"
+    - "${CLUSTER_FQDN}"
 EOF
 ```
 
@@ -307,19 +314,29 @@ Install `external-dns`:
 ROUTE53_ROLE_ARN=$(eksctl get iamserviceaccount --region eu-central-1 --cluster=${CLUSTER_NAME} --namespace external-dns -o json  | jq -r ".iam.serviceAccounts[] | select(.metadata.name==\"external-dns\") .status.roleARN")
 
 helm repo add --force-update bitnami https://charts.bitnami.com/bitnami ; helm repo update > /dev/null
-helm install --version 4.0.0 --namespace external-dns --create-namespace external-dns bitnami/external-dns \
-  --set aws.region="eu-central-1" \
-  --set domainFilters="{${MY_DOMAIN}}" \
-  --set interval="10s" \
-  --set policy="sync" \
-  --set replicas="2" \
-  --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"="${ROUTE53_ROLE_ARN}" \
-  --set securityContext.allowPrivilegeEscalation="false" \
-  --set securityContext.readOnlyRootFilesystem="true" \
-  --set securityContext.capabilities.drop="{ALL}" \
-  --set podSecurityContext.runAsNonRoot="true" \
-  --set metrics.enabled="true" \
-  --set serviceMonitor.enabled="true"
+helm install --version 3.5.1 --namespace external-dns --create-namespace --values - external-dns bitnami/external-dns << EOF
+# https://github.com/bitnami/charts/blob/master/bitnami/external-dns/values.yaml
+aws:
+  region: eu-central-1
+domainFilters:
+  - ${CLUSTER_FQDN}
+interval: 10s
+policy: sync
+replicas: 1
+serviceAccount:
+  annotations:
+    eks.amazonaws.com/role-arn: ${ROUTE53_ROLE_ARN}
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: ["ALL"]
+  runAsNonRoot: true
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+EOF
 ```
 
 Output:
@@ -327,7 +344,7 @@ Output:
 ```text
 "bitnami" has been added to your repositories
 NAME: external-dns
-LAST DEPLOYED: Thu Nov 12 14:17:32 2020
+LAST DEPLOYED: Fri Nov 13 16:46:25 2020
 NAMESPACE: external-dns
 STATUS: deployed
 REVISION: 1
@@ -353,7 +370,7 @@ See the details:
 ```bash
 helm repo add --force-update appscode https://charts.appscode.com/stable/ ; helm repo update > /dev/null
 helm install --version v0.12.0 --namespace kubed --create-namespace kubed appscode/kubed \
-  --set config.clusterName="${MY_DOMAIN}"
+  --set config.clusterName="${CLUSTER_FQDN}"
 ```
 
 Output:
@@ -361,7 +378,7 @@ Output:
 ```text
 "appscode" has been added to your repositories
 NAME: kubed
-LAST DEPLOYED: Thu Nov 12 14:17:37 2020
+LAST DEPLOYED: Fri Nov 13 16:46:34 2020
 NAMESPACE: kubed
 STATUS: deployed
 REVISION: 1
@@ -376,8 +393,8 @@ Annotate the wildcard certificate secret. It will allow `kubed` to distribute
 it to all namespaces.
 
 ```bash
-kubectl wait --timeout=5m --namespace cert-manager --for=condition=Ready certificate ingress-cert-${LETSENCRYPT_ENVIRONMENT}
-kubectl annotate secret ingress-cert-${LETSENCRYPT_ENVIRONMENT} -n cert-manager kubed.appscode.com/sync=""
+kubectl wait --timeout=5m --namespace cert-manager --for=condition=Ready certificate "ingress-cert-${LETSENCRYPT_ENVIRONMENT}"
+kubectl annotate secret "ingress-cert-${LETSENCRYPT_ENVIRONMENT}" -n cert-manager kubed.appscode.com/sync=""
 ```
 
 ## ingress-nginx
@@ -386,11 +403,17 @@ Install the Ingress:
 
 ```bash
 helm repo add --force-update ingress-nginx https://kubernetes.github.io/ingress-nginx ; helm repo update > /dev/null
-helm install --version 3.7.1 --namespace ingress-nginx --create-namespace --wait ingress-nginx ingress-nginx/ingress-nginx \
-  --set controller.extraArgs.default-ssl-certificate=cert-manager/ingress-cert-${LETSENCRYPT_ENVIRONMENT} \
-  --set controller.replicaCount="1" \
-  --set controller.metrics.enabled="true" \
-  --set controller.metrics.serviceMonitor.enabled="true"
+helm install --version 3.7.1 --namespace ingress-nginx --create-namespace --wait --values - ingress-nginx ingress-nginx/ingress-nginx << EOF
+# https://github.com/kubernetes/ingress-nginx/blob/master/charts/ingress-nginx/values.yaml
+controller:
+  extraArgs:
+    default-ssl-certificate: cert-manager/ingress-cert-${LETSENCRYPT_ENVIRONMENT}
+  replicaCount: 1
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+EOF
 ```
 
 Output:
@@ -398,7 +421,7 @@ Output:
 ```text
 "ingress-nginx" has been added to your repositories
 NAME: ingress-nginx
-LAST DEPLOYED: Thu Nov 12 14:19:03 2020
+LAST DEPLOYED: Fri Nov 13 16:50:45 2020
 NAMESPACE: ingress-nginx
 STATUS: deployed
 REVISION: 1
@@ -462,20 +485,20 @@ config:
   configFile: |-
     email_domains = [ "*" ]
     upstreams = [ "file:///dev/null" ]
-    whitelist_domains = ".${MY_DOMAIN}"
-    cookie_domain = ".${MY_DOMAIN}"
+    whitelist_domains = ".${CLUSTER_FQDN}"
+    cookie_domain = ".${CLUSTER_FQDN}"
 authenticatedEmailsFile:
   enabled: true
   restricted_access: |-
-    petr.ruzicka@gmail.com
+    ${MY_EMAIL}
 ingress:
   enabled: true
   hosts:
-    - auth.${MY_DOMAIN}
+    - auth.${CLUSTER_FQDN}
   tls:
     - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
       hosts:
-        - auth.${MY_DOMAIN}
+        - auth.${CLUSTER_FQDN}
 EOF
 ```
 
@@ -485,7 +508,7 @@ Output:
 namespace/oauth2-proxy created
 "stable" has been added to your repositories
 NAME: oauth2-proxy
-LAST DEPLOYED: Thu Nov 12 14:19:50 2020
+LAST DEPLOYED: Fri Nov 13 16:51:49 2020
 NAMESPACE: oauth2-proxy
 STATUS: deployed
 REVISION: 1
@@ -494,6 +517,45 @@ NOTES:
 To verify that oauth2-proxy has started, run:
 
   kubectl --namespace=oauth2-proxy get pods -l "app=oauth2-proxy"
+```
+
+## Gangway
+
+```bash
+helm install --version 0.4.3 --namespace gangway --create-namespace --values - gangway stable/gangway << EOF
+gangway:
+  clusterName: ${CLUSTER_FQDN}
+  authorizeUrl: https://accounts.google.com/o/oauth2/auth
+  tokenUrl: https://accounts.google.com/o/oauth2/token
+  audience: ${MY_GOOGLE_OAUTH_CLIENT_ID}
+  scopes: ["openid", "profile", "email"]
+  redirectUrl: https://${CLUSTER_FQDN}/callback
+  clientId: ${MY_GOOGLE_OAUTH_CLIENT_ID}
+  clientSecret: ${MY_GOOGLE_OAUTH_CLIENT_SECRET}
+  apiServerURL: $(awk "/server:/ { print \$2 }" "${KUBECONFIG}")
+ingress:
+  enabled: true
+  hosts:
+    - ${CLUSTER_FQDN}
+  tls:
+    - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
+      hosts:
+        - ${CLUSTER_FQDN}
+EOF
+```
+
+Output:
+
+```text
+NAME: gangway
+LAST DEPLOYED: Fri Nov 13 16:51:53 2020
+NAMESPACE: gangway
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+1. Get the application URL by running these commands:
+  https://k1.k8s.mylabs.dev/
 ```
 
 ## cluster-autoscaler
@@ -515,7 +577,7 @@ Output:
 ```text
 "autoscaler" has been added to your repositories
 NAME: cluster-autoscaler
-LAST DEPLOYED: Thu Nov 12 14:19:53 2020
+LAST DEPLOYED: Fri Nov 13 16:51:58 2020
 NAMESPACE: kube-system
 STATUS: deployed
 REVISION: 1
@@ -538,7 +600,7 @@ Output:
 
 ```text
 NAME: metrics-server
-LAST DEPLOYED: Thu Nov 12 14:19:57 2020
+LAST DEPLOYED: Fri Nov 13 16:52:02 2020
 NAMESPACE: kube-system
 STATUS: deployed
 REVISION: 1
@@ -567,14 +629,14 @@ server:
   ingress:
     enabled: true
     annotations:
-      nginx.ingress.kubernetes.io/auth-url: https://auth.${MY_DOMAIN}/oauth2/auth
-      nginx.ingress.kubernetes.io/auth-signin: https://auth.${MY_DOMAIN}/oauth2/start?rd=\$scheme://\$host\$request_uri
+      nginx.ingress.kubernetes.io/auth-url: https://auth.${CLUSTER_FQDN}/oauth2/auth
+      nginx.ingress.kubernetes.io/auth-signin: https://auth.${CLUSTER_FQDN}/oauth2/start?rd=\$scheme://\$host\$request_uri
     hosts:
-      - host: vault.${MY_DOMAIN}
+      - host: vault.${CLUSTER_FQDN}
     tls:
       - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
         hosts:
-          - vault.${MY_DOMAIN}
+          - vault.${CLUSTER_FQDN}
   dataStorage:
     size: 1Gi
 EOF
@@ -586,7 +648,7 @@ Output:
 namespace/vault created
 "hashicorp" has been added to your repositories
 NAME: vault
-LAST DEPLOYED: Thu Nov 12 14:20:04 2020
+LAST DEPLOYED: Fri Nov 13 16:52:16 2020
 NAMESPACE: vault
 STATUS: deployed
 REVISION: 1

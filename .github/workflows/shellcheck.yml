@@ -5,12 +5,14 @@ on:
     types: [opened, synchronize]
     paths:
       - '**.sh'
+      - docs/part**.md
       - .github/workflows/shellcheck.yml
   push:
     branches:
       - master
     paths:
       - '**.sh'
+      - docs/part**.md
       - .github/workflows/shellcheck.yml
 
 jobs:
@@ -18,6 +20,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+
+      - name: Extract command from markdown files
+        run: |
+          echo '#!/usr/bin/env bash' > README.sh
+          sed -n "/^\`\`\`\(bash\|shell\).*/,/^\`\`\`$/p" docs/part-0*/README.md \
+          | \
+          sed \
+            -e 's/^```\(bash\|shell\).*/\n/' \
+            -e 's/^```$//' \
+          >> README.sh
 
       - name: Lint check
         uses: azohra/shell-linter@latest

@@ -2,13 +2,14 @@
 
 set -eu
 
-export MY_DOMAIN=${MY_DOMAIN:-kube1.mylabs.dev}
+export BASE_DOMAIN="k8s.mylabs.dev"
+export CLUSTER_NAME="k1"
+export CLUSTER_FQDN="${CLUSTER_NAME}.${BASE_DOMAIN}"
 export LETSENCRYPT_ENVIRONMENT=${LETSENCRYPT_ENVIRONMENT:-staging}
+export MY_EMAIL="petr.ruzicka@gmail.com"
 export MY_GOOGLE_OAUTH_CLIENT_ID="2xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx5.apps.googleusercontent.com"
 export MY_GOOGLE_OAUTH_CLIENT_SECRET="OxxxxxxxxxxxxxxxxxxxxxxF"
-CLUSTER_NAME=$(basename "${PWD}")
-export CLUSTER_NAME
-export KUBECONFIG="${PWD}/kubeconfig.conf"
+export KUBECONFIG="${PWD}/kubeconfig-test-${CLUSTER_NAME}.conf"
 
 test -d tests || ( echo -e "\n*** Run in top level of git repository\n"; exit 1 )
 
@@ -16,15 +17,13 @@ echo "*** Remove cluster (if exists)"
 kind get clusters | grep "${CLUSTER_NAME}" && kind delete cluster --name "${CLUSTER_NAME}"
 
 echo -e "\n*** Create a new Kubernetes cluster using kind"
-kind create cluster --name "${CLUSTER_NAME}" --image kindest/node:v1.19.1 --kubeconfig kubeconfig.conf --quiet --config - << EOF
+kind create cluster --name "${CLUSTER_NAME}" --image kindest/node:v1.19.1 --kubeconfig "${KUBECONFIG}" --quiet --config - << EOF
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 nodes:
  - role: control-plane
  - role: worker
 EOF
-
-export KUBECONFIG="${PWD}/kubeconfig.conf"
 
 echo -e "\n*** Create StorageClass called 'gp2'"
 kubectl apply -f - << EOF
@@ -83,8 +82,10 @@ sed \
 # shellcheck disable=SC1091
 source README.sh
 
+kubectl get pods --all-namespaces
+
 rm demo-magic.sh
 
 kind delete cluster --name "${CLUSTER_NAME}"
 
-rm kubeconfig.conf
+rm "${KUBECONFIG}"

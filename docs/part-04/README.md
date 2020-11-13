@@ -15,11 +15,11 @@ EKS_VPC_CIDR=$(aws ec2 --region eu-central-1 describe-vpcs --vpc-ids "${EKS_VPC_
 EKS_PRIVATE_SUBNETS=$(aws ec2 --region eu-central-1 describe-subnets \
   --filter Name=tag:alpha.eksctl.io/cluster-name,Values=${CLUSTER_NAME} \
   | jq -r "[.Subnets[] | select(.MapPublicIpOnLaunch == false) .SubnetId] | join(\",\")")
-EKS_PRIVATE_SUBNET1=$(echo $EKS_PRIVATE_SUBNETS | cut -d , -f 1)
-EKS_PRIVATE_SUBNET2=$(echo $EKS_PRIVATE_SUBNETS | cut -d , -f 2)
+EKS_PRIVATE_SUBNET1=$(echo "${EKS_PRIVATE_SUBNETS}" | cut -d , -f 1)
+EKS_PRIVATE_SUBNET2=$(echo "${EKS_PRIVATE_SUBNETS}" | cut -d , -f 2)
 RDS_DB_USERNAME="root"
 RDS_DB_PASSWORD="123-My_Secret_Password-456"
-TAGS="Owner=petr.ruzicka@gmail.com Environment=Dev Tribe=Cloud_Native Squad=Cloud_Container_Platform"
+TAGS="Owner=${MY_EMAIL} Environment=Dev Tribe=Cloud_Native Squad=Cloud_Container_Platform"
 ```
 
 ### RDS
@@ -209,7 +209,7 @@ Outputs:
 EOF
 
 eval aws --region eu-central-1 cloudformation deploy --stack-name "${CLUSTER_NAME}-rds" \
-  --template-file tmp/cf_rds.yml --tags ${TAGS}
+  --template-file tmp/cf_rds.yml --tags "${TAGS}"
 
 RDS_DB_HOST=$(aws rds --region eu-central-1 describe-db-instances --query "DBInstances[?DBInstanceIdentifier==\`${CLUSTER_NAME}db\`].[Endpoint.Address]" --output text)
 ```
@@ -232,13 +232,13 @@ db:
 ingress:
   enabled: true
   annotations:
-    nginx.ingress.kubernetes.io/auth-url: https://auth.${MY_DOMAIN}/oauth2/auth
-    nginx.ingress.kubernetes.io/auth-signin: https://auth.${MY_DOMAIN}/oauth2/start?rd=\$scheme://\$host\$request_uri
+    nginx.ingress.kubernetes.io/auth-url: https://auth.${CLUSTER_FQDN}/oauth2/auth
+    nginx.ingress.kubernetes.io/auth-signin: https://auth.${CLUSTER_FQDN}/oauth2/start?rd=\$scheme://\$host\$request_uri
   hosts:
-    - name: phpmyadmin.${MY_DOMAIN}
+    - name: phpmyadmin.${CLUSTER_FQDN}
   tls: true
   tlsHosts:
-    - phpmyadmin.${MY_DOMAIN}
+    - phpmyadmin.${CLUSTER_FQDN}
   tlsSecret: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
 metrics:
   enabled: true
@@ -249,7 +249,7 @@ Output:
 
 ```text
 NAME: phpmyadmin
-LAST DEPLOYED: Thu Nov 12 14:25:44 2020
+LAST DEPLOYED: Fri Nov 13 16:58:01 2020
 NAMESPACE: phpmyadmin
 STATUS: deployed
 REVISION: 1
@@ -267,7 +267,7 @@ NOTES:
 
 2. How to log in
 
-phpMyAdmin has been configured to connect to a database in kube1db.crssduk1yxyx.eu-central-1.rds.amazonaws.comwith port 3306
+phpMyAdmin has been configured to connect to a database in k1db.crssduk1yxyx.eu-central-1.rds.amazonaws.comwith port 3306
 Please login using a database username and password.
 
 ** Please be patient while the chart is being deployed **
@@ -383,7 +383,7 @@ Outputs:
 EOF
 
 eval aws --region eu-central-1 cloudformation deploy --stack-name "${CLUSTER_NAME}-efs" \
-  --template-file tmp/cf_efs.yml --tags ${TAGS}
+  --template-file tmp/cf_efs.yml --tags "${TAGS}"
 
 EFS_FS_ID=$(aws efs --region eu-central-1 describe-file-systems --query "FileSystems[?Name==\`${CLUSTER_NAME}-efs\`].[FileSystemId]" --output text)
 EFS_AP_ID=$(aws efs --region eu-central-1 describe-access-points --query "AccessPoints[?FileSystemId==\`${EFS_FS_ID}\`].[AccessPointId]" --output text)
@@ -457,7 +457,7 @@ Create `drupal` database inside MariaDB:
 
 ```bash
 kubectl run -i --rm --env MYSQL_PWD=${RDS_DB_PASSWORD} --image=mysql:5.7 --restart=Never mysql-client -- \
-  mysql -h ${RDS_DB_HOST} -u ${RDS_DB_USERNAME} -e "CREATE DATABASE drupal"
+  mysql -h "${RDS_DB_HOST}" -u "${RDS_DB_USERNAME}" -e "CREATE DATABASE drupal"
 ```
 
 Install Drupal:
@@ -465,7 +465,6 @@ Install Drupal:
 ```bash
 DRUPAL_USERNAME="myuser"
 DRUPAL_PASSWORD="mypassword12345"
-DRUPAL_EMAIL="petr.ruzicka@gmail.com"
 
 helm repo add --force-update bitnami https://charts.bitnami.com/bitnami ; helm repo update > /dev/null
 helm install --version 10.0.0 --namespace drupal --values - drupal bitnami/drupal << EOF
@@ -474,7 +473,7 @@ replicaCount: 2
 #drupalSkipInstall: false
 drupalUsername: ${DRUPAL_USERNAME}
 drupalPassword: ${DRUPAL_PASSWORD}
-drupalEmail: ${DRUPAL_EMAIL}
+drupalEmail: ${MY_EMAIL}
 externalDatabase:
   host: ${RDS_DB_HOST}
   user: ${RDS_DB_USERNAME}
@@ -487,13 +486,13 @@ service:
 ingress:
   enabled: true
   annotations:
-    nginx.ingress.kubernetes.io/auth-url: https://auth.${MY_DOMAIN}/oauth2/auth
-    nginx.ingress.kubernetes.io/auth-signin: https://auth.${MY_DOMAIN}/oauth2/start?rd=\$scheme://\$host\$request_uri
-  hostname: drupal.${MY_DOMAIN}
+    nginx.ingress.kubernetes.io/auth-url: https://auth.${CLUSTER_FQDN}/oauth2/auth
+    nginx.ingress.kubernetes.io/auth-signin: https://auth.${CLUSTER_FQDN}/oauth2/start?rd=\$scheme://\$host\$request_uri
+  hostname: drupal.${CLUSTER_FQDN}
   tls:
     - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
       hosts:
-        - drupal.${MY_DOMAIN}
+        - drupal.${CLUSTER_FQDN}
 persistence:
   enabled: true
   storageClass: efs-sc
@@ -508,7 +507,7 @@ Output:
 ```text
 "bitnami" has been added to your repositories
 NAME: drupal
-LAST DEPLOYED: Thu Nov 12 14:28:37 2020
+LAST DEPLOYED: Fri Nov 13 17:01:09 2020
 NAMESPACE: drupal
 STATUS: deployed
 REVISION: 1
@@ -522,7 +521,7 @@ NOTES:
 
   You should be able to access your new Drupal installation through
 
-  http://drupal.kube1.mylabs.dev/
+  http://drupal.k1.k8s.mylabs.dev/
 
 2. Get your Drupal login credentials by running:
 
