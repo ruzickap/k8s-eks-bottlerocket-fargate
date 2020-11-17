@@ -2,6 +2,7 @@
 Ansible
 Autoscaler
 Bottlerocket
+ChartMuseum
 Cleanup
 CloudFlare
 CloudFormation
@@ -10,13 +11,18 @@ Drupal
 Fargate
 Grafana
 HashiCorp
+Istio
 K8s
 Kubernetes
 MariaDB
 OAuth
+Polaris
 ReadWriteMany
+Route53
+ServiceAccount
 Weaveworks
 awscli
+bookinfo
 cluster-autoscaler
 config
 eksctl

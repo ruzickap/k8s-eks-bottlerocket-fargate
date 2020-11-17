@@ -7,6 +7,7 @@ export CLUSTER_NAME="k1"
 export CLUSTER_FQDN="${CLUSTER_NAME}.${BASE_DOMAIN}"
 export LETSENCRYPT_ENVIRONMENT=${LETSENCRYPT_ENVIRONMENT:-staging}
 export MY_EMAIL="petr.ruzicka@gmail.com"
+export REGION="eu-central-1"
 export MY_GOOGLE_OAUTH_CLIENT_ID="2xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx5.apps.googleusercontent.com"
 export MY_GOOGLE_OAUTH_CLIENT_SECRET="OxxxxxxxxxxxxxxxxxxxxxxF"
 export KUBECONFIG="${PWD}/kubeconfig-test-${CLUSTER_NAME}.conf"
@@ -58,9 +59,16 @@ export PROMPT_TIMEOUT=0
 export NO_WAIT=true
 export DEMO_PROMPT="${GREEN}➜ ${CYAN}$ "
 
+# Variables which are taken from AWS - needs to be created for tests
+export ROUTE53_ROLE_ARN_CERT_MANAGER="test_arn"
+export ROUTE53_ROLE_ARN_EXTERNAL_DNS="test_arn"
+export RDS_DB_HOST="testdomain123.com"
+export EFS_FS_ID="123"
+export EFS_AP_ID="123"
+
 # shellcheck disable=SC1004
-sed docs/part-0{2,3}/README.md \
-  -e 's/^ROUTE53_ROLE_ARN.*/ROUTE53_ROLE_ARN="test_arn"/' \
+sed docs/part-0{2..4}/README.md \
+  -e '/aws /d;/eksctl /d' \
   -e '/^# Create ClusterIssuer for production/i \
 apiVersion: cert-manager.io/v1 \
 kind: ClusterIssuer \
@@ -77,15 +85,16 @@ sed -n "/^\`\`\`bash.*/,/^\`\`\`$/p" \
 sed \
   -e 's/^```bash.*/\npe '"'"'/' \
   -e 's/^```$/'"'"'/' \
-> README.sh
+> README-test.sh
+
+test -d tmp || mkdir -v tmp
 
 # shellcheck disable=SC1091
-source README.sh
+source README-test.sh
 
 kubectl get pods --all-namespaces
 
-rm demo-magic.sh
-
 kind delete cluster --name "${CLUSTER_NAME}"
 
-rm "${KUBECONFIG}"
+rm "${KUBECONFIG}" README-test.sh demo-magic.sh
+rm -rf tmp
