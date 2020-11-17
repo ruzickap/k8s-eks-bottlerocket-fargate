@@ -8,18 +8,10 @@ Get details about AWS environment where is the EKS cluster and store it into
 variables:
 
 ```bash
-EKS_VPC_ID=$(aws eks --region eu-central-1 describe-cluster --name "${CLUSTER_NAME}" \
-  --query "cluster.resourcesVpcConfig.vpcId" --output text)
-EKS_VPC_CIDR=$(aws ec2 --region eu-central-1 describe-vpcs --vpc-ids "${EKS_VPC_ID}" \
-  --query "Vpcs[].CidrBlock" --output text)
-EKS_PRIVATE_SUBNETS=$(aws ec2 --region eu-central-1 describe-subnets \
-  --filter Name=tag:alpha.eksctl.io/cluster-name,Values=${CLUSTER_NAME} \
-  | jq -r "[.Subnets[] | select(.MapPublicIpOnLaunch == false) .SubnetId] | join(\",\")")
-EKS_PRIVATE_SUBNET1=$(echo "${EKS_PRIVATE_SUBNETS}" | cut -d , -f 1)
-EKS_PRIVATE_SUBNET2=$(echo "${EKS_PRIVATE_SUBNETS}" | cut -d , -f 2)
+EKS_VPC_ID=$(aws eks --region "${REGION}" describe-cluster --name "${CLUSTER_NAME}" --query "cluster.resourcesVpcConfig.vpcId" --output text)
+EKS_VPC_CIDR=$(aws ec2 --region "${REGION}" describe-vpcs --vpc-ids "${EKS_VPC_ID}" --query "Vpcs[].CidrBlock" --output text)
 RDS_DB_USERNAME="root"
 RDS_DB_PASSWORD="123-My_Secret_Password-456"
-TAGS="Owner=${MY_EMAIL} Environment=Dev Tribe=Cloud_Native Squad=Cloud_Container_Platform"
 ```
 
 ### RDS
@@ -28,59 +20,15 @@ Apply CloudFormation template to create Amazon RDS MariaDB database.
 The template below is inspired by: [https://github.com/aquasecurity/marketplaces/blob/master/aws/cloudformation/AquaRDS.yaml](https://github.com/aquasecurity/marketplaces/blob/master/aws/cloudformation/AquaRDS.yaml)
 
 ```bash
-cat > tmp/cf_rds.yml << EOF
+cat > tmp/cf_rds.yml << \EOF
 AWSTemplateFormatVersion: 2010-09-09
-Description: >-
-  This AWS CloudFormation template installs the AWS RDS MariaDB database.
-Metadata:
-  "AWS::CloudFormation::Interface":
-    ParameterLabels:
-      VpcID:
-        default: VPC ID that hosts the EKS and will host the RDS instance
-      VpcIPCidr:
-        default: VPC CIDR
-      EksInstanceSubnets:
-        default: Private Subnets from the EKS VPC
-      RdsInstanceName:
-        default: RDS instance name
-      RdsMasterUsername:
-        default: RDS username
-      RdsMasterPassword:
-        default: RDS password
-      RdsInstanceClass:
-        default: RDS instance type
-      RdsStorage:
-        default: RDS storage size (GB)
-      MultiAzDatabase:
-        default: Enable Multi-AZ RDS
+Description: This AWS CloudFormation template installs the AWS RDS MariaDB database.
 Parameters:
-  VpcID:
-    Default: ${EKS_VPC_ID}
-    Description: VpcId of the EKS cluster to deploy into
-    Type: "AWS::EC2::VPC::Id"
   VpcIPCidr:
-    Default: ${EKS_VPC_CIDR}
     Description: "Enter VPC CIDR that hosts the EKS cluster. Ex: 10.0.0.0/16"
     Type: String
-  EksInstanceSubnets:
-    Default: ${EKS_PRIVATE_SUBNETS}
-    Type: "List<AWS::EC2::Subnet::Id>"
-    Description: Select all the subnets EKS utilizes. Recommended approach is to use only private subnets
-    ConstraintDescription: >-
-      Password must be at least 9 characters long and have 3 out of the
-      following: one number, one lower case, one upper case, or one special
-      character.
-  RdsInstanceName:
-    Default: ${CLUSTER_NAME}db
-    Description: ""
-    Type: String
-    MinLength: "1"
-    MaxLength: "64"
-    AllowedPattern: "[a-zA-Z][a-zA-Z0-9]*"
-    ConstraintDescription: Must begin with a letter and between 1 and 64 alphanumeric characters.
   RdsMasterUsername:
     Description: Enter the master username for the RDS instance.
-    Default: "${RDS_DB_USERNAME}"
     Type: String
     MinLength: "1"
     MaxLength: "63"
@@ -89,7 +37,6 @@ Parameters:
       Must be 1 to 63 characters long, begin with a letter, contain only
       alphanumeric characters, and not be a reserved word by PostgreSQL engine.
   RdsMasterPassword:
-    Default: "${RDS_DB_PASSWORD}"
     NoEcho: "true"
     Description: >-
       Enter the master password for the RDS instance. This password must contain
@@ -105,7 +52,6 @@ Parameters:
       following: one number, one lower case, one upper case, or one special
       character.
   RdsInstanceClass:
-    Description: ""
     Type: String
     Default: db.t2.medium
     AllowedValues:
@@ -134,19 +80,21 @@ Parameters:
     ConstraintDescription: Must be a valid EC2 RDS instance type
   RdsStorage:
     Default: "40"
-    Description: ""
     Type: Number
     MinValue: "40"
     MaxValue: "1024"
     ConstraintDescription: Must be set to between 40 and 1024GB.
   MultiAzDatabase:
     Default: "false"
-    Description: ""
     Type: String
     AllowedValues:
       - "true"
       - "false"
     ConstraintDescription: Must be either true or false.
+  ClusterName:
+    Default: "k1"
+    Description: K8s Cluster name
+    Type: String
 Resources:
   RdsInstance:
     Type: "AWS::RDS::DBInstance"
@@ -159,9 +107,9 @@ Resources:
       AutoMinorVersionUpgrade: "false"
       VPCSecurityGroups:
         - !Ref DbSecurityGroup
-      DBName: !Ref RdsInstanceName
+      DBName: !Sub "${ClusterName}db"
       BackupRetentionPeriod: "0"
-      DBInstanceIdentifier: !Ref RdsInstanceName
+      DBInstanceIdentifier: !Sub "${ClusterName}db"
       DBInstanceClass: !Ref RdsInstanceClass
       DBSubnetGroupName: !Ref RdsInstanceSubnetGroup
       CopyTagsToSnapshot: true
@@ -177,13 +125,25 @@ Resources:
     Type: "AWS::RDS::DBSubnetGroup"
     Properties:
       DBSubnetGroupDescription: Source subnet
-      SubnetIds: !Ref EksInstanceSubnets
+      SubnetIds:
+      - Fn::Select:
+        - 0
+        - Fn::Split:
+          - ","
+          - Fn::ImportValue: !Sub "eksctl-${ClusterName}-cluster::SubnetsPrivate"
+      - Fn::Select:
+        - 1
+        - Fn::Split:
+          - ","
+          - Fn::ImportValue: !Sub "eksctl-${ClusterName}-cluster::SubnetsPrivate"
   # Create DB Security Group
   DbSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: For RDS Instance
-      VpcId: !Ref VpcID
+      VpcId:
+        Fn::ImportValue:
+          Fn::Sub: "eksctl-${ClusterName}-cluster::VPC"
   # Attach Security Group Rule
   DbIngress1:
     Type: AWS::EC2::SecurityGroupIngress
@@ -197,21 +157,32 @@ Outputs:
   RdsInstanceEndpoint:
     Description: MariaDB endpoint
     Value: !GetAtt RdsInstance.Endpoint.Address
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-RdsInstanceEndpoint"
   RdsInstancePort:
     Description: MariaDB port
     Value: !GetAtt RdsInstance.Endpoint.Port
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-RdsInstancePort"
   RdsInstanceUser:
     Description: Username for the MariaDB instance
     Value: !Ref RdsMasterUsername
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-RdsInstanceUser"
   RdsMasterPassword:
     Description: Password for the MariaDB instance
     Value: !Ref RdsMasterPassword
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-RdsMasterPassword"
 EOF
 
-eval aws --region eu-central-1 cloudformation deploy --stack-name "${CLUSTER_NAME}-rds" \
-  --template-file tmp/cf_rds.yml --tags "${TAGS}"
+eval aws --region "${REGION}" cloudformation deploy --stack-name "${CLUSTER_NAME}-rds" --parameter-overrides "ClusterName=${CLUSTER_NAME} RdsMasterPassword=${RDS_DB_PASSWORD} RdsMasterUsername=${RDS_DB_USERNAME} VpcIPCidr=${EKS_VPC_CIDR}" --template-file tmp/cf_rds.yml --tags "${TAGS}"
 
-RDS_DB_HOST=$(aws rds --region eu-central-1 describe-db-instances --query "DBInstances[?DBInstanceIdentifier==\`${CLUSTER_NAME}db\`].[Endpoint.Address]" --output text)
+RDS_DB_HOST=$(aws rds --region "${REGION}" describe-db-instances --query "DBInstances[?DBInstanceIdentifier==\`${CLUSTER_NAME}db\`].[Endpoint.Address]" --output text)
 ```
 
 Output:
@@ -286,37 +257,24 @@ Apply CloudFormation template to create Amazon EFS.
 The template below is inspired by: [https://github.com/so008mo/inkubator-play/blob/64a150dbdc35b9ade48ff21b9ae6ba2710d18b5d/roles/eks/files/amazon-eks-efs.yaml](https://github.com/so008mo/inkubator-play/blob/64a150dbdc35b9ade48ff21b9ae6ba2710d18b5d/roles/eks/files/amazon-eks-efs.yaml)
 
 ```bash
-cat > tmp/cf_efs.yml << EOF
-AWSTemplateFormatVersion: "2010-09-09"
+cat > tmp/cf_efs.yml << \EOF
+AWSTemplateFormatVersion: 2010-09-09
 Description: Create EFS, mount points, security groups for EKS
 Parameters:
-  VpcID:
-    Default: ${EKS_VPC_ID}
-    Description: VpcId of the EKS cluster to deploy into
-    Type: "AWS::EC2::VPC::Id"
-  SubnetId1:
-    Default: ${EKS_PRIVATE_SUBNET1}
-    Type: AWS::EC2::Subnet::Id
-    Description: ID of private subnet in first AZ.
-  SubnetId2:
-    Default: ${EKS_PRIVATE_SUBNET2}
-    Type: AWS::EC2::Subnet::Id
-    Description: ID of private subnet in second AZ.
-  FileSystemName:
-    Default: ${CLUSTER_NAME}-efs
-    Type: String
-    Description: The name of the EFS file system.
   VpcIPCidr:
-    Default: ${EKS_VPC_CIDR}
     Description: "Enter VPC CIDR that hosts the EKS cluster. Ex: 10.0.0.0/16"
+    Type: String
+  ClusterName:
+    Description: "K8s Cluster name. Ex: k1"
     Type: String
 Resources:
   MountTargetSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       VpcId:
-        Ref: VpcID
-      GroupName: ${CLUSTER_NAME}-efs-sf
+        Fn::ImportValue:
+          Fn::Sub: "eksctl-${ClusterName}-cluster::VPC"
+      GroupName: !Sub "${ClusterName}-efs-sg-groupname"
       GroupDescription: Security group for mount target
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -326,21 +284,24 @@ Resources:
             Ref: VpcIPCidr
       Tags:
         - Key: Name
-          Value: ${CLUSTER_NAME}-efs-sf
+          Value: !Sub "${ClusterName}-efs-sg-tagname"
   FileSystem:
     Type: AWS::EFS::FileSystem
     Properties:
       FileSystemTags:
       - Key: Name
-        Value:
-          Ref: FileSystemName
+        Value: !Sub "${ClusterName}-efs"
   MountTargetAZ1:
     Type: AWS::EFS::MountTarget
     Properties:
       FileSystemId:
         Ref: FileSystem
       SubnetId:
-        Ref: SubnetId1
+        Fn::Select:
+        - 0
+        - Fn::Split:
+          - ","
+          - Fn::ImportValue: !Sub "eksctl-${ClusterName}-cluster::SubnetsPrivate"
       SecurityGroups:
       - Ref: MountTargetSecurityGroup
   MountTargetAZ2:
@@ -349,7 +310,11 @@ Resources:
       FileSystemId:
         Ref: FileSystem
       SubnetId:
-        Ref: SubnetId2
+        Fn::Select:
+        - 1
+        - Fn::Split:
+          - ","
+          - Fn::ImportValue: !Sub "eksctl-${ClusterName}-cluster::SubnetsPrivate"
       SecurityGroups:
       - Ref: MountTargetSecurityGroup
   AccessPoint:
@@ -368,25 +333,28 @@ Resources:
         Path: "/drupal"
       AccessPointTags:
         - Key: Name
-          Value: ${CLUSTER_NAME}-efs-ap
+          Value: !Sub "${ClusterName}-efs-ap"
 Outputs:
-  OutputFileSystemId:
+  FileSystemId:
     Description: Id of Elastic File System
     Value:
       Ref: FileSystem
-  OutputMountTarget1:
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-FileSystemId"
+  AccessPoint:
+    Description: EFS AccessPoint ID
     Value:
-      Ref: MountTargetAZ1
-  OutputMountTarget2:
-    Value:
-      Ref: MountTargetAZ2
+      Ref: AccessPoint
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-AccessPoint"
 EOF
 
-eval aws --region eu-central-1 cloudformation deploy --stack-name "${CLUSTER_NAME}-efs" \
-  --template-file tmp/cf_efs.yml --tags "${TAGS}"
+eval aws --region "${REGION}" cloudformation deploy --stack-name "${CLUSTER_NAME}-efs" --parameter-overrides "ClusterName=${CLUSTER_NAME} VpcIPCidr=${EKS_VPC_CIDR}" --template-file tmp/cf_efs.yml --tags "${TAGS}"
 
-EFS_FS_ID=$(aws efs --region eu-central-1 describe-file-systems --query "FileSystems[?Name==\`${CLUSTER_NAME}-efs\`].[FileSystemId]" --output text)
-EFS_AP_ID=$(aws efs --region eu-central-1 describe-access-points --query "AccessPoints[?FileSystemId==\`${EFS_FS_ID}\`].[AccessPointId]" --output text)
+EFS_FS_ID=$(aws efs --region "${REGION}" describe-file-systems --query "FileSystems[?Name==\`${CLUSTER_NAME}-efs\`].[FileSystemId]" --output text)
+EFS_AP_ID=$(aws efs --region "${REGION}" describe-access-points --query "AccessPoints[?FileSystemId==\`${EFS_FS_ID}\`].[AccessPointId]" --output text)
 ```
 
 Output:
@@ -433,6 +401,13 @@ EOF
 
 ### Install Drupal
 
+Create `drupal` database inside MariaDB:
+
+```bash
+kubectl run --env MYSQL_PWD=${RDS_DB_PASSWORD} --image=mysql:5.7 --restart=Never mysql-client -- \
+  mysql -h "${RDS_DB_HOST}" -u "${RDS_DB_USERNAME}" -e "CREATE DATABASE drupal"
+```
+
 Create `drupal` namespace and PVC:
 
 ```bash
@@ -453,13 +428,6 @@ spec:
 EOF
 ```
 
-Create `drupal` database inside MariaDB:
-
-```bash
-kubectl run -i --rm --env MYSQL_PWD=${RDS_DB_PASSWORD} --image=mysql:5.7 --restart=Never mysql-client -- \
-  mysql -h "${RDS_DB_HOST}" -u "${RDS_DB_USERNAME}" -e "CREATE DATABASE drupal"
-```
-
 Install Drupal:
 
 ```bash
@@ -470,7 +438,6 @@ helm repo add --force-update bitnami https://charts.bitnami.com/bitnami ; helm r
 helm install --version 10.0.0 --namespace drupal --values - drupal bitnami/drupal << EOF
 # https://github.com/bitnami/charts/blob/master/bitnami/drupal/values.yaml
 replicaCount: 2
-#drupalSkipInstall: false
 drupalUsername: ${DRUPAL_USERNAME}
 drupalPassword: ${DRUPAL_PASSWORD}
 drupalEmail: ${MY_EMAIL}

@@ -26,7 +26,9 @@ export CLUSTER_FQDN="${CLUSTER_NAME}.${BASE_DOMAIN}"
 export KUBECONFIG=${PWD}/kubeconfig-${CLUSTER_NAME}.conf
 export LETSENCRYPT_ENVIRONMENT=${LETSENCRYPT_ENVIRONMENT:-staging}
 export MY_EMAIL="petr.ruzicka@gmail.com"
-echo "${MY_EMAIL} | ${LETSENCRYPT_ENVIRONMENT} | ${CLUSTER_NAME} | ${BASE_DOMAIN} | ${CLUSTER_FQDN}"
+export REGION="eu-central-1"
+export TAGS="Owner=${MY_EMAIL} Environment=Dev Tribe=Cloud_Native Squad=Cloud_Container_Platform"
+echo -e "${MY_EMAIL} | ${LETSENCRYPT_ENVIRONMENT} | ${CLUSTER_NAME} | ${BASE_DOMAIN} | ${CLUSTER_FQDN}\n${TAGS}"
 ```
 
 Prepare Google OAuth 2.0 Client IDs, AWS variables for access.
@@ -96,7 +98,7 @@ fi
 
 ## Configure AWS Route 53 Domain delegation
 
-Create DNS zone:
+Create DNS zone (`BASE_DOMAIN`):
 
 ```shell
 aws route53 create-hosted-zone --output json \
@@ -186,111 +188,7 @@ localhost | CHANGED => {
 }
 ```
 
-## Add new domain to Route 53
-
-Let's add the new domain `CLUSTER_FQDN` to the Route 53 and configure the
-DNS delegation from the `BASE_DOMAIN`.
-
-Create DNS zone `k1.k8.mylabs.dev` (`CLUSTER_FQDN`):
-
-```bash
-aws route53 create-hosted-zone --output json \
-  --name ${CLUSTER_FQDN} \
-  --caller-reference "$(date)" \
-  --hosted-zone-config="{\"Comment\": \"Created by ${MY_EMAIL}\", \"PrivateZone\": false}" | jq
-```
-
-Output:
-
-```json
-{
-  "Location": "https://route53.amazonaws.com/2013-04-01/hostedzone/ZxxxxxxxxxxxxxxxxxxxW",
-  "HostedZone": {
-    "Id": "/hostedzone/ZxxxxxxxxxxxxxxxxxxxW",
-    "Name": "k1.k8s.mylabs.dev.",
-    "CallerReference": "Fri Nov 13 16:23:08 CET 2020",
-    "Config": {
-      "Comment": "Created by petr.ruzicka@gmail.com",
-      "PrivateZone": false
-    },
-    "ResourceRecordSetCount": 2
-  },
-  "ChangeInfo": {
-    "Id": "/change/CxxxxxxxxxxxxxxxxxxN",
-    "Status": "PENDING",
-    "SubmittedAt": "2020-11-13T15:23:09.921000+00:00"
-  },
-  "DelegationSet": {
-    "NameServers": [
-      "ns-943.awsdns-53.net",
-      "ns-1762.awsdns-28.co.uk",
-      "ns-465.awsdns-58.com",
-      "ns-1417.awsdns-49.org"
-    ]
-  }
-}
-```
-
-Get the NS servers from the new zone `k1.k8.mylabs.dev` (`CLUSTER_FQDN`):
-
-```bash
-NEW_ZONE_ID=$(aws route53 list-hosted-zones --query "HostedZones[?Name==\`${CLUSTER_FQDN}.\`].Id" --output text)
-NEW_ZONE_NS1=$(aws route53 get-hosted-zone --output json --id "${NEW_ZONE_ID}" --query "DelegationSet.NameServers" | jq -r '.[0]')
-NEW_ZONE_NS2=$(aws route53 get-hosted-zone --output json --id "${NEW_ZONE_ID}" --query "DelegationSet.NameServers" | jq -r '.[1]')
-```
-
-Create the NS record in `k8.mylabs.dev` (`BASE_DOMAIN`) for proper zone delegation:
-
-```bash
-BASE_DOMAIN_ZONE_ID=$(aws route53 list-hosted-zones --query "HostedZones[?Name==\`${BASE_DOMAIN}.\`].Id" --output text)
-cat << EOF | aws route53 change-resource-record-sets --output json --hosted-zone-id "${BASE_DOMAIN_ZONE_ID}" --change-batch file:///dev/stdin | jq
-{
-  "Comment": "Create a subdomain NS record in the parent domain",
-  "Changes": [
-    {
-      "Action": "CREATE",
-      "ResourceRecordSet": {
-        "Name": "${CLUSTER_FQDN}",
-        "Type": "NS",
-        "TTL": 60,
-        "ResourceRecords": [
-          {
-            "Value": "${NEW_ZONE_NS1}"
-          },
-          {
-            "Value": "${NEW_ZONE_NS2}"
-          }
-        ]
-      }
-    }
-  ]
-}
-EOF
-```
-
-## Create Amazon EKS
-
-![EKS](https://raw.githubusercontent.com/aws-samples/eks-workshop/65b766c494a5b4f5420b2912d8373c4957163541/static/images/3-service-animated.gif
-"EKS")
-
-Generate SSH key if not exists:
-
-```bash
-test -f ~/.ssh/id_rsa || ( install -m 0700 -d ~/.ssh && ssh-keygen -b 2048 -t rsa -f ~/.ssh/id_rsa -q -N "" )
-```
-
-Clone the [k8s-eks-bottlerocket-fargate](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate)
-Git repository if it wasn't done already:
-
-```bash
-if [ ! -d .git ]; then
-  git clone --quiet https://github.com/ruzickap/k8s-eks-bottlerocket-fargate
-  cd k8s-eks-bottlerocket-fargate || exit
-fi
-```
-
-Create AWS IAM Policy `AllowDNSUpdates` which allows `cert-manager` and
-`external-dns` to modify the Route 53 entries.
+## Add new domain to Route 53, Policies, S3
 
 Details with examples are described on these links:
 
@@ -298,66 +196,129 @@ Details with examples are described on these links:
 * [https://cert-manager.io/docs/configuration/acme/dns01/route53/](https://cert-manager.io/docs/configuration/acme/dns01/route53/)
 * [https://github.com/kubernetes-sigs/external-dns/blob/master/docs/tutorials/aws.md](https://github.com/kubernetes-sigs/external-dns/blob/master/docs/tutorials/aws.md)
 
+Create CloudFormation template containing policies for Route53, S3 access
+(Harbor) and Domain. AWS IAM Policy `${ClusterFQDN}-AmazonRoute53Domains`
+allows `cert-manager` and `external-dns` to modify the Route 53 entries.
+Put new domain `CLUSTER_FQDN` to the Route 53 and configure the
+DNS delegation from the `BASE_DOMAIN`.
+
 ```bash
 test -d tmp || mkdir -v tmp
 
-DNS_ZONE_ID=$(aws route53 list-hosted-zones --query "HostedZones[?Name==\`${CLUSTER_FQDN}.\`].Id" --output text | awk -F "/" "{ print \$NF }")
-cat > tmp/route_53_change_policy.json << EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": "route53:GetChange",
-      "Resource": "arn:aws:route53:::change/*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "route53:ChangeResourceRecordSets",
-        "route53:ListResourceRecordSets"
-      ],
-      "Resource": "arn:aws:route53:::hostedzone/${DNS_ZONE_ID}"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "route53:ListHostedZones",
-        "route53:ListHostedZonesByName"
-      ],
-      "Resource": "*"
-    }
-  ]
-}
+cat > tmp/aws_policies.yml << \EOF
+Description: "Template to generate the necessary IAM Policies for access to Route53 and S3"
+Parameters:
+  ClusterFQDN:
+    Description: "Cluster domain where all necessary app subdomains will live (subdomain of BaseDomain). Ex: k1.k8s.mylabs.dev"
+    Type: String
+  BaseDomain:
+    Description: "Base domain where cluster domains + their subdomains will live. Ex: k8s.mylabs.dev"
+    Type: String
+Resources:
+  Route53Policy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: !Sub "${ClusterFQDN}-AmazonRoute53Domains"
+      Description: !Sub "Policy required by cert-manager or external-dns to be able to modify Route 53 entries for ${ClusterFQDN}"
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Effect: Allow
+          Action:
+          - route53:GetChange
+          Resource: "arn:aws:route53:::change/*"
+        - Effect: Allow
+          Action:
+          - route53:ChangeResourceRecordSets
+          - route53:ListResourceRecordSets
+          Resource: !Sub "arn:aws:route53:::hostedzone/${HostedZone.Id}"
+        - Effect: Allow
+          Action:
+          - route53:ListHostedZones
+          - route53:ListHostedZonesByName
+          Resource: "*"
+  S3PolicyHarbor:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: !Sub "${ClusterFQDN}-AmazonS3-Harbor"
+      Description: !Sub "Policy required by harbor to write to S3 bucket ${ClusterFQDN}-harbor"
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Effect: Allow
+          Action:
+          - s3:ListBucket
+          - s3:GetBucketLocation
+          - s3:ListBucketMultipartUploads
+          Resource: !GetAtt S3BucketHarbor.Arn
+        - Effect: Allow
+          Action:
+          - s3:PutObject
+          - s3:GetObject
+          - s3:DeleteObject
+          - s3:ListMultipartUploadParts
+          - s3:AbortMultipartUpload
+          Resource: !Sub "arn:aws:s3:::${ClusterFQDN}-harbor/*"
+  S3BucketHarbor:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: PublicRead
+      BucketName: !Sub "${ClusterFQDN}-harbor"
+  HostedZone:
+    Type: AWS::Route53::HostedZone
+    Properties:
+      Name: !Ref ClusterFQDN
+  RecordSet:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: !Sub "${BaseDomain}."
+      Name: !Ref ClusterFQDN
+      Type: NS
+      TTL: 60
+      ResourceRecords: !GetAtt HostedZone.NameServers
+Outputs:
+  Route53Policy:
+    Description: The ARN of the created AmazonRoute53Domains policy
+    Value:
+      Ref: Route53Policy
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-Route53Policy"
+  S3PolicyHarbor:
+    Description: The ARN of the created AmazonS3-Harbor policy
+    Value:
+      Ref: S3PolicyHarbor
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-S3PolicyHarbor"
+  S3BucketHarbor:
+    Description: The ARN of the created S3 bucket for Harbor
+    Value:
+      Ref: S3BucketHarbor
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-S3BucketHarbor"
+  HostedZone:
+    Description: The ARN of the created Route53 Zone for K8s cluster
+    Value:
+      Ref: HostedZone
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-HostedZone"
 EOF
 
-aws iam create-policy \
-  --policy-name ${CLUSTER_FQDN}-AmazonRoute53Domains \
-  --description "Policy required by cert-manager or external-dns to be able to modify Route 53 entries for ${CLUSTER_FQDN}" \
-  --policy-document file://tmp/route_53_change_policy.json \
-| jq
+eval aws --region "${REGION}" cloudformation deploy --capabilities CAPABILITY_NAMED_IAM \
+  --parameter-overrides "ClusterFQDN=${CLUSTER_FQDN} BaseDomain=${BASE_DOMAIN}" \
+  --stack-name "${CLUSTER_NAME}-route53-iam-s3" --template-file tmp/aws_policies.yml --tags "${TAGS}"
 
 ROUTE53_POLICY_ARN=$(aws iam list-policies --query "Policies[?PolicyName==\`${CLUSTER_FQDN}-AmazonRoute53Domains\`].{ARN:Arn}" --output text)
+S3_POLICY_HARBOR_ARN=$(aws iam list-policies --query "Policies[?PolicyName==\`${CLUSTER_FQDN}-AmazonS3-Harbor\`].{ARN:Arn}" --output text)
 ```
 
-Output:
+## Create Amazon EKS
 
-```json
-{
-  "Policy": {
-    "PolicyName": "k1.k8s.mylabs.dev-AmazonRoute53Domains",
-    "PolicyId": "AxxxxxxxxxxxxxxxxxxxxX",
-    "Arn": "arn:aws:iam::7xxxxxxxxxx7:policy/k1.k8s.mylabs.dev-AmazonRoute53Domains",
-    "Path": "/",
-    "DefaultVersionId": "v1",
-    "AttachmentCount": 0,
-    "PermissionsBoundaryUsageCount": 0,
-    "IsAttachable": true,
-    "CreateDate": "2020-11-13T15:23:22+00:00",
-    "UpdateDate": "2020-11-13T15:23:22+00:00"
-  }
-}
-```
+![EKS](https://raw.githubusercontent.com/aws-samples/eks-workshop/65b766c494a5b4f5420b2912d8373c4957163541/static/images/3-service-animated.gif
+"EKS")
 
 Create [Amazon EKS](https://aws.amazon.com/eks/) in AWS by using [eksctl](https://eksctl.io/).
 It's a tool from [Weaveworks](https://weave.works/) based on official
@@ -366,6 +327,12 @@ EKS cluster and nodes.
 
 ![eksctl](https://raw.githubusercontent.com/weaveworks/eksctl/c365149fc1a0b8d357139cbd6cda5aee8841c16c/logo/eksctl.png
 "eksctl")
+
+Generate SSH key if not exists:
+
+```bash
+test -f ~/.ssh/id_rsa || ( install -m 0700 -d ~/.ssh && ssh-keygen -b 2048 -t rsa -f ~/.ssh/id_rsa -q -N "" )
+```
 
 Create the Amazon EKS cluster using `eksctl`:
 
@@ -377,7 +344,7 @@ kind: ClusterConfig
 
 metadata:
   name: ${CLUSTER_NAME}
-  region: eu-central-1
+  region: ${REGION}
   version: "1.18"
   tags: &tags
     Owner: ${MY_EMAIL}
@@ -386,8 +353,8 @@ metadata:
     Squad: Cloud_Container_Platform
 
 availabilityZones:
-  - eu-central-1a
-  - eu-central-1b
+  - ${REGION}a
+  - ${REGION}b
 
 iam:
   withOIDC: true
@@ -406,6 +373,13 @@ iam:
           build: "eksctl"
       attachPolicyARNs:
         - ${ROUTE53_POLICY_ARN}
+    - metadata:
+        name: harbor
+        namespace: harbor
+        labels:
+          build: "eksctl"
+      attachPolicyARNs:
+        - ${S3_POLICY_HARBOR_ARN}
 
 nodeGroups:
   - name: ng01

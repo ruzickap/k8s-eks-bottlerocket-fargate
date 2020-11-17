@@ -21,7 +21,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Extract command from markdown files
+      - name: Extract commands from markdown files
         run: |
           echo '#!/usr/bin/env bash' > README.sh
           sed -n "/^\`\`\`\(bash\|shell\).*/,/^\`\`\`$/p" docs/part-0*/README.md \

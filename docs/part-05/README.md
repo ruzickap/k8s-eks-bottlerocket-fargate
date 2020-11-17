@@ -1,122 +1,138 @@
-# Clean-up
+# Harbor
 
-![Clean-up](https://raw.githubusercontent.com/aws-samples/eks-workshop/65b766c494a5b4f5420b2912d8373c4957163541/static/images/cleanup.svg?sanitize=true
-"Clean-up")
+The S3 bucket where Harbor will store container images
+(registry and ChartMuseum) was already created using CloudFormation.
 
-Set necessary variables:
+The ServiceAccount for Harbor's registry and ChartMuseum to access S3 without
+additional secrets was created by `eksctl`.
+
+Install Harbor:
 
 ```bash
-export BASE_DOMAIN="k8s.mylabs.dev"
-export CLUSTER_NAME="k1"
-export CLUSTER_FQDN="${CLUSTER_NAME}.${BASE_DOMAIN}"
-export KUBECONFIG=${PWD}/kubeconfig-${CLUSTER_NAME}.conf
+HARBOR_ADMIN_PASSWORD="harbor_supersecret_admin_password"
+
+helm repo add --force-update harbor https://helm.goharbor.io ; helm repo update > /dev/null
+helm install --wait --version 1.5.1 --namespace harbor --values - harbor harbor/harbor << EOF
+# https://github.com/goharbor/harbor-helm/blob/master/values.yaml
+expose:
+  tls:
+    certSource: secret
+  secret:
+    secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
+    notarySecretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
+  ingress:
+    hosts:
+      core: harbor.${CLUSTER_FQDN}
+      notary: notary.${CLUSTER_FQDN}
+externalURL: https://harbor.${CLUSTER_FQDN}
+persistence:
+  enabled: false
+  # resourcePolicy: delete
+  # persistentVolumeClaim:
+  #   registry:
+  #     size: 1Gi
+  #   chartmuseum:
+  #     size: 1Gi
+  #   trivy:
+  #     size: 1Gi
+  # imageChartStorage:
+  # # S3 is not working due to the bugs:
+  # # https://github.com/goharbor/harbor/issues/12888
+  # # https://github.com/goharbor/harbor-helm/issues/725
+  #   type: s3
+  #   s3:
+  #     region: ${REGION}
+  #     bucket: ${CLUSTER_FQDN}-harbor
+  #     rootdirectory: harbor
+  #     storageclass: REDUCED_REDUNDANCY
+imagePullPolicy: Always
+harborAdminPassword: ${HARBOR_ADMIN_PASSWORD}
+EOF
 ```
 
-Uninstall external-dns otherwise it will be recreating the DNS entries:
+Configure OIDC for Harbor:
 
-```bash
-helm uninstall --kubeconfig="${KUBECONFIG}" -n external-dns external-dns
+```shell
+curl -u "admin:${HARBOR_ADMIN_PASSWORD}" -X PUT "https://harbor.${CLUSTER_FQDN}/api/v2.0/configurations" -H "Content-Type: application/json" -d \
+"{
+  \"auth_mode\": \"oidc_auth\",
+  \"self_registration\": \"false\",
+  \"oidc_name\": \"Google\",
+  \"oidc_endpoint\": \"https://accounts.google.com\",
+  \"oidc_client_id\": \"${MY_GOOGLE_OAUTH_CLIENT_ID}\",
+  \"oidc_client_secret\": \"${MY_GOOGLE_OAUTH_CLIENT_SECRET}\",
+  \"oidc_scope\": \"openid,profile,email\",
+  \"oidc_auto_onboard\": \"true\"
+}"
 ```
 
-Remove Route 53 DNS configuration:
+Enable automated vulnerability scan after each "image push" to the project:
+`library`:
 
 ```bash
-BASE_DOMAIN_ZONE_ID=$(aws route53 list-hosted-zones --query "HostedZones[?Name==\`${BASE_DOMAIN}.\`].Id" --output text)
-RESOURCE_RECORD_SET=$(aws route53 list-resource-record-sets --output json --hosted-zone-id "${BASE_DOMAIN_ZONE_ID}" | jq -c ".ResourceRecordSets[] | select(.Name==\"${CLUSTER_FQDN}.\")")
-aws route53 change-resource-record-sets \
-  --hosted-zone-id "${BASE_DOMAIN_ZONE_ID}" \
-  --change-batch '{"Changes":[{"Action":"DELETE","ResourceRecordSet":
-          '"${RESOURCE_RECORD_SET}"'
-        }]}' | jq
+PROJECT_ID=$(curl -s -u "admin:${HARBOR_ADMIN_PASSWORD}" -X GET "https://harbor.${CLUSTER_FQDN}/api/v2.0/projects?name=library" | jq ".[].project_id")
+curl -s -u "admin:${HARBOR_ADMIN_PASSWORD}" -X PUT "https://harbor.${CLUSTER_FQDN}/api/v2.0/projects/${PROJECT_ID}" -H  "Content-Type: application/json" -d \
+"{
+  \"metadata\": {
+    \"auto_scan\": \"true\"
+  }
+}"
+```
 
-CLUSTER_FQDN_ZONE_ID=$(aws route53 list-hosted-zones --query "HostedZones[?Name==\`${CLUSTER_FQDN}.\`].Id" --output text)
-aws route53 list-resource-record-sets --hosted-zone-id "${CLUSTER_FQDN_ZONE_ID}" | jq -c '.ResourceRecordSets[] | select (.Type != "SOA" and .Type != "NS")' |
-while read -r RESOURCERECORDSET; do
-  aws route53 change-resource-record-sets \
-    --hosted-zone-id "${CLUSTER_FQDN_ZONE_ID}" \
-    --change-batch '{"Changes":[{"Action":"DELETE","ResourceRecordSet": '"${RESOURCERECORDSET}"' }]}' \
-    --output text --query 'ChangeInfo.Id'
+Create new Registry Endpoint:
+
+```bash
+curl -X POST -H "Content-Type: application/json" -u "admin:${HARBOR_ADMIN_PASSWORD}" "https://harbor.${CLUSTER_FQDN}/api/v2.0/registries" -d \
+"{
+  \"name\": \"Docker Hub\",
+  \"type\": \"docker-hub\",
+  \"url\": \"https://hub.docker.com\",
+  \"description\": \"Docker Hub Registry Endpoint\"
+}"
+```
+
+Create new Replication Rule:
+
+I'm going to replicate the "bookinfo" application used for testing Istio:
+[https://istio.io/docs/examples/bookinfo/](https://istio.io/docs/examples/bookinfo/)
+When the replication completes all images should be automatically scanned
+because I'm going to replicate everything into `library` project which has
+"Automatically scan images on push" feature enabled.
+
+Create new Replication Rule and initiate replication:
+
+```bash
+COUNTER=0
+for DOCKER_HUB_REPOSITORY in istio/examples-bookinfo-details-v1 istio/examples-bookinfo-ratings-v1; do
+  COUNTER=$((COUNTER+1))
+  echo "Replicating (${COUNTER}): ${DOCKER_HUB_REPOSITORY}"
+  curl -X POST -H "Content-Type: application/json" -u "admin:${HARBOR_ADMIN_PASSWORD}" "https://harbor.${CLUSTER_FQDN}/api/v2.0/replication/policies" -d \
+    "{
+      \"name\": \"Replication of ${DOCKER_HUB_REPOSITORY}\",
+      \"type\": \"docker-hub\",
+      \"url\": \"https://hub.docker.com\",
+      \"description\": \"Replication Rule for ${DOCKER_HUB_REPOSITORY}\",
+      \"enabled\": true,
+      \"src_registry\": {
+        \"id\": 1
+      },
+      \"dest_namespace\": \"library\",
+      \"filters\": [{
+        \"type\": \"name\",
+        \"value\": \"${DOCKER_HUB_REPOSITORY}\"
+      },
+      {
+        \"type\": \"tag\",
+        \"value\": \"1.1*\"
+      }],
+      \"trigger\": {
+        \"type\": \"manual\"
+      }
+    }"
+  POLICY_ID=$(curl -s -H "Content-Type: application/json" -u "admin:${HARBOR_ADMIN_PASSWORD}" "https://harbor.${CLUSTER_FQDN}/api/v2.0/replication/policies" | jq ".[] | select (.filters[].value==\"${DOCKER_HUB_REPOSITORY}\") .id")
+  curl -X POST -H "Content-Type: application/json" -u "admin:${HARBOR_ADMIN_PASSWORD}" "https://harbor.${CLUSTER_FQDN}/api/v2.0/replication/executions" -d "{ \"policy_id\": ${POLICY_ID} }"
 done
-
-aws route53 delete-hosted-zone --id "${CLUSTER_FQDN_ZONE_ID}" | jq
 ```
 
-Remove RDS CloudFormation:
-
-```bash
-aws --region eu-central-1 cloudformation delete-stack --stack-name "${CLUSTER_NAME}-rds"
-aws --region eu-central-1 cloudformation delete-stack --stack-name "${CLUSTER_NAME}-efs"
-```
-
-Remove EKS cluster:
-
-```bash
-eksctl delete cluster --region eu-central-1 --name=${CLUSTER_NAME} --wait
-```
-
-Output:
-
-```text
-[ℹ]  eksctl version 0.31.0
-[ℹ]  using region eu-central-1
-[ℹ]  deleting EKS cluster "k1"
-[ℹ]  deleting Fargate profile "fp-default"
-[ℹ]  deleted Fargate profile "fp-default"
-[ℹ]  deleting Fargate profile "fp-fargate-workload"
-[ℹ]  deleted Fargate profile "fp-fargate-workload"
-[ℹ]  deleted 2 Fargate profile(s)
-[✔]  kubeconfig has been updated
-[ℹ]  cleaning up AWS load balancers created by Kubernetes objects of Kind Service or Ingress
-[ℹ]  3 sequential tasks: { delete nodegroup "ng01", 2 sequential sub-tasks: { 3 parallel sub-tasks: { 2 sequential sub-tasks: { delete IAM role for serviceaccount "cert-manager/cert-manager", delete serviceaccount "cert-manager/cert-manager" }, 2 sequential sub-tasks: { delete IAM role for serviceaccount "external-dns/external-dns", delete serviceaccount "external-dns/external-dns" }, 2 sequential sub-tasks: { delete IAM role for serviceaccount "kube-system/aws-node", delete serviceaccount "kube-system/aws-node" } }, delete IAM OIDC provider }, delete cluster control plane "k1" }
-[ℹ]  will delete stack "eksctl-k1-nodegroup-ng01"
-[ℹ]  waiting for stack "eksctl-k1-nodegroup-ng01" to get deleted
-[ℹ]  will delete stack "eksctl-k1-addon-iamserviceaccount-kube-system-aws-node"
-[ℹ]  waiting for stack "eksctl-k1-addon-iamserviceaccount-kube-system-aws-node" to get deleted
-[ℹ]  will delete stack "eksctl-k1-addon-iamserviceaccount-external-dns-external-dns"
-[ℹ]  waiting for stack "eksctl-k1-addon-iamserviceaccount-external-dns-external-dns" to get deleted
-[ℹ]  will delete stack "eksctl-k1-addon-iamserviceaccount-cert-manager-cert-manager"
-[ℹ]  waiting for stack "eksctl-k1-addon-iamserviceaccount-cert-manager-cert-manager" to get deleted
-[ℹ]  serviceaccount "external-dns/external-dns" was already deleted
-[ℹ]  deleted serviceaccount "cert-manager/cert-manager"
-[ℹ]  deleted serviceaccount "kube-system/aws-node"
-[ℹ]  will delete stack "eksctl-k1-cluster"
-[ℹ]  waiting for stack "eksctl-k1-cluster" to get deleted
-[✔]  all cluster resources were deleted
-```
-
-Remove Volumes related to the cluster:
-
-```bash
-VOLUMES=$(aws ec2 describe-volumes --region eu-central-1 --filter Name=tag:kubernetes.io/cluster/${CLUSTER_NAME},Values=owned --query 'Volumes[].VolumeId' --output text)
-for VOLUME in ${VOLUMES}; do
-  echo "Removing: ${VOLUME}"
-  aws ec2 delete-volume --region eu-central-1 --volume-id "${VOLUME}"
-done
-```
-
-Remove Route 53 Policy from AWS:
-
-```bash
-ROUTE53_POLICY_ARN=$(aws iam list-policies --query "Policies[?PolicyName==\`${CLUSTER_FQDN}-AmazonRoute53Domains\`].{ARN:Arn}" --output text)
-aws iam delete-policy --policy-arn "${ROUTE53_POLICY_ARN}"
-```
-
-Cleanup + Remove Helm:
-
-```bash
-if [[ -d ~/Library/Caches/helm ]]; then rm -rf ~/Library/Caches/helm; fi
-if [[ -d ~/Library/Preferences/helm ]]; then rm -rf ~/Library/Preferences/helm; fi
-if [[ -d ~/.helm ]]; then rm -rf ~/.helm; fi
-```
-
-Remove `tmp` directory:
-
-```bash
-rm -rf tmp
-```
-
-Remove other files:
-
-```bash
-rm demo-magic.sh "${KUBECONFIG}" README.sh
-```
+After a while all images used by "bookinfo" application should be replicated
+into `library` project and all should be automatically scanned.
