@@ -26,3 +26,14 @@ jobs:
 
       - name: Run tests/tests.sh
         run: script -e -c tests/tests.sh
+
+      - name: Apostrophe code check
+        env:
+          TERM: xterm
+        run: |
+          ./run-k8s-eks-bottlerocket-fargate.sh readme_output_only > /dev/null
+          if [[ $(grep \' README.sh | sort | uniq | wc -l) != "2" ]]; then
+            echo "*** Additional apostrophe found. Please check the source code and remove them..."
+            grep \' README.sh | sort | uniq
+            exit 1
+          fi
