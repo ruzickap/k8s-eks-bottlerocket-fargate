@@ -20,30 +20,37 @@ The `LETSENCRYPT_ENVIRONMENT` variable should be one of:
 names will look like `CLUSTER_NAME`.`BASE_DOMAIN` (`k1.k8s.mylabs.dev`).
 
 ```bash
+# Hostname / FQDN definitions
 export BASE_DOMAIN="k8s.mylabs.dev"
 export CLUSTER_NAME="k1"
 export CLUSTER_FQDN="${CLUSTER_NAME}.${BASE_DOMAIN}"
 export KUBECONFIG=${PWD}/kubeconfig-${CLUSTER_NAME}.conf
+# * "production" - valid certificates signed by Lets Encrypt ""
+# * "staging" - not trusted certs signed by Lets Encrypt "Fake LE Intermediate X1"
 export LETSENCRYPT_ENVIRONMENT=${LETSENCRYPT_ENVIRONMENT:-staging}
 export MY_EMAIL="petr.ruzicka@gmail.com"
+# GitHub Organization + Team where are the users who will have the admin access
+# to K8s resources (Grafana). Only users in GitHub organization
+# (MY_GITHUB_ORG_NAME) will be able to access the apps via ingress.
+export MY_GITHUB_ORG_NAME="ruzickap-org"
+# AWS Region
 export REGION="eu-central-1"
+# Tags used to tag the AWS resources
 export TAGS="Owner=${MY_EMAIL} Environment=Dev Tribe=Cloud_Native Squad=Cloud_Container_Platform"
 echo -e "${MY_EMAIL} | ${LETSENCRYPT_ENVIRONMENT} | ${CLUSTER_NAME} | ${BASE_DOMAIN} | ${CLUSTER_FQDN}\n${TAGS}"
 ```
 
-Prepare Google OAuth 2.0 Client IDs, AWS variables for access.
+Prepare GitHub OAuth "access" credentials ans AWS "access" variables.
 
-You can find the description how to do it here:
-
-* Google OAuth: [https://oauth2-proxy.github.io/oauth2-proxy/docs/configuration/oauth_provider#google-auth-provider](https://oauth2-proxy.github.io/oauth2-proxy/docs/configuration/oauth_provider#google-auth-provider)
-
-You will need AWS CLI working: [https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html)
+You will need to configure AWS CLI: [https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html)
 
 ```shell
+# AWS Credentials
 export AWS_ACCESS_KEY_ID="AxxxxxxxxxxxxxxxxxxY"
 export AWS_SECRET_ACCESS_KEY="txxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxh"
-export MY_GOOGLE_OAUTH_CLIENT_ID="2xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx5.apps.googleusercontent.com"
-export MY_GOOGLE_OAUTH_CLIENT_SECRET="OxxxxxxxxxxxxxxxxxxxxxxF"
+# GitHub Organization OAuth Apps credentials
+export MY_GITHUB_ORG_OAUTH_CLIENT_ID="3xxxxxxxxxxxxxxxxxx3"
+export MY_GITHUB_ORG_OAUTH_CLIENT_SECRET="7xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx8"
 ```
 
 ## Prepare the local working environment
@@ -66,7 +73,7 @@ Install [kubectl](https://github.com/kubernetes/kubectl) binary:
 
 ```bash
 if [[ ! -x /usr/local/bin/kubectl ]]; then
-  sudo curl -s -Lo "/usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/v1.19.3/bin/$(uname | tr '[:upper:]' '[:lower:]')/amd64/kubectl"
+  sudo curl -s -Lo "/usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/v1.19.3/bin/$(uname | tr "[:upper:]" "[:lower:]")/amd64/kubectl"
   sudo chmod a+x /usr/local/bin/kubectl
 fi
 ```
@@ -91,7 +98,7 @@ Install [AWS IAM Authenticator for Kubernetes](https://github.com/kubernetes-sig
 
 ```bash
 if [[ ! -x /usr/local/bin/aws-iam-authenticator ]]; then
-  sudo curl -s -Lo "/usr/local/bin/aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.18.8/2020-09-18/bin/$(uname | tr '[:upper:]' '[:lower:]')/amd64/aws-iam-authenticator"
+  sudo curl -s -Lo "/usr/local/bin/aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.18.8/2020-09-18/bin/$(uname | tr "[:upper:]" "[:lower:]")/amd64/aws-iam-authenticator"
   sudo chmod a+x /usr/local/bin/aws-iam-authenticator
 fi
 ```

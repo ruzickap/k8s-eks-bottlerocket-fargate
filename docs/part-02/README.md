@@ -7,31 +7,11 @@ certificate management ([cert-manager](https://cert-manager.io/)), ...
 
 ## kube-prometheus-stack
 
-Create Grafana secret with Google OAuth 2.0 Client IDs:
-
-```bash
-MY_GOOGLE_OAUTH_CLIENT_ID_BASE64=$(echo -n "${MY_GOOGLE_OAUTH_CLIENT_ID}" | base64 -w 0)
-MY_GOOGLE_OAUTH_CLIENT_SECRET_BASE64=$(echo -n "${MY_GOOGLE_OAUTH_CLIENT_SECRET}" | base64 -w 0)
-
-kubectl create namespace kube-prometheus-stack
-kubectl apply -f - << EOF
-apiVersion: v1
-kind: Secret
-metadata:
-  name: grafana-env
-  namespace: kube-prometheus-stack
-type: Opaque
-data:
-  GF_AUTH_GENERIC_OAUTH_CLIENT_ID: ${MY_GOOGLE_OAUTH_CLIENT_ID_BASE64}
-  GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET: ${MY_GOOGLE_OAUTH_CLIENT_SECRET_BASE64}
-EOF
-```
-
 Create config file for `kube-prometheus-stack` Helm chart:
 
 ```bash
 helm repo add --force-update prometheus-community https://prometheus-community.github.io/helm-charts ; helm repo update > /dev/null
-helm install --version 12.0.1 --namespace kube-prometheus-stack --create-namespace --values - kube-prometheus-stack prometheus-community/kube-prometheus-stack << EOF
+helm install --version 12.1.0 --namespace kube-prometheus-stack --create-namespace --values - kube-prometheus-stack prometheus-community/kube-prometheus-stack << EOF
 # https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/values.yaml
 defaultRules:
   rules:
@@ -43,8 +23,8 @@ alertmanager:
   ingress:
     enabled: true
     annotations:
-      nginx.ingress.kubernetes.io/auth-url: https://auth.${CLUSTER_FQDN}/oauth2/auth
-      nginx.ingress.kubernetes.io/auth-signin: https://auth.${CLUSTER_FQDN}/oauth2/start?rd=\$scheme://\$host\$request_uri
+      nginx.ingress.kubernetes.io/auth-url: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/auth
+      nginx.ingress.kubernetes.io/auth-signin: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/start?rd=\$scheme://\$host\$request_uri
     hosts:
       - alertmanager.${CLUSTER_FQDN}
     tls:
@@ -71,21 +51,6 @@ grafana:
       - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
         hosts:
           - grafana.${CLUSTER_FQDN}
-  env:
-    GF_SERVER_ROOT_URL: "https://grafana.${CLUSTER_FQDN}"
-    GF_ANALYTICS_REPORTING_ENABLED: "false"
-    GF_AUTH_DISABLE_LOGIN_FORM: "true"
-    GF_USERS_ALLOW_SIGN_UP: "false"
-    GF_USERS_AUTO_ASSIGN_ORG_ROLE: "Admin"
-    GF_SMTP_ENABLED: "false"
-    GF_AUTH_GENERIC_OAUTH_ENABLED: "true"
-    GF_AUTH_GENERIC_OAUTH_ALLOW_SIGN_UP: "true"
-    GF_AUTH_GENERIC_OAUTH_NAME: "Google"
-    GF_AUTH_GENERIC_OAUTH_SCOPES: "https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email"
-    GF_AUTH_GENERIC_OAUTH_AUTH_URL: "https://accounts.google.com/o/oauth2/auth"
-    GF_AUTH_GENERIC_OAUTH_TOKEN_URL: "https://accounts.google.com/o/oauth2/token"
-    GF_AUTH_GENERIC_OAUTH_API_URL: "https://www.googleapis.com/oauth2/v1/userinfo"
-  envFromSecret: grafana-env
   plugins:
     - grafana-piechart-panel
   dashboardProviders:
@@ -122,6 +87,24 @@ grafana:
         gnetId: 9852
         revision: 1
         datasource: Prometheus
+  grafana.ini:
+    server:
+      root_url: https://grafana.${CLUSTER_FQDN}
+    auth.basic:
+      disable_login_form: true
+    auth.generic_oauth:
+      name: Dex
+      enabled: true
+      allow_sign_up: true
+      scopes: openid profile email groups
+      auth_url: https://dex.${CLUSTER_FQDN}/auth
+      token_url: https://dex.${CLUSTER_FQDN}/token
+      api_url: https://dex.${CLUSTER_FQDN}/userinfo
+      client_id: grafana.${CLUSTER_FQDN}
+      client_secret: ${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET}
+      tls_skip_verify_insecure: true
+    users:
+      auto_assign_org_role: Admin
 
 kubeControllerManager:
   enabled: false
@@ -141,8 +124,8 @@ prometheus:
   ingress:
     enabled: true
     annotations:
-      nginx.ingress.kubernetes.io/auth-url: https://auth.${CLUSTER_FQDN}/oauth2/auth
-      nginx.ingress.kubernetes.io/auth-signin: https://auth.${CLUSTER_FQDN}/oauth2/start?rd=\$scheme://\$host\$request_uri
+      nginx.ingress.kubernetes.io/auth-url: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/auth
+      nginx.ingress.kubernetes.io/auth-signin: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/start?rd=\$scheme://\$host\$request_uri
     hosts:
       - prometheus.${CLUSTER_FQDN}
     tls:
@@ -416,7 +399,7 @@ Install the Ingress:
 
 ```bash
 helm repo add --force-update ingress-nginx https://kubernetes.github.io/ingress-nginx ; helm repo update > /dev/null
-helm install --version 3.7.1 --namespace ingress-nginx --create-namespace --wait --values - ingress-nginx ingress-nginx/ingress-nginx << EOF
+helm install --version 3.11.0 --namespace ingress-nginx --create-namespace --wait --values - ingress-nginx ingress-nginx/ingress-nginx << EOF
 # https://github.com/kubernetes/ingress-nginx/blob/master/charts/ingress-nginx/values.yaml
 controller:
   extraArgs:
@@ -481,6 +464,63 @@ If TLS is enabled for the Ingress, a Secret containing the certificate and key m
   type: kubernetes.io/tls
 ```
 
+## Dex
+
+Install Dex:
+
+```bash
+helm repo add --force-update stable https://charts.helm.sh/stable ; helm repo update > /dev/null
+helm install --version 2.15.1 --namespace dex --create-namespace --values - dex stable/dex << EOF
+# https://github.com/helm/charts/blob/master/stable/dex/values.yaml
+grpc: false
+telemetry: true
+ingress:
+  enabled: true
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+  hosts:
+    - dex.${CLUSTER_FQDN}
+  tls:
+    - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
+      hosts:
+        - dex.${CLUSTER_FQDN}
+config:
+  issuer: https://dex.${CLUSTER_FQDN}
+  connectors:
+    - type: github
+      id: github
+      name: GitHub
+      config:
+        clientID: ${MY_GITHUB_ORG_OAUTH_CLIENT_ID}
+        clientSecret: ${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET}
+        redirectURI: https://dex.${CLUSTER_FQDN}/callback
+        orgs:
+          - name: ${MY_GITHUB_ORG_NAME}
+  staticClients:
+    - id: gangway.${CLUSTER_FQDN}
+      redirectURIs:
+        - https://gangway.${CLUSTER_FQDN}/callback
+      name: Gangway
+      secret: ${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET}
+    - id: grafana.${CLUSTER_FQDN}
+      redirectURIs:
+        - https://grafana.${CLUSTER_FQDN}/login/generic_oauth
+      name: Grafana
+      secret: ${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET}
+    - id: harbor.${CLUSTER_FQDN}
+      redirectURIs:
+        - https://harbor.${CLUSTER_FQDN}/c/oidc/callback
+      name: Harbor
+      secret: ${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET}
+    - id: oauth2-proxy.${CLUSTER_FQDN}
+      redirectURIs:
+        - https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/callback
+      name: OAuth2 Proxy
+      secret: ${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET}
+  enablePasswordDB: false
+EOF
+```
+
 ## oauth2-proxy
 
 Install [oauth2-proxy](https://github.com/oauth2-proxy/oauth2-proxy) to secure
@@ -488,32 +528,32 @@ the endpoints like (`prometheus.`, `alertmanager.`).
 
 ```bash
 kubectl create namespace oauth2-proxy
-helm repo add --force-update stable https://charts.helm.sh/stable ; helm repo update > /dev/null
 helm install --version 3.2.3 --namespace oauth2-proxy --create-namespace --values - oauth2-proxy stable/oauth2-proxy << EOF
 # https://github.com/helm/charts/blob/master/stable/oauth2-proxy/values.yaml
 config:
-  clientID: "${MY_GOOGLE_OAUTH_CLIENT_ID}"
-  clientSecret: "${MY_GOOGLE_OAUTH_CLIENT_SECRET}"
+  clientID: oauth2-proxy.${CLUSTER_FQDN}
+  clientSecret: "${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET}"
   cookieSecret: "$(openssl rand -base64 32 | head -c 32 | base64 )"
   configFile: |-
     email_domains = [ "*" ]
     upstreams = [ "file:///dev/null" ]
     whitelist_domains = ".${CLUSTER_FQDN}"
     cookie_domain = ".${CLUSTER_FQDN}"
+    provider = "oidc"
+    # Use http of non-valid certificates
+    oidc_issuer_url = "https://dex.${CLUSTER_FQDN}"
+    ssl_insecure_skip_verify = "true"
+    insecure_oidc_skip_issuer_verification = "true"
 image:
   pullPolicy: Always
-authenticatedEmailsFile:
-  enabled: true
-  restricted_access: |-
-    ${MY_EMAIL}
 ingress:
   enabled: true
   hosts:
-    - auth.${CLUSTER_FQDN}
+    - oauth2-proxy.${CLUSTER_FQDN}
   tls:
     - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
       hosts:
-        - auth.${CLUSTER_FQDN}
+        - oauth2-proxy.${CLUSTER_FQDN}
 resources:
   limits:
     cpu: 100m
@@ -541,6 +581,112 @@ To verify that oauth2-proxy has started, run:
   kubectl --namespace=oauth2-proxy get pods -l "app=oauth2-proxy"
 ```
 
+## Gangway
+
+::: danger
+This is not working...
+:::
+
+Install gangway:
+
+```shell
+helm install --version 0.4.3 --namespace gangway --create-namespace --values - gangway stable/gangway << EOF
+# https://github.com/helm/charts/blob/master/stable/gangway/values.yaml
+gangway:
+  clusterName: gangway.${CLUSTER_FQDN}
+  authorizeURL: https://dex.${CLUSTER_FQDN}/auth
+  # Needs to be http only because of non-valid certificate
+  tokenURL: http://dex.${CLUSTER_FQDN}/token
+  audience: https://dex.${CLUSTER_FQDN}/userinfo
+  redirectURL: https://gangway.${CLUSTER_FQDN}/callback
+  clientID: gangway.${CLUSTER_FQDN}
+  clientSecret: ${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET}
+  apiServerURL: https://kube-oidc-proxy.${CLUSTER_FQDN}
+ingress:
+  enabled: true
+  hosts:
+    - gangway.${CLUSTER_FQDN}
+  tls:
+    - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
+      hosts:
+        - gangway.${CLUSTER_FQDN}
+EOF
+```
+
+Output:
+
+```text
+NAME: gangway
+LAST DEPLOYED: Fri Nov 13 16:51:53 2020
+NAMESPACE: gangway
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+1. Get the application URL by running these commands:
+  https://gangway.k1.k8s.mylabs.dev/
+```
+
+## kube-oidc-proxy
+
+::: danger
+This is not working...
+:::
+
+Install kube-oidc-proxy:
+
+```shell
+git clone --quiet https://github.com/jetstack/kube-oidc-proxy.git tmp/kube-oidc-proxy
+git -C tmp/kube-oidc-proxy checkout --quiet v0.3.0
+
+helm install --namespace kube-oidc-proxy --create-namespace --values - kube-oidc-proxy tmp/kube-oidc-proxy/deploy/charts/kube-oidc-proxy << EOF
+# https://github.com/jetstack/kube-oidc-proxy/blob/master/deploy/charts/kube-oidc-proxy/values.yaml
+oidc:
+  clientId: kube-oidc-proxy.${CLUSTER_FQDN}
+  issuerUrl: https://dex.${CLUSTER_FQDN}
+  usernameClaim: email
+  # https://letsencrypt.org/certs/fakeleintermediatex1.pem
+  caPEM: |
+    -----BEGIN CERTIFICATE-----
+    MIIEqzCCApOgAwIBAgIRAIvhKg5ZRO08VGQx8JdhT+UwDQYJKoZIhvcNAQELBQAw
+    GjEYMBYGA1UEAwwPRmFrZSBMRSBSb290IFgxMB4XDTE2MDUyMzIyMDc1OVoXDTM2
+    MDUyMzIyMDc1OVowIjEgMB4GA1UEAwwXRmFrZSBMRSBJbnRlcm1lZGlhdGUgWDEw
+    ggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDtWKySDn7rWZc5ggjz3ZB0
+    8jO4xti3uzINfD5sQ7Lj7hzetUT+wQob+iXSZkhnvx+IvdbXF5/yt8aWPpUKnPym
+    oLxsYiI5gQBLxNDzIec0OIaflWqAr29m7J8+NNtApEN8nZFnf3bhehZW7AxmS1m0
+    ZnSsdHw0Fw+bgixPg2MQ9k9oefFeqa+7Kqdlz5bbrUYV2volxhDFtnI4Mh8BiWCN
+    xDH1Hizq+GKCcHsinDZWurCqder/afJBnQs+SBSL6MVApHt+d35zjBD92fO2Je56
+    dhMfzCgOKXeJ340WhW3TjD1zqLZXeaCyUNRnfOmWZV8nEhtHOFbUCU7r/KkjMZO9
+    AgMBAAGjgeMwgeAwDgYDVR0PAQH/BAQDAgGGMBIGA1UdEwEB/wQIMAYBAf8CAQAw
+    HQYDVR0OBBYEFMDMA0a5WCDMXHJw8+EuyyCm9Wg6MHoGCCsGAQUFBwEBBG4wbDA0
+    BggrBgEFBQcwAYYoaHR0cDovL29jc3Auc3RnLXJvb3QteDEubGV0c2VuY3J5cHQu
+    b3JnLzA0BggrBgEFBQcwAoYoaHR0cDovL2NlcnQuc3RnLXJvb3QteDEubGV0c2Vu
+    Y3J5cHQub3JnLzAfBgNVHSMEGDAWgBTBJnSkikSg5vogKNhcI5pFiBh54DANBgkq
+    hkiG9w0BAQsFAAOCAgEABYSu4Il+fI0MYU42OTmEj+1HqQ5DvyAeyCA6sGuZdwjF
+    UGeVOv3NnLyfofuUOjEbY5irFCDtnv+0ckukUZN9lz4Q2YjWGUpW4TTu3ieTsaC9
+    AFvCSgNHJyWSVtWvB5XDxsqawl1KzHzzwr132bF2rtGtazSqVqK9E07sGHMCf+zp
+    DQVDVVGtqZPHwX3KqUtefE621b8RI6VCl4oD30Olf8pjuzG4JKBFRFclzLRjo/h7
+    IkkfjZ8wDa7faOjVXx6n+eUQ29cIMCzr8/rNWHS9pYGGQKJiY2xmVC9h12H99Xyf
+    zWE9vb5zKP3MVG6neX1hSdo7PEAb9fqRhHkqVsqUvJlIRmvXvVKTwNCP3eCjRCCI
+    PTAvjV+4ni786iXwwFYNz8l3PmPLCyQXWGohnJ8iBm+5nk7O2ynaPVW0U2W+pt2w
+    SVuvdDM5zGv2f9ltNWUiYZHJ1mmO97jSY/6YfdOUH66iRtQtDkHBRdkNBsMbD+Em
+    2TgBldtHNSJBfB3pm9FblgOcJ0FSWcUDWJ7vO0+NTXlgrRofRT6pVywzxVo6dND0
+    WzYlTWeUVsO40xJqhgUQRER9YLOLxJ0O6C8i0xFxAMKOtSdodMB3RIwt7RFQ0uyt
+    n5Z5MqkYhlMI3J1tPRTp1nEt9fyGspBOO05gi148Qasp+3N+svqKomoQglNoAxU=
+    -----END CERTIFICATE-----
+ingress:
+  enabled: false
+  hosts:
+    - host: kube-oidc-proxy.${CLUSTER_FQDN}
+      paths:
+        - /
+  tls:
+   - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
+     hosts:
+       - kube-oidc-proxy.${CLUSTER_FQDN}
+EOF
+```
+
 ## Polaris
 
 Install Polaris
@@ -553,8 +699,8 @@ dashboard:
   ingress:
     enabled: true
     annotations:
-      nginx.ingress.kubernetes.io/auth-url: https://auth.${CLUSTER_FQDN}/oauth2/auth
-      nginx.ingress.kubernetes.io/auth-signin: https://auth.${CLUSTER_FQDN}/oauth2/start?rd=\$scheme://\$host\$request_uri
+      nginx.ingress.kubernetes.io/auth-url: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/auth
+      nginx.ingress.kubernetes.io/auth-signin: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/start?rd=\$scheme://\$host\$request_uri
     hosts:
       - polaris.${CLUSTER_FQDN}
     tls:
@@ -635,8 +781,8 @@ server:
   ingress:
     enabled: true
     annotations:
-      nginx.ingress.kubernetes.io/auth-url: https://auth.${CLUSTER_FQDN}/oauth2/auth
-      nginx.ingress.kubernetes.io/auth-signin: https://auth.${CLUSTER_FQDN}/oauth2/start?rd=\$scheme://\$host\$request_uri
+      nginx.ingress.kubernetes.io/auth-url: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/auth
+      nginx.ingress.kubernetes.io/auth-signin: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/start?rd=\$scheme://\$host\$request_uri
     hosts:
       - host: vault.${CLUSTER_FQDN}
     tls:

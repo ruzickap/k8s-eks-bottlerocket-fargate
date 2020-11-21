@@ -8,8 +8,9 @@ export CLUSTER_FQDN="${CLUSTER_NAME}.${BASE_DOMAIN}"
 export LETSENCRYPT_ENVIRONMENT=${LETSENCRYPT_ENVIRONMENT:-staging}
 export MY_EMAIL="petr.ruzicka@gmail.com"
 export REGION="eu-central-1"
-export MY_GOOGLE_OAUTH_CLIENT_ID="2xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx5.apps.googleusercontent.com"
-export MY_GOOGLE_OAUTH_CLIENT_SECRET="OxxxxxxxxxxxxxxxxxxxxxxF"
+export MY_GITHUB_ORG_OAUTH_CLIENT_ID="3xxxxxxxxxxxxxxxxxx3"
+export MY_GITHUB_ORG_OAUTH_CLIENT_SECRET="7xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx8"
+export MY_GITHUB_ORG_NAME="ruzickap-org"
 export KUBECONFIG="${PWD}/kubeconfig-test-${CLUSTER_NAME}.conf"
 
 test -d tests || ( echo -e "\n*** Run in top level of git repository\n"; exit 1 )

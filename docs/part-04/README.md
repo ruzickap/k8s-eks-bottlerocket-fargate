@@ -203,8 +203,8 @@ db:
 ingress:
   enabled: true
   annotations:
-    nginx.ingress.kubernetes.io/auth-url: https://auth.${CLUSTER_FQDN}/oauth2/auth
-    nginx.ingress.kubernetes.io/auth-signin: https://auth.${CLUSTER_FQDN}/oauth2/start?rd=\$scheme://\$host\$request_uri
+    nginx.ingress.kubernetes.io/auth-url: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/auth
+    nginx.ingress.kubernetes.io/auth-signin: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/start?rd=\$scheme://\$host\$request_uri
   hosts:
     - name: phpmyadmin.${CLUSTER_FQDN}
   tls: true
@@ -404,14 +404,14 @@ EOF
 Create `drupal` database inside MariaDB:
 
 ```bash
-kubectl run --env MYSQL_PWD=${RDS_DB_PASSWORD} --image=mysql:5.7 --restart=Never mysql-client -- \
+kubectl create namespace drupal
+kubectl run -n drupal --env MYSQL_PWD=${RDS_DB_PASSWORD} --image=mysql:5.7 --restart=Never mysql-client-drupal -- \
   mysql -h "${RDS_DB_HOST}" -u "${RDS_DB_USERNAME}" -e "CREATE DATABASE drupal"
 ```
 
 Create `drupal` namespace and PVC:
 
 ```bash
-kubectl create namespace drupal
 kubectl apply -f - <<EOF
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -435,7 +435,7 @@ DRUPAL_USERNAME="myuser"
 DRUPAL_PASSWORD="mypassword12345"
 
 helm repo add --force-update bitnami https://charts.bitnami.com/bitnami ; helm repo update > /dev/null
-helm install --version 10.0.0 --namespace drupal --values - drupal bitnami/drupal << EOF
+helm install --version 10.0.2 --namespace drupal --values - drupal bitnami/drupal << EOF
 # https://github.com/bitnami/charts/blob/master/bitnami/drupal/values.yaml
 replicaCount: 2
 drupalUsername: ${DRUPAL_USERNAME}
@@ -453,8 +453,8 @@ service:
 ingress:
   enabled: true
   annotations:
-    nginx.ingress.kubernetes.io/auth-url: https://auth.${CLUSTER_FQDN}/oauth2/auth
-    nginx.ingress.kubernetes.io/auth-signin: https://auth.${CLUSTER_FQDN}/oauth2/start?rd=\$scheme://\$host\$request_uri
+    nginx.ingress.kubernetes.io/auth-url: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/auth
+    nginx.ingress.kubernetes.io/auth-signin: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/start?rd=\$scheme://\$host\$request_uri
   hostname: drupal.${CLUSTER_FQDN}
   tls:
     - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}

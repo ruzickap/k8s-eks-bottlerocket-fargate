@@ -52,15 +52,16 @@ EOF
 
 Configure OIDC for Harbor:
 
-```shell
+```bash
 curl -u "admin:${HARBOR_ADMIN_PASSWORD}" -X PUT "https://harbor.${CLUSTER_FQDN}/api/v2.0/configurations" -H "Content-Type: application/json" -d \
 "{
   \"auth_mode\": \"oidc_auth\",
   \"self_registration\": \"false\",
-  \"oidc_name\": \"Google\",
-  \"oidc_endpoint\": \"https://accounts.google.com\",
-  \"oidc_client_id\": \"${MY_GOOGLE_OAUTH_CLIENT_ID}\",
-  \"oidc_client_secret\": \"${MY_GOOGLE_OAUTH_CLIENT_SECRET}\",
+  \"oidc_name\": \"Dex\",
+  \"oidc_endpoint\": \"https://dex.${CLUSTER_FQDN}\",
+  \"oidc_client_id\": \"harbor.${CLUSTER_FQDN}\",
+  \"oidc_client_secret\": \"${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET}\",
+  \"oidc_verify_cert\": \"false\",
   \"oidc_scope\": \"openid,profile,email\",
   \"oidc_auto_onboard\": \"true\"
 }"

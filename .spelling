@@ -7,6 +7,7 @@ Cleanup
 CloudFlare
 CloudFormation
 ClusterIssuers
+Dex
 Drupal
 Fargate
 Grafana
@@ -29,6 +30,7 @@ eksctl
 external-dns
 ingress-nginx
 k8s-eks-bottlerocket-fargate
+kube-oidc-proxy
 kube-prometheus-stack
 kubectl
 kubed
