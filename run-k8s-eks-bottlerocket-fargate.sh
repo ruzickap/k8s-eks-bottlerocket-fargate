@@ -39,16 +39,15 @@ clear
 ### Please run these commands before running the script
 
 # if [ -n "$SSH_AUTH_SOCK" ]; then
-#  docker run -it --rm -e USER="$USER" -e MY_GITHUB_ORG_OAUTH_CLIENT_ID -e MY_GITHUB_ORG_OAUTH_CLIENT_SECRET -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e SSH_AUTH_SOCK -v $SSH_AUTH_SOCK:$SSH_AUTH_SOCK -v $PWD:/mnt -v $HOME/.ssh:/root/.ssh:ro ubuntu
+#  docker run -it --rm -e MY_GITHUB_ORG_OAUTH_CLIENT_ID -e MY_GITHUB_ORG_OAUTH_CLIENT_SECRET -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e SSH_AUTH_SOCK -v $SSH_AUTH_SOCK:$SSH_AUTH_SOCK -v $PWD:/mnt -v $HOME/.ssh:/root/.ssh:ro ubuntu
 # else
-#  docker run -it --rm -e USER="$USER" -e MY_GITHUB_ORG_OAUTH_CLIENT_ID -e MY_GITHUB_ORG_OAUTH_CLIENT_SECRET -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -v $PWD:/mnt -v $HOME/.ssh:/root/.ssh:ro -v $HOME/.aws:/root/.aws ubuntu
+#  docker run -it --rm -e MY_GITHUB_ORG_OAUTH_CLIENT_ID -e MY_GITHUB_ORG_OAUTH_CLIENT_SECRET -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -v $PWD:/mnt -v $HOME/.ssh:/root/.ssh:ro -v $HOME/.aws:/root/.aws ubuntu
 # fi
 # echo $(hostname -I) $(hostname) >> /etc/hosts
 # apt-get update -qq && apt-get install -qq -y curl git pv > /dev/null
 # cd /mnt
 
 # export LETSENCRYPT_ENVIRONMENT="production"  # Use with care - Let's Encrypt will generate real certificates
-# export MY_DOMAIN="mylabs.dev"
 
 # ./run-k8s-eks-bottlerocket-fargate.sh
 
