@@ -73,7 +73,7 @@ Install [kubectl](https://github.com/kubernetes/kubectl) binary:
 
 ```bash
 if [[ ! -x /usr/local/bin/kubectl ]]; then
-  sudo curl -s -Lo "/usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/v1.19.3/bin/$(uname | tr "[:upper:]" "[:lower:]")/amd64/kubectl"
+  sudo curl -s -Lo /usr/local/bin/kubectl "https://storage.googleapis.com/kubernetes-release/release/v1.19.3/bin/$(uname | sed "s/./\L&/g" )/amd64/kubectl"
   sudo chmod a+x /usr/local/bin/kubectl
 fi
 ```
@@ -82,7 +82,7 @@ Install [Helm](https://helm.sh/):
 
 ```bash
 if [[ ! -x /usr/local/bin/helm ]]; then
-  curl https://raw.githubusercontent.com/helm/helm/master/scripts/get | bash -s -- --version v3.4.0
+  curl -s https://raw.githubusercontent.com/helm/helm/master/scripts/get | bash -s -- --version v3.4.0
 fi
 ```
 
@@ -98,7 +98,7 @@ Install [AWS IAM Authenticator for Kubernetes](https://github.com/kubernetes-sig
 
 ```bash
 if [[ ! -x /usr/local/bin/aws-iam-authenticator ]]; then
-  sudo curl -s -Lo "/usr/local/bin/aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.18.8/2020-09-18/bin/$(uname | tr "[:upper:]" "[:lower:]")/amd64/aws-iam-authenticator"
+  sudo curl -s -Lo /usr/local/bin/aws-iam-authenticator "https://amazon-eks.s3.us-west-2.amazonaws.com/1.18.8/2020-09-18/bin/$(uname | sed "s/./\L&/g" )/amd64/aws-iam-authenticator"
   sudo chmod a+x /usr/local/bin/aws-iam-authenticator
 fi
 ```

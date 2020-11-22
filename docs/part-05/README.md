@@ -53,7 +53,7 @@ EOF
 Configure OIDC for Harbor:
 
 ```bash
-curl -u "admin:${HARBOR_ADMIN_PASSWORD}" -X PUT "https://harbor.${CLUSTER_FQDN}/api/v2.0/configurations" -H "Content-Type: application/json" -d \
+curl -sk -u "admin:${HARBOR_ADMIN_PASSWORD}" -X PUT "https://harbor.${CLUSTER_FQDN}/api/v2.0/configurations" -H "Content-Type: application/json" -d \
 "{
   \"auth_mode\": \"oidc_auth\",
   \"self_registration\": \"false\",
@@ -71,8 +71,8 @@ Enable automated vulnerability scan after each "image push" to the project:
 `library`:
 
 ```bash
-PROJECT_ID=$(curl -s -u "admin:${HARBOR_ADMIN_PASSWORD}" -X GET "https://harbor.${CLUSTER_FQDN}/api/v2.0/projects?name=library" | jq ".[].project_id")
-curl -s -u "admin:${HARBOR_ADMIN_PASSWORD}" -X PUT "https://harbor.${CLUSTER_FQDN}/api/v2.0/projects/${PROJECT_ID}" -H  "Content-Type: application/json" -d \
+PROJECT_ID=$(curl -sk -u "admin:${HARBOR_ADMIN_PASSWORD}" -X GET "https://harbor.${CLUSTER_FQDN}/api/v2.0/projects?name=library" | jq ".[].project_id")
+curl -sk -u "admin:${HARBOR_ADMIN_PASSWORD}" -X PUT "https://harbor.${CLUSTER_FQDN}/api/v2.0/projects/${PROJECT_ID}" -H  "Content-Type: application/json" -d \
 "{
   \"metadata\": {
     \"auto_scan\": \"true\"
@@ -83,7 +83,7 @@ curl -s -u "admin:${HARBOR_ADMIN_PASSWORD}" -X PUT "https://harbor.${CLUSTER_FQD
 Create new Registry Endpoint:
 
 ```bash
-curl -X POST -H "Content-Type: application/json" -u "admin:${HARBOR_ADMIN_PASSWORD}" "https://harbor.${CLUSTER_FQDN}/api/v2.0/registries" -d \
+curl -sk -X POST -H "Content-Type: application/json" -u "admin:${HARBOR_ADMIN_PASSWORD}" "https://harbor.${CLUSTER_FQDN}/api/v2.0/registries" -d \
 "{
   \"name\": \"Docker Hub\",
   \"type\": \"docker-hub\",
@@ -107,7 +107,7 @@ COUNTER=0
 for DOCKER_HUB_REPOSITORY in istio/examples-bookinfo-details-v1 istio/examples-bookinfo-ratings-v1; do
   COUNTER=$((COUNTER+1))
   echo "Replicating (${COUNTER}): ${DOCKER_HUB_REPOSITORY}"
-  curl -X POST -H "Content-Type: application/json" -u "admin:${HARBOR_ADMIN_PASSWORD}" "https://harbor.${CLUSTER_FQDN}/api/v2.0/replication/policies" -d \
+  curl -sk -X POST -H "Content-Type: application/json" -u "admin:${HARBOR_ADMIN_PASSWORD}" "https://harbor.${CLUSTER_FQDN}/api/v2.0/replication/policies" -d \
     "{
       \"name\": \"Replication of ${DOCKER_HUB_REPOSITORY}\",
       \"type\": \"docker-hub\",
@@ -130,8 +130,8 @@ for DOCKER_HUB_REPOSITORY in istio/examples-bookinfo-details-v1 istio/examples-b
         \"type\": \"manual\"
       }
     }"
-  POLICY_ID=$(curl -s -H "Content-Type: application/json" -u "admin:${HARBOR_ADMIN_PASSWORD}" "https://harbor.${CLUSTER_FQDN}/api/v2.0/replication/policies" | jq ".[] | select (.filters[].value==\"${DOCKER_HUB_REPOSITORY}\") .id")
-  curl -X POST -H "Content-Type: application/json" -u "admin:${HARBOR_ADMIN_PASSWORD}" "https://harbor.${CLUSTER_FQDN}/api/v2.0/replication/executions" -d "{ \"policy_id\": ${POLICY_ID} }"
+  POLICY_ID=$(curl -sk -H "Content-Type: application/json" -u "admin:${HARBOR_ADMIN_PASSWORD}" "https://harbor.${CLUSTER_FQDN}/api/v2.0/replication/policies" | jq ".[] | select (.filters[].value==\"${DOCKER_HUB_REPOSITORY}\") .id")
+  curl -sk -X POST -H "Content-Type: application/json" -u "admin:${HARBOR_ADMIN_PASSWORD}" "https://harbor.${CLUSTER_FQDN}/api/v2.0/replication/executions" -d "{ \"policy_id\": ${POLICY_ID} }"
 done
 ```
 
