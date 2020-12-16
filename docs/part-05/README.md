@@ -6,7 +6,10 @@ The S3 bucket where Harbor will store container images
 The ServiceAccount for Harbor's registry and ChartMuseum to access S3 without
 additional secrets was created by `eksctl`.
 
-Install Harbor:
+Install `harbor`
+[helm chart](https://artifacthub.io/packages/helm/harbor/harbor)
+and modify the
+[default values](https://github.com/goharbor/harbor-helm/blob/master/values.yaml).
 
 ```bash
 HARBOR_ADMIN_PASSWORD="harbor_supersecret_admin_password"
@@ -35,19 +38,37 @@ persistence:
   #     size: 1Gi
   #   trivy:
   #     size: 1Gi
-  # imageChartStorage:
-  # # S3 is not working due to the bugs:
-  # # https://github.com/goharbor/harbor/issues/12888
-  # # https://github.com/goharbor/harbor-helm/issues/725
-  #   type: s3
-  #   s3:
-  #     region: ${REGION}
-  #     bucket: ${CLUSTER_FQDN}-harbor
-  #     rootdirectory: harbor
-  #     storageclass: REDUCED_REDUNDANCY
+  imageChartStorage:
+    type: s3
+    s3:
+      region: ${AWS_DEFAULT_REGION}
+      bucket: ${CLUSTER_FQDN}
+      # This should be replaced by IRSA once these bugs will be fixed:
+      # https://github.com/goharbor/harbor/issues/12888
+      # https://github.com/goharbor/harbor-helm/issues/725
+      accesskey: ${AWS_ACCESS_KEY_ID}
+      secretkey: ${AWS_SECRET_ACCESS_KEY}
+      rootdirectory: /harbor
+      storageclass: REDUCED_REDUNDANCY
 imagePullPolicy: Always
 harborAdminPassword: ${HARBOR_ADMIN_PASSWORD}
 EOF
+```
+
+Output:
+
+```text
+"harbor" has been added to your repositories
+NAME: harbor
+LAST DEPLOYED: Thu Dec 10 16:12:10 2020
+NAMESPACE: harbor
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+Please wait for several minutes for Harbor deployment to complete.
+Then you should be able to visit the Harbor portal at https://harbor.k1.k8s.mylabs.dev
+For more details, please visit https://github.com/goharbor/harbor
 ```
 
 Configure OIDC for Harbor:
@@ -137,3 +158,13 @@ done
 
 After a while all images used by "bookinfo" application should be replicated
 into `library` project and all should be automatically scanned.
+
+## CloudWatch retention
+
+Set retention for all log groups which belongs to the cluster to 1 day:
+
+```bash
+for LOG_GROUP in $(aws logs describe-log-groups | jq -r ".logGroups[] | select(.logGroupName|test(\"/${CLUSTER_NAME}/|/${CLUSTER_FQDN}/\")) .logGroupName"); do
+  aws logs put-retention-policy --log-group-name "${LOG_GROUP}" --retention-in-days 1
+done
+```

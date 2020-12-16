@@ -5,14 +5,107 @@ Install the basic tools, before running some applications like monitoring
 ([external-dns](https://github.com/kubernetes-sigs/external-dns)), Ingress ([ingress-nginx](https://kubernetes.github.io/ingress-nginx/)),
 certificate management ([cert-manager](https://cert-manager.io/)), ...
 
+## aws-ebs-csi-driver
+
+```bash
+EBS_CONTROLLER_ROLE_ARN=$(eksctl get iamserviceaccount --cluster=${CLUSTER_NAME} --namespace kube-system -o json  | jq -r ".iam.serviceAccounts[] | select(.metadata.name==\"ebs-csi-controller-sa\") .status.roleARN")
+EBS_SNAPSHOT_ROLE_ARN=$(eksctl get iamserviceaccount --cluster=${CLUSTER_NAME} --namespace kube-system -o json  | jq -r ".iam.serviceAccounts[] | select(.metadata.name==\"ebs-snapshot-controller\") .status.roleARN")
+```
+
+Install Amazon EBS CSI Driver `aws-ebs-csi-driver`
+[helm chart](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/tree/master/charts/aws-ebs-csi-driver)
+and modify the
+[default values](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/blob/master/charts/aws-ebs-csi-driver/values.yaml):
+
+```bash
+helm repo add aws-ebs-csi-driver https://kubernetes-sigs.github.io/aws-ebs-csi-driver
+helm install --version 0.7.0 --namespace kube-system --values - aws-ebs-csi-driver aws-ebs-csi-driver/aws-ebs-csi-driver << EOF
+enableVolumeScheduling: true
+enableVolumeResizing: true
+enableVolumeSnapshot: false
+k8sTagClusterId: ${CLUSTER_FQDN}
+serviceAccount:
+  controller:
+    annotations:
+      eks.amazonaws.com/role-arn: ${EBS_CONTROLLER_ROLE_ARN}
+  snapshot:
+    annotations:
+      eks.amazonaws.com/role-arn: ${EBS_SNAPSHOT_ROLE_ARN}
+EOF
+```
+
+Delete default `gp2` storage class:
+
+```bash
+kubectl delete storageclass gp2
+```
+
+Create new `gp3` storage class using `aws-ebs-csi-driver`:
+
+```bash
+kubectl apply -f - << EOF
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: gp3
+provisioner: ebs.csi.aws.com # Amazon EBS CSI driver
+parameters:
+  type: gp3
+  encrypted: "true" # EBS volumes will always be encrypted by default
+reclaimPolicy: Delete
+EOF
+```
+
+## aws-for-fluent-bit
+
+Install `aws-for-fluent-bit`
+[helm chart](https://artifacthub.io/packages/helm/aws/aws-for-fluent-bit)
+and modify the
+[default values](https://github.com/aws/eks-charts/blob/master/stable/aws-for-fluent-bit/values.yaml).
+
+```bash
+helm repo add eks https://aws.github.io/eks-charts
+helm install --version 0.1.5 --namespace kube-system --values - aws-for-fluent-bit eks/aws-for-fluent-bit << EOF
+cloudWatch:
+  region: ${AWS_DEFAULT_REGION}
+  logGroupName: /aws/eks/${CLUSTER_FQDN}/logs
+firehose:
+  enabled: false
+kinesis:
+  enabled: false
+elasticsearch:
+  enabled: false
+EOF
+```
+
+The `aws-for-fluent-bit` will create Log group `/aws/eks/k1.k8s.mylabs.dev/logs`
+and stream the logs from all pods there.
+
+## aws-cloudwatch-metrics
+
+Install `aws-cloudwatch-metrics`
+[helm chart](https://artifacthub.io/packages/helm/aws/aws-cloudwatch-metrics)
+and modify the
+[default values](https://github.com/aws/eks-charts/blob/master/stable/aws-cloudwatch-metrics/values.yaml).
+
+```bash
+helm install --version 0.0.1 --namespace amazon-cloudwatch --create-namespace --values - aws-cloudwatch-metrics eks/aws-cloudwatch-metrics << EOF
+clusterName: ${CLUSTER_FQDN}
+EOF
+```
+
+The `aws-cloudwatch-metrics` populates "Container insights" in CloudWatch
+
 ## kube-prometheus-stack
 
-Create config file for `kube-prometheus-stack` Helm chart:
+Install `kube-prometheus-stack`
+[helm chart](https://artifacthub.io/packages/helm/prometheus-community/kube-prometheus-stack)
+and modify the
+[default values](https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/values.yaml):
 
 ```bash
 helm repo add --force-update prometheus-community https://prometheus-community.github.io/helm-charts ; helm repo update > /dev/null
-helm install --version 12.2.0 --namespace kube-prometheus-stack --create-namespace --values - kube-prometheus-stack prometheus-community/kube-prometheus-stack << EOF
-# https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/values.yaml
+helm install --version 12.7.0 --namespace kube-prometheus-stack --create-namespace --values - kube-prometheus-stack prometheus-community/kube-prometheus-stack << EOF
 defaultRules:
   rules:
     etcd: false
@@ -35,7 +128,7 @@ alertmanager:
     storage:
       volumeClaimTemplate:
         spec:
-          storageClassName: gp2
+          storageClassName: gp3
           accessModes: ["ReadWriteOnce"]
           resources:
             requests:
@@ -141,7 +234,7 @@ prometheus:
     storageSpec:
       volumeClaimTemplate:
         spec:
-          storageClassName: gp2
+          storageClassName: gp3
           accessModes: ["ReadWriteOnce"]
           resources:
             requests:
@@ -154,7 +247,7 @@ Output:
 ```text
 "prometheus-community" has been added to your repositories
 NAME: kube-prometheus-stack
-LAST DEPLOYED: Fri Nov 13 16:45:33 2020
+LAST DEPLOYED: Thu Dec 10 15:56:10 2020
 NAMESPACE: kube-prometheus-stack
 STATUS: deployed
 REVISION: 1
@@ -167,14 +260,17 @@ Visit https://github.com/prometheus-operator/kube-prometheus for instructions on
 
 ## cert-manager
 
-Install `cert-manager` and use the previously created Role ARN to annotate
-service account:
+Install `cert-manager`
+[helm chart](https://artifacthub.io/packages/helm/jetstack/cert-manager)
+and modify the
+[default values](https://github.com/jetstack/cert-manager/blob/master/deploy/charts/cert-manager/values.yaml).
+The the previously created Role ARN will be used to annotate service account.
 
 ```bash
-ROUTE53_ROLE_ARN_CERT_MANAGER=$(eksctl get iamserviceaccount --region "${REGION}" --cluster=${CLUSTER_NAME} --namespace cert-manager -o json  | jq -r ".iam.serviceAccounts[] | select(.metadata.name==\"cert-manager\") .status.roleARN")
+ROUTE53_ROLE_ARN_CERT_MANAGER=$(eksctl get iamserviceaccount --cluster=${CLUSTER_NAME} --namespace cert-manager -o json  | jq -r ".iam.serviceAccounts[] | select(.metadata.name==\"cert-manager\") .status.roleARN")
 
 helm repo add --force-update jetstack https://charts.jetstack.io ; helm repo update > /dev/null
-helm install --version v1.0.3 --namespace cert-manager --create-namespace --wait --values - cert-manager jetstack/cert-manager << EOF
+helm install --version v1.1.0 --namespace cert-manager --create-namespace --wait --values - cert-manager jetstack/cert-manager << EOF
 # https://github.com/jetstack/cert-manager/blob/master/deploy/charts/cert-manager/values.yaml
 installCRDs: true
 prometheus:
@@ -197,7 +293,7 @@ Output:
 ```text
 "jetstack" has been added to your repositories
 NAME: cert-manager
-LAST DEPLOYED: Fri Nov 13 16:45:46 2020
+LAST DEPLOYED: Thu Dec 10 15:56:33 2020
 NAMESPACE: cert-manager
 STATUS: deployed
 REVISION: 1
@@ -241,7 +337,7 @@ spec:
             - ${CLUSTER_FQDN}
         dns01:
           route53:
-            region: ${REGION}
+            region: ${AWS_DEFAULT_REGION}
 ---
 # Create ClusterIssuer for production to get real signed certificates
 apiVersion: cert-manager.io/v1
@@ -261,7 +357,7 @@ spec:
             - ${CLUSTER_FQDN}
         dns01:
           route53:
-            region: ${REGION}
+            region: ${AWS_DEFAULT_REGION}
 EOF
 ```
 
@@ -288,21 +384,24 @@ EOF
 
 ## external-dns
 
-Install `external-dns` to take care about DNS records.
+Install `external-dns`
+[helm chart](https://artifacthub.io/packages/helm/bitnami/external-dns)
+and modify the
+[default values](https://github.com/bitnami/charts/blob/master/bitnami/external-dns/values.yaml).
+`external-dns` will take care about DNS records.
 (`ROUTE53_ROLE_ARN` variable was defined before for `cert-manager`)
 
 ```bash
-ROUTE53_ROLE_ARN_EXTERNAL_DNS=$(eksctl get iamserviceaccount --region eu-central-1 --cluster=${CLUSTER_NAME} --namespace external-dns -o json  | jq -r ".iam.serviceAccounts[] | select(.metadata.name==\"external-dns\") .status.roleARN")
+ROUTE53_ROLE_ARN_EXTERNAL_DNS=$(eksctl get iamserviceaccount --cluster=${CLUSTER_NAME} --namespace external-dns -o json  | jq -r ".iam.serviceAccounts[] | select(.metadata.name==\"external-dns\") .status.roleARN")
 ```
 
 ```bash
 helm repo add --force-update bitnami https://charts.bitnami.com/bitnami ; helm repo update > /dev/null
-helm install --version 3.5.1 --namespace external-dns --create-namespace --values - external-dns bitnami/external-dns << EOF
-# https://github.com/bitnami/charts/blob/master/bitnami/external-dns/values.yaml
+helm install --version 4.4.1 --namespace external-dns --create-namespace --values - external-dns bitnami/external-dns << EOF
 image:
   pullPolicy: Always
 aws:
-  region: ${REGION}
+  region: ${AWS_DEFAULT_REGION}
 domainFilters:
   - ${CLUSTER_FQDN}
 interval: 10s
@@ -336,7 +435,7 @@ Output:
 ```text
 "bitnami" has been added to your repositories
 NAME: external-dns
-LAST DEPLOYED: Fri Nov 13 16:46:25 2020
+LAST DEPLOYED: Thu Dec 10 15:57:16 2020
 NAMESPACE: external-dns
 STATUS: deployed
 REVISION: 1
@@ -351,18 +450,22 @@ To verify that external-dns has started, run:
 
 ## kubed
 
-Install `kubed` - tool which helps the certificate secretes to be copied to
-the namespaces.
+`kubed` - tool which helps with copying the certificate secretes across the
+namespaces.
 
 See the details:
 
 * [https://cert-manager.io/docs/faq/kubed/](https://cert-manager.io/docs/faq/kubed/)
 * [https://appscode.com/products/kubed/v0.12.0/guides/config-syncer/intra-cluster/](https://appscode.com/products/kubed/v0.12.0/guides/config-syncer/intra-cluster/)
 
+Install `kubed`
+[helm chart](https://artifacthub.io/packages/helm/appscode/kubed)
+and modify the
+[default values](https://github.com/appscode/kubed/blob/master/charts/kubed/values.yaml).
+
 ```bash
 helm repo add --force-update appscode https://charts.appscode.com/stable/ ; helm repo update > /dev/null
 helm install --version v0.12.0 --namespace kubed --create-namespace --values - kubed appscode/kubed << EOF
-# https://github.com/appscode/kubed/blob/master/charts/kubed/values.yaml
 imagePullPolicy: Always
 config:
   clusterName: ${CLUSTER_FQDN}
@@ -374,7 +477,7 @@ Output:
 ```text
 "appscode" has been added to your repositories
 NAME: kubed
-LAST DEPLOYED: Fri Nov 13 16:46:34 2020
+LAST DEPLOYED: Thu Dec 10 15:57:21 2020
 NAMESPACE: kubed
 STATUS: deployed
 REVISION: 1
@@ -395,12 +498,14 @@ kubectl annotate secret "ingress-cert-${LETSENCRYPT_ENVIRONMENT}" -n cert-manage
 
 ## ingress-nginx
 
-Install the Ingress:
+Install `ingress-nginx`
+[helm chart](https://artifacthub.io/packages/helm/ingress-nginx/ingress-nginx)
+and modify the
+[default values](https://github.com/kubernetes/ingress-nginx/blob/master/charts/ingress-nginx/values.yaml).
 
 ```bash
 helm repo add --force-update ingress-nginx https://kubernetes.github.io/ingress-nginx ; helm repo update > /dev/null
-helm install --version 3.11.0 --namespace ingress-nginx --create-namespace --wait --values - ingress-nginx ingress-nginx/ingress-nginx << EOF
-# https://github.com/kubernetes/ingress-nginx/blob/master/charts/ingress-nginx/values.yaml
+helm install --version 3.15.2 --namespace ingress-nginx --create-namespace --wait --values - ingress-nginx ingress-nginx/ingress-nginx << EOF
 controller:
   extraArgs:
     default-ssl-certificate: cert-manager/ingress-cert-${LETSENCRYPT_ENVIRONMENT}
@@ -417,7 +522,7 @@ Output:
 ```text
 "ingress-nginx" has been added to your repositories
 NAME: ingress-nginx
-LAST DEPLOYED: Fri Nov 13 16:50:45 2020
+LAST DEPLOYED: Thu Dec 10 16:00:57 2020
 NAMESPACE: ingress-nginx
 STATUS: deployed
 REVISION: 1
@@ -466,8 +571,6 @@ If TLS is enabled for the Ingress, a Secret containing the certificate and key m
 
 ## Dex
 
-Install Dex:
-
 ```bash
 helm repo add --force-update stable https://charts.helm.sh/stable ; helm repo update > /dev/null
 helm install --version 2.15.1 --namespace dex --create-namespace --values - dex stable/dex << EOF
@@ -497,6 +600,11 @@ config:
         orgs:
           - name: ${MY_GITHUB_ORG_NAME}
   staticClients:
+    - id: argocd.${CLUSTER_FQDN}
+      redirectURIs:
+        - https://argocd.${CLUSTER_FQDN}/auth/callback
+      name: ArgoCD
+      secret: ${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET}
     - id: gangway.${CLUSTER_FQDN}
       redirectURIs:
         - https://gangway.${CLUSTER_FQDN}/callback
@@ -521,6 +629,21 @@ config:
 EOF
 ```
 
+Output:
+
+```text
+"stable" has been added to your repositories
+NAME: dex
+LAST DEPLOYED: Thu Dec 10 16:01:52 2020
+NAMESPACE: dex
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+1. Get the application URL by running these commands:
+  https://dex.k1.k8s.mylabs.dev/
+```
+
 ## oauth2-proxy
 
 Install [oauth2-proxy](https://github.com/oauth2-proxy/oauth2-proxy) to secure
@@ -528,7 +651,7 @@ the endpoints like (`prometheus.`, `alertmanager.`).
 
 ```bash
 kubectl create namespace oauth2-proxy
-helm install --version 3.2.3 --namespace oauth2-proxy --create-namespace --values - oauth2-proxy stable/oauth2-proxy << EOF
+helm install --version 3.2.5 --namespace oauth2-proxy --create-namespace --values - oauth2-proxy stable/oauth2-proxy << EOF
 # https://github.com/helm/charts/blob/master/stable/oauth2-proxy/values.yaml
 config:
   clientID: oauth2-proxy.${CLUSTER_FQDN}
@@ -568,9 +691,9 @@ Output:
 
 ```text
 namespace/oauth2-proxy created
-"stable" has been added to your repositories
+WARNING: This chart is deprecated
 NAME: oauth2-proxy
-LAST DEPLOYED: Fri Nov 13 16:51:49 2020
+LAST DEPLOYED: Thu Dec 10 16:02:08 2020
 NAMESPACE: oauth2-proxy
 STATUS: deployed
 REVISION: 1
@@ -645,35 +768,8 @@ oidc:
   clientId: kube-oidc-proxy.${CLUSTER_FQDN}
   issuerUrl: https://dex.${CLUSTER_FQDN}
   usernameClaim: email
-  # https://letsencrypt.org/certs/fakeleintermediatex1.pem
   caPEM: |
-    -----BEGIN CERTIFICATE-----
-    MIIEqzCCApOgAwIBAgIRAIvhKg5ZRO08VGQx8JdhT+UwDQYJKoZIhvcNAQELBQAw
-    GjEYMBYGA1UEAwwPRmFrZSBMRSBSb290IFgxMB4XDTE2MDUyMzIyMDc1OVoXDTM2
-    MDUyMzIyMDc1OVowIjEgMB4GA1UEAwwXRmFrZSBMRSBJbnRlcm1lZGlhdGUgWDEw
-    ggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDtWKySDn7rWZc5ggjz3ZB0
-    8jO4xti3uzINfD5sQ7Lj7hzetUT+wQob+iXSZkhnvx+IvdbXF5/yt8aWPpUKnPym
-    oLxsYiI5gQBLxNDzIec0OIaflWqAr29m7J8+NNtApEN8nZFnf3bhehZW7AxmS1m0
-    ZnSsdHw0Fw+bgixPg2MQ9k9oefFeqa+7Kqdlz5bbrUYV2volxhDFtnI4Mh8BiWCN
-    xDH1Hizq+GKCcHsinDZWurCqder/afJBnQs+SBSL6MVApHt+d35zjBD92fO2Je56
-    dhMfzCgOKXeJ340WhW3TjD1zqLZXeaCyUNRnfOmWZV8nEhtHOFbUCU7r/KkjMZO9
-    AgMBAAGjgeMwgeAwDgYDVR0PAQH/BAQDAgGGMBIGA1UdEwEB/wQIMAYBAf8CAQAw
-    HQYDVR0OBBYEFMDMA0a5WCDMXHJw8+EuyyCm9Wg6MHoGCCsGAQUFBwEBBG4wbDA0
-    BggrBgEFBQcwAYYoaHR0cDovL29jc3Auc3RnLXJvb3QteDEubGV0c2VuY3J5cHQu
-    b3JnLzA0BggrBgEFBQcwAoYoaHR0cDovL2NlcnQuc3RnLXJvb3QteDEubGV0c2Vu
-    Y3J5cHQub3JnLzAfBgNVHSMEGDAWgBTBJnSkikSg5vogKNhcI5pFiBh54DANBgkq
-    hkiG9w0BAQsFAAOCAgEABYSu4Il+fI0MYU42OTmEj+1HqQ5DvyAeyCA6sGuZdwjF
-    UGeVOv3NnLyfofuUOjEbY5irFCDtnv+0ckukUZN9lz4Q2YjWGUpW4TTu3ieTsaC9
-    AFvCSgNHJyWSVtWvB5XDxsqawl1KzHzzwr132bF2rtGtazSqVqK9E07sGHMCf+zp
-    DQVDVVGtqZPHwX3KqUtefE621b8RI6VCl4oD30Olf8pjuzG4JKBFRFclzLRjo/h7
-    IkkfjZ8wDa7faOjVXx6n+eUQ29cIMCzr8/rNWHS9pYGGQKJiY2xmVC9h12H99Xyf
-    zWE9vb5zKP3MVG6neX1hSdo7PEAb9fqRhHkqVsqUvJlIRmvXvVKTwNCP3eCjRCCI
-    PTAvjV+4ni786iXwwFYNz8l3PmPLCyQXWGohnJ8iBm+5nk7O2ynaPVW0U2W+pt2w
-    SVuvdDM5zGv2f9ltNWUiYZHJ1mmO97jSY/6YfdOUH66iRtQtDkHBRdkNBsMbD+Em
-    2TgBldtHNSJBfB3pm9FblgOcJ0FSWcUDWJ7vO0+NTXlgrRofRT6pVywzxVo6dND0
-    WzYlTWeUVsO40xJqhgUQRER9YLOLxJ0O6C8i0xFxAMKOtSdodMB3RIwt7RFQ0uyt
-    n5Z5MqkYhlMI3J1tPRTp1nEt9fyGspBOO05gi148Qasp+3N+svqKomoQglNoAxU=
-    -----END CERTIFICATE-----
+$(curl -s https://letsencrypt.org/certs/fakelerootx1.pem | sed  "s/^/    /" )
 ingress:
   enabled: false
   hosts:
@@ -687,38 +783,41 @@ ingress:
 EOF
 ```
 
-## Polaris
+## Istio
 
-Install Polaris
+Download `istioctl`:
 
 ```bash
-helm repo add fairwinds-stable https://charts.fairwinds.com/stable
-helm install --version 1.3.1 --namespace polaris --create-namespace --values - polaris fairwinds-stable/polaris << EOF
-# https://github.com/FairwindsOps/charts/blob/master/stable/polaris/values.yaml
-dashboard:
-  ingress:
-    enabled: true
-    annotations:
-      nginx.ingress.kubernetes.io/auth-url: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/auth
-      nginx.ingress.kubernetes.io/auth-signin: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/start?rd=\$scheme://\$host\$request_uri
-    hosts:
-      - polaris.${CLUSTER_FQDN}
-    tls:
-      - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
-        hosts:
-          - polaris.${CLUSTER_FQDN}
-EOF
+if [[ ! -f /usr/local/bin/istioctl ]]; then
+  ISTIO_VERSION="1.8.1"
+  if [[ $(uname) == "Darwin" ]]; then
+    ISTIOCTL_URL="https://github.com/istio/istio/releases/download/${ISTIO_VERSION}/istioctl-${ISTIO_VERSION}-osx.tar.gz"
+  else
+    ISTIOCTL_URL="https://github.com/istio/istio/releases/download/${ISTIO_VERSION}/istioctl-${ISTIO_VERSION}-linux-amd64.tar.gz"
+  fi
+  curl -s -L ${ISTIOCTL_URL} | sudo tar xz -C /usr/local/bin/
+fi
+```
+
+Install Istio Operator:
+
+```bash
+# istioctl operator init --revision 1-8-2
 ```
 
 ## cluster-autoscaler
 
+Install `autoscaler`
+[helm chart](https://artifacthub.io/packages/helm/cluster-autoscaler/cluster-autoscaler)
+and modify the
+[default values](https://github.com/kubernetes/autoscaler/blob/master/charts/cluster-autoscaler/values.yaml).
+
 ```bash
 helm repo add autoscaler https://kubernetes.github.io/autoscaler
-helm install --version 1.1.0 --namespace kube-system --values - cluster-autoscaler autoscaler/cluster-autoscaler-chart << EOF
-# https://github.com/kubernetes/autoscaler/blob/master/charts/cluster-autoscaler-chart/values.yaml
+helm install --version 9.3.0 --namespace kube-system --values - cluster-autoscaler autoscaler/cluster-autoscaler << EOF
 autoDiscovery:
   clusterName: ${CLUSTER_NAME}
-awsRegion: ${REGION}
+awsRegion: ${AWS_DEFAULT_REGION}
 serviceMonitor:
   enabled: true
   namespace: kube-prometheus-stack
@@ -730,7 +829,7 @@ Output:
 ```text
 "autoscaler" has been added to your repositories
 NAME: cluster-autoscaler
-LAST DEPLOYED: Fri Nov 13 16:51:58 2020
+LAST DEPLOYED: Thu Dec 10 16:02:21 2020
 NAMESPACE: kube-system
 STATUS: deployed
 REVISION: 1
@@ -738,7 +837,7 @@ TEST SUITE: None
 NOTES:
 To verify that cluster-autoscaler has started, run:
 
-  kubectl --namespace=kube-system get pods -l "app.kubernetes.io/name=aws-cluster-autoscaler-chart,app.kubernetes.io/instance=cluster-autoscaler"
+  kubectl --namespace=kube-system get pods -l "app.kubernetes.io/name=aws-cluster-autoscaler,app.kubernetes.io/instance=cluster-autoscaler"
 ```
 
 ## metrics-server
@@ -753,7 +852,7 @@ Output:
 
 ```text
 NAME: metrics-server
-LAST DEPLOYED: Fri Nov 13 16:52:02 2020
+LAST DEPLOYED: Thu Dec 10 16:02:25 2020
 NAMESPACE: kube-system
 STATUS: deployed
 REVISION: 1
@@ -764,58 +863,4 @@ In a few minutes you should be able to list metrics using the following
 command:
 
   kubectl get --raw "/apis/metrics.k8s.io/v1beta1/nodes"
-```
-
-## HashiCorp Vault
-
-Install HashiCorp Vault:
-
-```bash
-helm repo add --force-update hashicorp https://helm.releases.hashicorp.com ; helm repo update > /dev/null
-helm install --version 0.8.0 --namespace vault --create-namespace --values - vault hashicorp/vault << EOF
-# https://github.com/hashicorp/vault-helm/blob/master/values.yaml
-injector:
-  metrics:
-    enabled: false
-server:
-  ingress:
-    enabled: true
-    annotations:
-      nginx.ingress.kubernetes.io/auth-url: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/auth
-      nginx.ingress.kubernetes.io/auth-signin: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/start?rd=\$scheme://\$host\$request_uri
-    hosts:
-      - host: vault.${CLUSTER_FQDN}
-    tls:
-      - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
-        hosts:
-          - vault.${CLUSTER_FQDN}
-  dataStorage:
-    size: 1Gi
-EOF
-```
-
-Output:
-
-```text
-namespace/vault created
-"hashicorp" has been added to your repositories
-NAME: vault
-LAST DEPLOYED: Fri Nov 13 16:52:16 2020
-NAMESPACE: vault
-STATUS: deployed
-REVISION: 1
-TEST SUITE: None
-NOTES:
-Thank you for installing HashiCorp Vault!
-
-Now that you have deployed Vault, you should look over the docs on using
-Vault with Kubernetes available here:
-
-https://www.vaultproject.io/docs/
-
-
-Your release is named vault. To learn more about the release, try:
-
-  $ helm status vault
-  $ helm get manifest vault
 ```

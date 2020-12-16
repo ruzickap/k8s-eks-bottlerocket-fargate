@@ -7,7 +7,7 @@ export CLUSTER_NAME="k1"
 export CLUSTER_FQDN="${CLUSTER_NAME}.${BASE_DOMAIN}"
 export LETSENCRYPT_ENVIRONMENT=${LETSENCRYPT_ENVIRONMENT:-staging}
 export MY_EMAIL="petr.ruzicka@gmail.com"
-export REGION="eu-central-1"
+export AWS_DEFAULT_REGION="eu-central-1"
 export MY_GITHUB_ORG_OAUTH_CLIENT_ID="3xxxxxxxxxxxxxxxxxx3"
 export MY_GITHUB_ORG_OAUTH_CLIENT_SECRET="7xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx8"
 export MY_GITHUB_ORG_NAME="ruzickap-org"
@@ -66,6 +66,8 @@ export ROUTE53_ROLE_ARN_EXTERNAL_DNS="test_arn"
 export RDS_DB_HOST="testdomain123.com"
 export EFS_FS_ID="123"
 export EFS_AP_ID="123"
+export EBS_CONTROLLER_ROLE_ARN="test123"
+export EBS_SNAPSHOT_ROLE_ARN="test123"
 
 # shellcheck disable=SC1004
 sed docs/part-0{2..4}/README.md \
