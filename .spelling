@@ -1,11 +1,15 @@
 
 Ansible
+ArgoCD
 Autoscaler
+Base64
 Bottlerocket
 ChartMuseum
 Cleanup
 CloudFlare
 CloudFormation
+CloudWatch
+ClusterAPI
 ClusterIssuers
 Dex
 Drupal
@@ -21,7 +25,11 @@ Polaris
 ReadWriteMany
 Route53
 ServiceAccount
+Velero
 Weaveworks
+aws-cloudwatch-metrics
+aws-ebs-csi-driver
+aws-for-fluent-bit
 awscli
 bookinfo
 cluster-autoscaler
@@ -32,8 +40,10 @@ ingress-nginx
 k8s-eks-bottlerocket-fargate
 kube-oidc-proxy
 kube-prometheus-stack
+kube2iam
 kubectl
 kubed
+kubernetes-dashboard
 mylabs.dev
 nameservers
 oauth2-proxy

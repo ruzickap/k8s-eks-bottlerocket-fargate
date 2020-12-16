@@ -8,8 +8,8 @@ Get details about AWS environment where is the EKS cluster and store it into
 variables:
 
 ```bash
-EKS_VPC_ID=$(aws eks --region "${REGION}" describe-cluster --name "${CLUSTER_NAME}" --query "cluster.resourcesVpcConfig.vpcId" --output text)
-EKS_VPC_CIDR=$(aws ec2 --region "${REGION}" describe-vpcs --vpc-ids "${EKS_VPC_ID}" --query "Vpcs[].CidrBlock" --output text)
+EKS_VPC_ID=$(aws eks describe-cluster --name "${CLUSTER_NAME}" --query "cluster.resourcesVpcConfig.vpcId" --output text)
+EKS_VPC_CIDR=$(aws ec2 describe-vpcs --vpc-ids "${EKS_VPC_ID}" --query "Vpcs[].CidrBlock" --output text)
 RDS_DB_USERNAME="root"
 RDS_DB_PASSWORD="123-My_Secret_Password-456"
 ```
@@ -180,9 +180,9 @@ Outputs:
         Fn::Sub: "${AWS::StackName}-RdsMasterPassword"
 EOF
 
-eval aws --region "${REGION}" cloudformation deploy --stack-name "${CLUSTER_NAME}-rds" --parameter-overrides "ClusterName=${CLUSTER_NAME} RdsMasterPassword=${RDS_DB_PASSWORD} RdsMasterUsername=${RDS_DB_USERNAME} VpcIPCidr=${EKS_VPC_CIDR}" --template-file tmp/cf_rds.yml --tags "${TAGS}"
+eval aws cloudformation deploy --stack-name "${CLUSTER_NAME}-rds" --parameter-overrides "ClusterName=${CLUSTER_NAME} RdsMasterPassword=${RDS_DB_PASSWORD} RdsMasterUsername=${RDS_DB_USERNAME} VpcIPCidr=${EKS_VPC_CIDR}" --template-file tmp/cf_rds.yml --tags "${TAGS}"
 
-RDS_DB_HOST=$(aws rds --region "${REGION}" describe-db-instances --query "DBInstances[?DBInstanceIdentifier==\`${CLUSTER_NAME}db\`].[Endpoint.Address]" --output text)
+RDS_DB_HOST=$(aws rds describe-db-instances --query "DBInstances[?DBInstanceIdentifier==\`${CLUSTER_NAME}db\`].[Endpoint.Address]" --output text)
 ```
 
 Output:
@@ -220,7 +220,7 @@ Output:
 
 ```text
 NAME: phpmyadmin
-LAST DEPLOYED: Fri Nov 13 16:58:01 2020
+LAST DEPLOYED: Thu Dec 10 16:09:35 2020
 NAMESPACE: phpmyadmin
 STATUS: deployed
 REVISION: 1
@@ -351,10 +351,10 @@ Outputs:
         Fn::Sub: "${AWS::StackName}-AccessPoint"
 EOF
 
-eval aws --region "${REGION}" cloudformation deploy --stack-name "${CLUSTER_NAME}-efs" --parameter-overrides "ClusterName=${CLUSTER_NAME} VpcIPCidr=${EKS_VPC_CIDR}" --template-file tmp/cf_efs.yml --tags "${TAGS}"
+eval aws cloudformation deploy --stack-name "${CLUSTER_NAME}-efs" --parameter-overrides "ClusterName=${CLUSTER_NAME} VpcIPCidr=${EKS_VPC_CIDR}" --template-file tmp/cf_efs.yml --tags "${TAGS}"
 
-EFS_FS_ID=$(aws efs --region "${REGION}" describe-file-systems --query "FileSystems[?Name==\`${CLUSTER_NAME}-efs\`].[FileSystemId]" --output text)
-EFS_AP_ID=$(aws efs --region "${REGION}" describe-access-points --query "AccessPoints[?FileSystemId==\`${EFS_FS_ID}\`].[AccessPointId]" --output text)
+EFS_FS_ID=$(aws efs describe-file-systems --query "FileSystems[?Name==\`${CLUSTER_NAME}-efs\`].[FileSystemId]" --output text)
+EFS_AP_ID=$(aws efs describe-access-points --query "AccessPoints[?FileSystemId==\`${EFS_FS_ID}\`].[AccessPointId]" --output text)
 ```
 
 Output:
@@ -428,14 +428,17 @@ spec:
 EOF
 ```
 
-Install Drupal:
+Install `drupal`
+[helm chart](https://artifacthub.io/packages/helm/bitnami/drupal)
+and modify the
+[default values](https://github.com/bitnami/charts/blob/master/bitnami/drupal/values.yaml).
 
 ```bash
 DRUPAL_USERNAME="myuser"
 DRUPAL_PASSWORD="mypassword12345"
 
 helm repo add --force-update bitnami https://charts.bitnami.com/bitnami ; helm repo update > /dev/null
-helm install --version 10.0.2 --namespace drupal --values - drupal bitnami/drupal << EOF
+helm install --version 10.0.6 --namespace drupal --values - drupal bitnami/drupal << EOF
 # https://github.com/bitnami/charts/blob/master/bitnami/drupal/values.yaml
 replicaCount: 2
 drupalUsername: ${DRUPAL_USERNAME}
@@ -474,7 +477,7 @@ Output:
 ```text
 "bitnami" has been added to your repositories
 NAME: drupal
-LAST DEPLOYED: Fri Nov 13 17:01:09 2020
+LAST DEPLOYED: Thu Dec 10 16:12:00 2020
 NAMESPACE: drupal
 STATUS: deployed
 REVISION: 1

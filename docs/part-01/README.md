@@ -34,7 +34,7 @@ export MY_EMAIL="petr.ruzicka@gmail.com"
 # (MY_GITHUB_ORG_NAME) will be able to access the apps via ingress.
 export MY_GITHUB_ORG_NAME="ruzickap-org"
 # AWS Region
-export REGION="eu-central-1"
+export AWS_DEFAULT_REGION="eu-central-1"
 # Tags used to tag the AWS resources
 export TAGS="Owner=${MY_EMAIL} Environment=Dev Tribe=Cloud_Native Squad=Cloud_Container_Platform"
 echo -e "${MY_EMAIL} | ${LETSENCRYPT_ENVIRONMENT} | ${CLUSTER_NAME} | ${BASE_DOMAIN} | ${CLUSTER_FQDN}\n${TAGS}"
@@ -73,7 +73,8 @@ Install [kubectl](https://github.com/kubernetes/kubectl) binary:
 
 ```bash
 if [[ ! -x /usr/local/bin/kubectl ]]; then
-  sudo curl -s -Lo /usr/local/bin/kubectl "https://storage.googleapis.com/kubernetes-release/release/v1.19.3/bin/$(uname | sed "s/./\L&/g" )/amd64/kubectl"
+  # https://github.com/kubernetes/kubectl/releases
+  sudo curl -s -Lo /usr/local/bin/kubectl "https://storage.googleapis.com/kubernetes-release/release/v1.19.5/bin/$(uname | sed "s/./\L&/g" )/amd64/kubectl"
   sudo chmod a+x /usr/local/bin/kubectl
 fi
 ```
@@ -82,6 +83,7 @@ Install [Helm](https://helm.sh/):
 
 ```bash
 if [[ ! -x /usr/local/bin/helm ]]; then
+  # https://github.com/helm/helm/releases
   curl -s https://raw.githubusercontent.com/helm/helm/master/scripts/get | bash -s -- --version v3.4.0
 fi
 ```
@@ -90,7 +92,8 @@ Install [eksctl](https://eksctl.io/):
 
 ```bash
 if [[ ! -x /usr/local/bin/eksctl ]]; then
-  curl -s -L "https://github.com/weaveworks/eksctl/releases/download/0.31.0/eksctl_$(uname)_amd64.tar.gz" | sudo tar xz -C /usr/local/bin/
+  # https://github.com/weaveworks/eksctl/releases
+  curl -s -L "https://github.com/weaveworks/eksctl/releases/download/0.34.0/eksctl_$(uname)_amd64.tar.gz" | sudo tar xz -C /usr/local/bin/
 fi
 ```
 
@@ -98,7 +101,8 @@ Install [AWS IAM Authenticator for Kubernetes](https://github.com/kubernetes-sig
 
 ```bash
 if [[ ! -x /usr/local/bin/aws-iam-authenticator ]]; then
-  sudo curl -s -Lo /usr/local/bin/aws-iam-authenticator "https://amazon-eks.s3.us-west-2.amazonaws.com/1.18.8/2020-09-18/bin/$(uname | sed "s/./\L&/g" )/amd64/aws-iam-authenticator"
+  # https://docs.aws.amazon.com/eks/latest/userguide/install-aws-iam-authenticator.html
+  sudo curl -s -Lo /usr/local/bin/aws-iam-authenticator "https://amazon-eks.s3.us-west-2.amazonaws.com/1.18.9/2020-11-02/bin/$(uname | sed "s/./\L&/g" )/amd64/aws-iam-authenticator"
   sudo chmod a+x /usr/local/bin/aws-iam-authenticator
 fi
 ```
@@ -222,6 +226,32 @@ Parameters:
     Description: "Base domain where cluster domains + their subdomains will live. Ex: k8s.mylabs.dev"
     Type: String
 Resources:
+  EBSPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: !Sub "${ClusterFQDN}-AmazonEBS"
+      Description: !Sub "Policy required by  Amazon EBS Container Storage Interface (CSI) Driver (aws-ebs-csi-driver) to manage EBS volumes on ${ClusterFQDN}"
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Effect: Allow
+          Action:
+          - ec2:AttachVolume
+          - ec2:CreateSnapshot
+          - ec2:CreateTags
+          - ec2:CreateVolume
+          - ec2:DeleteSnapshot
+          - ec2:DeleteTags
+          - ec2:DeleteVolume
+          - ec2:DescribeAvailabilityZones
+          - ec2:DescribeInstances
+          - ec2:DescribeSnapshots
+          - ec2:DescribeTags
+          - ec2:DescribeVolumes
+          - ec2:DescribeVolumesModifications
+          - ec2:DetachVolume
+          - ec2:ModifyVolume
+          Resource: "*"
   Route53Policy:
     Type: AWS::IAM::ManagedPolicy
     Properties:
@@ -244,11 +274,11 @@ Resources:
           - route53:ListHostedZones
           - route53:ListHostedZonesByName
           Resource: "*"
-  S3PolicyHarbor:
+  S3Policy:
     Type: AWS::IAM::ManagedPolicy
     Properties:
-      ManagedPolicyName: !Sub "${ClusterFQDN}-AmazonS3-Harbor"
-      Description: !Sub "Policy required by harbor to write to S3 bucket ${ClusterFQDN}-harbor"
+      ManagedPolicyName: !Sub "${ClusterFQDN}-AmazonS3"
+      Description: !Sub "Policy required by Harbor and Velero to write to S3 bucket ${ClusterFQDN}"
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -257,7 +287,7 @@ Resources:
           - s3:ListBucket
           - s3:GetBucketLocation
           - s3:ListBucketMultipartUploads
-          Resource: !GetAtt S3BucketHarbor.Arn
+          Resource: !GetAtt S3Bucket.Arn
         - Effect: Allow
           Action:
           - s3:PutObject
@@ -265,12 +295,12 @@ Resources:
           - s3:DeleteObject
           - s3:ListMultipartUploadParts
           - s3:AbortMultipartUpload
-          Resource: !Sub "arn:aws:s3:::${ClusterFQDN}-harbor/*"
-  S3BucketHarbor:
+          Resource: !Sub "arn:aws:s3:::${ClusterFQDN}/*"
+  S3Bucket:
     Type: AWS::S3::Bucket
     Properties:
-      AccessControl: PublicRead
-      BucketName: !Sub "${ClusterFQDN}-harbor"
+      AccessControl: Private
+      BucketName: !Sub "${ClusterFQDN}"
   HostedZone:
     Type: AWS::Route53::HostedZone
     Properties:
@@ -291,20 +321,20 @@ Outputs:
     Export:
       Name:
         Fn::Sub: "${AWS::StackName}-Route53Policy"
-  S3PolicyHarbor:
-    Description: The ARN of the created AmazonS3-Harbor policy
+  S3Policy:
+    Description: The ARN of the created AmazonS3 policy
     Value:
-      Ref: S3PolicyHarbor
+      Ref: S3Policy
     Export:
       Name:
-        Fn::Sub: "${AWS::StackName}-S3PolicyHarbor"
-  S3BucketHarbor:
-    Description: The ARN of the created S3 bucket for Harbor
+        Fn::Sub: "${AWS::StackName}-S3Policy"
+  S3Bucket:
+    Description: The ARN of the created S3 bucket for Harbor and Velero
     Value:
-      Ref: S3BucketHarbor
+      Ref: S3Bucket
     Export:
       Name:
-        Fn::Sub: "${AWS::StackName}-S3BucketHarbor"
+        Fn::Sub: "${AWS::StackName}-S3Bucket"
   HostedZone:
     Description: The ARN of the created Route53 Zone for K8s cluster
     Value:
@@ -314,12 +344,13 @@ Outputs:
         Fn::Sub: "${AWS::StackName}-HostedZone"
 EOF
 
-eval aws --region "${REGION}" cloudformation deploy --capabilities CAPABILITY_NAMED_IAM \
+eval aws cloudformation deploy --capabilities CAPABILITY_NAMED_IAM \
   --parameter-overrides "ClusterFQDN=${CLUSTER_FQDN} BaseDomain=${BASE_DOMAIN}" \
   --stack-name "${CLUSTER_NAME}-route53-iam-s3" --template-file tmp/aws_policies.yml --tags "${TAGS}"
 
+EBS_POLICY_ARN=$(aws iam list-policies --query "Policies[?PolicyName==\`${CLUSTER_FQDN}-AmazonEBS\`].{ARN:Arn}" --output text)
 ROUTE53_POLICY_ARN=$(aws iam list-policies --query "Policies[?PolicyName==\`${CLUSTER_FQDN}-AmazonRoute53Domains\`].{ARN:Arn}" --output text)
-S3_POLICY_HARBOR_ARN=$(aws iam list-policies --query "Policies[?PolicyName==\`${CLUSTER_FQDN}-AmazonS3-Harbor\`].{ARN:Arn}" --output text)
+S3_POLICY_ARN=$(aws iam list-policies --query "Policies[?PolicyName==\`${CLUSTER_FQDN}-AmazonS3\`].{ARN:Arn}" --output text)
 ```
 
 ## Create Amazon EKS
@@ -351,7 +382,7 @@ kind: ClusterConfig
 
 metadata:
   name: ${CLUSTER_NAME}
-  region: ${REGION}
+  region: ${AWS_DEFAULT_REGION}
   version: "1.18"
   tags: &tags
     Owner: ${MY_EMAIL}
@@ -360,33 +391,42 @@ metadata:
     Squad: Cloud_Container_Platform
 
 availabilityZones:
-  - ${REGION}a
-  - ${REGION}b
+  - ${AWS_DEFAULT_REGION}a
+  - ${AWS_DEFAULT_REGION}b
 
 iam:
   withOIDC: true
   serviceAccounts:
     - metadata:
+        name: ebs-csi-controller-sa
+        namespace: kube-system
+      attachPolicyARNs:
+        - ${EBS_POLICY_ARN}
+    - metadata:
+        name: ebs-snapshot-controller
+        namespace: kube-system
+      attachPolicyARNs:
+        - ${EBS_POLICY_ARN}
+    - metadata:
         name: cert-manager
         namespace: cert-manager
-        labels:
-          build: "eksctl"
       attachPolicyARNs:
         - ${ROUTE53_POLICY_ARN}
     - metadata:
         name: external-dns
         namespace: external-dns
-        labels:
-          build: "eksctl"
       attachPolicyARNs:
         - ${ROUTE53_POLICY_ARN}
     - metadata:
         name: harbor
         namespace: harbor
-        labels:
-          build: "eksctl"
       attachPolicyARNs:
-        - ${S3_POLICY_HARBOR_ARN}
+        - ${S3_POLICY_ARN}
+    # - metadata:
+    #     name: velero-server
+    #     namespace: velero
+    #   attachPolicyARNs:
+    #     - ${S3_POLICY_ARN}
 
 nodeGroups:
   - name: ng01
@@ -412,7 +452,7 @@ nodeGroups:
         ebs: true
         efs: true
         xRay: true
-    volumeType: standard
+    volumeType: gp2
     volumeEncrypted: true
     # bottlerocket:
     #   enableAdminContainer: true
@@ -421,37 +461,30 @@ nodeGroups:
 fargateProfiles:
   - name: fp-default
     selectors:
-      # All workloads in the "default" Kubernetes namespace matching the following
-      # label selectors will be scheduled onto Fargate:
-      - namespace: default
+      - namespace: fargate-test
         labels:
           fargate: "true"
     tags: *tags
   - name: fp-fargate-workload
     selectors:
-      # All workloads in the "fargate-workload" Kubernetes namespace will be
-      # scheduled onto Fargate:
       - namespace: fargate-workload
     tags: *tags
 
 cloudWatch:
   clusterLogging:
-    # enable specific types of cluster control plane logs
     enableTypes: ["audit", "authenticator", "controllerManager"]
-    # all supported types: "api", "audit", "authenticator", "controllerManager", "scheduler"
-    # supported special values: "*" and "all"
 EOF
 ```
 
 Output:
 
 ```text
-[ℹ]  eksctl version 0.31.0
+[ℹ]  eksctl version 0.34.0
 [ℹ]  using region eu-central-1
 [ℹ]  subnets for eu-central-1a - public:192.168.0.0/19 private:192.168.64.0/19
 [ℹ]  subnets for eu-central-1b - public:192.168.32.0/19 private:192.168.96.0/19
-[ℹ]  nodegroup "ng01" will use "ami-045e4ecd708ac12ba" [AmazonLinux2/1.18]
-[ℹ]  using SSH public key "/Users/petr_ruzicka/.ssh/id_rsa.pub" as "eksctl-k1-nodegroup-ng01-a3:84:e4:0d:af:5f:c8:40:da:71:68:8a:74:c7:ba:16"
+[ℹ]  nodegroup "ng01" will use "ami-0770b08976be5e4aa" [AmazonLinux2/1.18]
+[ℹ]  using SSH public key "/root/.ssh/id_rsa.pub" as "eksctl-k1-nodegroup-ng01-a3:84:e4:0d:af:5f:c8:40:da:71:68:8a:74:c7:ba:16"
 [ℹ]  using Kubernetes version 1.18
 [ℹ]  creating EKS cluster "k1" in "eu-central-1" region with Fargate profile and un-managed nodes
 [ℹ]  1 nodegroup (ng01) was included (based on the include/exclude rules)
@@ -459,49 +492,62 @@ Output:
 [ℹ]  will create a CloudFormation stack for cluster itself and 0 managed nodegroup stack(s)
 [ℹ]  if you encounter any issues, check CloudFormation console or try 'eksctl utils describe-stacks --region=eu-central-1 --cluster=k1'
 [ℹ]  Kubernetes API endpoint access will use default of {publicAccess=true, privateAccess=false} for cluster "k1" in "eu-central-1"
-[ℹ]  2 sequential tasks: { create cluster control plane "k1", 2 sequential sub-tasks: { 6 sequential sub-tasks: { tag cluster, update CloudWatch logging configuration, create fargate profiles, associate IAM OIDC provider, 3 parallel sub-tasks: { 2 sequential sub-tasks: { create IAM role for serviceaccount "cert-manager/cert-manager", create serviceaccount "cert-manager/cert-manager" }, 2 sequential sub-tasks: { create IAM role for serviceaccount "external-dns/external-dns", create serviceaccount "external-dns/external-dns" }, 2 sequential sub-tasks: { create IAM role for serviceaccount "kube-system/aws-node", create serviceaccount "kube-system/aws-node" } }, restart daemonset "kube-system/aws-node" }, create nodegroup "ng01" } }
+[ℹ]  2 sequential tasks: { create cluster control plane "k1", 3 sequential sub-tasks: { 6 sequential sub-tasks: { tag cluster, update CloudWatch logging configuration, create fargate profiles, associate IAM OIDC provider, 5 parallel sub-tasks: { 2 sequential sub-tasks: { create IAM role for serviceaccount "cert-manager/cert-manager", create serviceaccount "cert-manager/cert-manager" }, 2 sequential sub-tasks: { create IAM role for serviceaccount "external-dns/external-dns", create serviceaccount "external-dns/external-dns" }, 2 sequential sub-tasks: { create IAM role for serviceaccount "harbor/harbor", create serviceaccount "harbor/harbor" }, 2 sequential sub-tasks: { create IAM role for serviceaccount "velero/velero", create serviceaccount "velero/velero" }, 2 sequential sub-tasks: { create IAM role for serviceaccount "kube-system/aws-node", create serviceaccount "kube-system/aws-node" } }, restart daemonset "kube-system/aws-node" }, create addons, create nodegroup "ng01" } }
 [ℹ]  building cluster stack "eksctl-k1-cluster"
 [ℹ]  deploying stack "eksctl-k1-cluster"
-[✔]  tagged EKS cluster (Owner=petr.ruzicka@gmail.com, Squad=Cloud_Container_Platform, Tribe=Cloud_Native, Environment=Dev)
+[✔]  tagged EKS cluster (Environment=Dev, Owner=petr.ruzicka@gmail.com, Squad=Cloud_Container_Platform, Tribe=Cloud_Native)
 [✔]  configured CloudWatch logging for cluster "k1" in "eu-central-1" (enabled types: audit, authenticator, controllerManager & disabled types: api, scheduler)
 [ℹ]  creating Fargate profile "fp-default" on EKS cluster "k1"
 [ℹ]  created Fargate profile "fp-default" on EKS cluster "k1"
 [ℹ]  creating Fargate profile "fp-fargate-workload" on EKS cluster "k1"
 [ℹ]  created Fargate profile "fp-fargate-workload" on EKS cluster "k1"
-[ℹ]  building iamserviceaccount stack "eksctl-k1-addon-iamserviceaccount-kube-system-aws-node"
 [ℹ]  building iamserviceaccount stack "eksctl-k1-addon-iamserviceaccount-external-dns-external-dns"
 [ℹ]  building iamserviceaccount stack "eksctl-k1-addon-iamserviceaccount-cert-manager-cert-manager"
+[ℹ]  building iamserviceaccount stack "eksctl-k1-addon-iamserviceaccount-kube-system-aws-node"
+[ℹ]  building iamserviceaccount stack "eksctl-k1-addon-iamserviceaccount-harbor-harbor"
+[ℹ]  building iamserviceaccount stack "eksctl-k1-addon-iamserviceaccount-velero-velero"
 [ℹ]  deploying stack "eksctl-k1-addon-iamserviceaccount-kube-system-aws-node"
 [ℹ]  deploying stack "eksctl-k1-addon-iamserviceaccount-external-dns-external-dns"
 [ℹ]  deploying stack "eksctl-k1-addon-iamserviceaccount-cert-manager-cert-manager"
+[ℹ]  deploying stack "eksctl-k1-addon-iamserviceaccount-velero-velero"
+[ℹ]  deploying stack "eksctl-k1-addon-iamserviceaccount-harbor-harbor"
+[ℹ]  created namespace "harbor"
+[ℹ]  created serviceaccount "harbor/harbor"
+[ℹ]  created namespace "velero"
+[ℹ]  created serviceaccount "velero/velero"
+[ℹ]  serviceaccount "kube-system/aws-node" already exists
+[ℹ]  updated serviceaccount "kube-system/aws-node"
 [ℹ]  created namespace "external-dns"
 [ℹ]  created serviceaccount "external-dns/external-dns"
 [ℹ]  created namespace "cert-manager"
 [ℹ]  created serviceaccount "cert-manager/cert-manager"
-[ℹ]  serviceaccount "kube-system/aws-node" already exists
-[ℹ]  updated serviceaccount "kube-system/aws-node"
 [ℹ]  daemonset "kube-system/aws-node" restarted
 [ℹ]  building nodegroup stack "eksctl-k1-nodegroup-ng01"
 [ℹ]  deploying stack "eksctl-k1-nodegroup-ng01"
 [ℹ]  waiting for the control plane availability...
-[✔]  saved kubeconfig as "/Users/petr_ruzicka/git/k8s-eks-bottlerocket-fargate/kubeconfig-k1.conf"
+[✔]  saved kubeconfig as "/mnt/kubeconfig-k1.conf"
 [ℹ]  no tasks
 [✔]  all EKS cluster resources for "k1" have been created
-[ℹ]  adding identity "arn:aws:iam::729560437327:role/eksctl-k1-nodegroup-ng01-NodeInstanceRole-1M1IW0ZKOQ5OT" to auth ConfigMap
+[ℹ]  adding identity "arn:aws:iam::729560437327:role/eksctl-k1-nodegroup-ng01-NodeInstanceRole-1KP39SOLWQ5T9" to auth ConfigMap
 [ℹ]  nodegroup "ng01" has 0 node(s)
 [ℹ]  waiting for at least 2 node(s) to become ready in "ng01"
 [ℹ]  nodegroup "ng01" has 2 node(s)
-[ℹ]  node "ip-192-168-17-169.eu-central-1.compute.internal" is ready
-[ℹ]  node "ip-192-168-39-132.eu-central-1.compute.internal" is ready
-[ℹ]  kubectl command should work with "/Users/petr_ruzicka/git/k8s-eks-bottlerocket-fargate/kubeconfig-k1.conf", try 'kubectl --kubeconfig=/Users/petr_ruzicka/git/k8s-eks-bottlerocket-fargate/kubeconfig-k1.conf get nodes'
+[ℹ]  node "ip-192-168-46-39.eu-central-1.compute.internal" is ready
+[ℹ]  node "ip-192-168-8-205.eu-central-1.compute.internal" is ready
+[ℹ]  kubectl command should work with "/mnt/kubeconfig-k1.conf", try 'kubectl --kubeconfig=/mnt/kubeconfig-k1.conf get nodes'
 [✔]  EKS cluster "k1" in "eu-central-1" region is ready
 ```
+
+When the cluster is ready it immediately start pushing logs to CloudWatch under
+`/aws/eks/k1/cluster`.
 
 Remove namespaces with serviceaccounts created by `eksctl`:
 
 ```bash
 kubectl delete serviceaccount -n cert-manager cert-manager
 kubectl delete serviceaccount -n external-dns external-dns
+kubectl delete serviceaccount -n kube-system ebs-csi-controller-sa
+kubectl delete serviceaccount -n kube-system ebs-snapshot-controller
 ```
 
 Check the nodes:
@@ -513,7 +559,7 @@ kubectl get nodes -o wide
 Output:
 
 ```text
-NAME                                              STATUS   ROLES    AGE   VERSION              INTERNAL-IP      EXTERNAL-IP     OS-IMAGE         KERNEL-VERSION                  CONTAINER-RUNTIME
-ip-192-168-17-169.eu-central-1.compute.internal   Ready    <none>   34s   v1.18.8-eks-7c9bda   192.168.17.169   3.123.32.8      Amazon Linux 2   4.14.198-152.320.amzn2.x86_64   docker://19.3.6
-ip-192-168-39-132.eu-central-1.compute.internal   Ready    <none>   33s   v1.18.8-eks-7c9bda   192.168.39.132   18.196.100.10   Amazon Linux 2   4.14.198-152.320.amzn2.x86_64   docker://19.3.6
+NAME                                             STATUS   ROLES    AGE     VERSION              INTERNAL-IP     EXTERNAL-IP      OS-IMAGE         KERNEL-VERSION                  CONTAINER-RUNTIME
+ip-192-168-46-39.eu-central-1.compute.internal   Ready    <none>   2m13s   v1.18.9-eks-d1db3c   192.168.46.39   18.193.105.122   Amazon Linux 2   4.14.203-156.332.amzn2.x86_64   docker://19.3.6
+ip-192-168-8-205.eu-central-1.compute.internal   Ready    <none>   2m7s    v1.18.9-eks-d1db3c   192.168.8.205   54.93.80.77      Amazon Linux 2   4.14.203-156.332.amzn2.x86_64   docker://19.3.6
 ```

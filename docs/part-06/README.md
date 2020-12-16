@@ -9,48 +9,60 @@ Set necessary variables:
 export BASE_DOMAIN="k8s.mylabs.dev"
 export CLUSTER_NAME="k1"
 export CLUSTER_FQDN="${CLUSTER_NAME}.${BASE_DOMAIN}"
-export REGION="eu-central-1"
+export AWS_DEFAULT_REGION="eu-central-1"
 export KUBECONFIG=${PWD}/kubeconfig-${CLUSTER_NAME}.conf
 ```
 
 Uninstall external-dns otherwise it will be recreating the DNS entries:
 
 ```bash
-helm uninstall --kubeconfig="${KUBECONFIG}" -n external-dns external-dns
+[[ -f ${KUBECONFIG} ]] && helm status -n external-dns external-dns > /dev/null && helm uninstall --kubeconfig="${KUBECONFIG}" -n external-dns external-dns
 ```
 
 Remove Route 53 DNS records from DNS Zone:
 
 ```bash
-CLUSTER_FQDN_ZONE_ID=$(aws route53 list-hosted-zones --query "HostedZones[?Name==\`${CLUSTER_FQDN}.\`].Id" --output text) && \
-aws route53 list-resource-record-sets --hosted-zone-id "${CLUSTER_FQDN_ZONE_ID}" | jq -c '.ResourceRecordSets[] | select (.Type != "SOA" and .Type != "NS")' |
-while read -r RESOURCERECORDSET; do
-  aws route53 change-resource-record-sets \
-    --hosted-zone-id "${CLUSTER_FQDN_ZONE_ID}" \
-    --change-batch '{"Changes":[{"Action":"DELETE","ResourceRecordSet": '"${RESOURCERECORDSET}"' }]}' \
-    --output text --query 'ChangeInfo.Id'
-done
+CLUSTER_FQDN_ZONE_ID=$(aws route53 list-hosted-zones --query "HostedZones[?Name==\`${CLUSTER_FQDN}.\`].Id" --output text)
+if [[ -n "${CLUSTER_FQDN_ZONE_ID}" ]]; then
+  aws route53 list-resource-record-sets --hosted-zone-id "${CLUSTER_FQDN_ZONE_ID}" | jq -c '.ResourceRecordSets[] | select (.Type != "SOA" and .Type != "NS")' |
+  while read -r RESOURCERECORDSET; do
+    aws route53 change-resource-record-sets \
+      --hosted-zone-id "${CLUSTER_FQDN_ZONE_ID}" \
+      --change-batch '{"Changes":[{"Action":"DELETE","ResourceRecordSet": '"${RESOURCERECORDSET}"' }]}' \
+      --output text --query 'ChangeInfo.Id'
+  done
+fi
 ```
 
 Remove all S3 data form the bucket:
 
 ```bash
-aws s3 rm s3://${CLUSTER_FQDN}-harbor/ --recursive
+if aws s3api head-bucket --bucket "${CLUSTER_FQDN}" 2>/dev/null; then
+  aws s3 rm s3://${CLUSTER_FQDN}/ --recursive
+fi
 ```
 
 Remove CloudFormation stacks [Route53, S3, RDS, EFS]
 (IAM policies will be removed later - after EKS):
 
 ```bash
-aws --region "${REGION}" cloudformation delete-stack --stack-name "${CLUSTER_NAME}-route53-iam-s3"
-aws --region "${REGION}" cloudformation delete-stack --stack-name "${CLUSTER_NAME}-rds"
-aws --region "${REGION}" cloudformation delete-stack --stack-name "${CLUSTER_NAME}-efs"
+aws cloudformation delete-stack --stack-name "${CLUSTER_NAME}-route53-iam-s3"
+aws cloudformation delete-stack --stack-name "${CLUSTER_NAME}-rds"
+aws cloudformation delete-stack --stack-name "${CLUSTER_NAME}-efs"
+```
+
+Remove CloudFormation created by ClusterAPI:
+
+```shell
+clusterawsadm bootstrap iam delete-cloudformation-stack
 ```
 
 Remove EKS cluster:
 
 ```bash
-eksctl delete cluster --region "${REGION}" --name=${CLUSTER_NAME} --wait
+if eksctl get cluster --name k1 2>/dev/null ; then
+  eksctl delete cluster --name=${CLUSTER_NAME} --wait
+fi
 ```
 
 Output:
@@ -87,16 +99,25 @@ Remove IAM Policies using CloudFormation template which were not removed before
 (they were used by EKS cluster when trying to remove them for the first time):
 
 ```bash
-aws --region "${REGION}" cloudformation delete-stack --stack-name "${CLUSTER_NAME}-route53-iam-s3"
+aws cloudformation delete-stack --stack-name "${CLUSTER_NAME}-route53-iam-s3"
 ```
 
 Remove Volumes related to the cluster:
 
 ```bash
-VOLUMES=$(aws ec2 describe-volumes --region "${REGION}" --filter Name=tag:kubernetes.io/cluster/${CLUSTER_NAME},Values=owned --query 'Volumes[].VolumeId' --output text) && \
+VOLUMES=$(aws ec2 describe-volumes --filter Name=tag:kubernetes.io/cluster/${CLUSTER_NAME},Values=owned --query 'Volumes[].VolumeId' --output text) && \
 for VOLUME in ${VOLUMES}; do
   echo "Removing: ${VOLUME}"
-  aws ec2 delete-volume --region "${REGION}" --volume-id "${VOLUME}"
+  aws ec2 delete-volume --volume-id "${VOLUME}"
+done
+```
+
+Remove CloudWatch log groups:
+
+```bash
+for LOG_GROUP in $(aws logs describe-log-groups | jq -r ".logGroups[] | select(.logGroupName|test(\"/${CLUSTER_NAME}/|/${CLUSTER_FQDN}/\")) .logGroupName"); do
+  echo "*** Delete log group: ${LOG_GROUP}"
+  aws logs delete-log-group --log-group-name "${LOG_GROUP}"
 done
 ```
 
@@ -118,4 +139,10 @@ Remove other files:
 
 ```bash
 rm demo-magic.sh "${KUBECONFIG}" README.sh &> /dev/null
+```
+
+Cleanup completed:
+
+```bash
+echo "Clenup completed..."
 ```
