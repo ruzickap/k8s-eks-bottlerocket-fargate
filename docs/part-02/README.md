@@ -5,6 +5,46 @@ Install the basic tools, before running some applications like monitoring
 ([external-dns](https://github.com/kubernetes-sigs/external-dns)), Ingress ([ingress-nginx](https://kubernetes.github.io/ingress-nginx/)),
 certificate management ([cert-manager](https://cert-manager.io/)), ...
 
+## aws-for-fluent-bit
+
+Install `aws-for-fluent-bit`
+[helm chart](https://artifacthub.io/packages/helm/aws/aws-for-fluent-bit)
+and modify the
+[default values](https://github.com/aws/eks-charts/blob/master/stable/aws-for-fluent-bit/values.yaml).
+
+```bash
+helm repo add eks https://aws.github.io/eks-charts
+helm install --version 0.1.5 --namespace kube-system --values - aws-for-fluent-bit eks/aws-for-fluent-bit << EOF
+cloudWatch:
+  region: ${AWS_DEFAULT_REGION}
+  logGroupName: /aws/eks/${CLUSTER_FQDN}/logs
+firehose:
+  enabled: false
+kinesis:
+  enabled: false
+elasticsearch:
+  enabled: false
+EOF
+```
+
+The `aws-for-fluent-bit` will create Log group `/aws/eks/k1.k8s.mylabs.dev/logs`
+and stream the logs from all pods there.
+
+## aws-cloudwatch-metrics
+
+Install `aws-cloudwatch-metrics`
+[helm chart](https://artifacthub.io/packages/helm/aws/aws-cloudwatch-metrics)
+and modify the
+[default values](https://github.com/aws/eks-charts/blob/master/stable/aws-cloudwatch-metrics/values.yaml).
+
+```bash
+helm install --version 0.0.1 --namespace amazon-cloudwatch --create-namespace --values - aws-cloudwatch-metrics eks/aws-cloudwatch-metrics << EOF
+clusterName: ${CLUSTER_FQDN}
+EOF
+```
+
+The `aws-cloudwatch-metrics` populates "Container insights" in CloudWatch
+
 ## aws-ebs-csi-driver
 
 ```bash
@@ -56,45 +96,20 @@ reclaimPolicy: Delete
 EOF
 ```
 
-## aws-for-fluent-bit
+## metrics-server
 
-Install `aws-for-fluent-bit`
-[helm chart](https://artifacthub.io/packages/helm/aws/aws-for-fluent-bit)
+Install `metrics-server`
+[helm chart](https://artifacthub.io/packages/helm/bitnami/metrics-server)
 and modify the
-[default values](https://github.com/aws/eks-charts/blob/master/stable/aws-for-fluent-bit/values.yaml).
+[default values](https://github.com/bitnami/charts/blob/master/bitnami/metrics-server/values.yaml):
 
 ```bash
-helm repo add eks https://aws.github.io/eks-charts
-helm install --version 0.1.5 --namespace kube-system --values - aws-for-fluent-bit eks/aws-for-fluent-bit << EOF
-cloudWatch:
-  region: ${AWS_DEFAULT_REGION}
-  logGroupName: /aws/eks/${CLUSTER_FQDN}/logs
-firehose:
-  enabled: false
-kinesis:
-  enabled: false
-elasticsearch:
-  enabled: false
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm install --version 5.3.2 --namespace metrics-server --create-namespace --values - metrics-server bitnami/metrics-server << EOF
+apiService:
+  create: true
 EOF
 ```
-
-The `aws-for-fluent-bit` will create Log group `/aws/eks/k1.k8s.mylabs.dev/logs`
-and stream the logs from all pods there.
-
-## aws-cloudwatch-metrics
-
-Install `aws-cloudwatch-metrics`
-[helm chart](https://artifacthub.io/packages/helm/aws/aws-cloudwatch-metrics)
-and modify the
-[default values](https://github.com/aws/eks-charts/blob/master/stable/aws-cloudwatch-metrics/values.yaml).
-
-```bash
-helm install --version 0.0.1 --namespace amazon-cloudwatch --create-namespace --values - aws-cloudwatch-metrics eks/aws-cloudwatch-metrics << EOF
-clusterName: ${CLUSTER_FQDN}
-EOF
-```
-
-The `aws-cloudwatch-metrics` populates "Container insights" in CloudWatch
 
 ## kube-prometheus-stack
 
@@ -838,29 +853,4 @@ NOTES:
 To verify that cluster-autoscaler has started, run:
 
   kubectl --namespace=kube-system get pods -l "app.kubernetes.io/name=aws-cluster-autoscaler,app.kubernetes.io/instance=cluster-autoscaler"
-```
-
-## metrics-server
-
-Enable Horizontal Pod Autoscaler by installing `metrics-server`:
-
-```bash
-helm install --version 2.11.2 --namespace kube-system metrics-server stable/metrics-server
-```
-
-Output:
-
-```text
-NAME: metrics-server
-LAST DEPLOYED: Thu Dec 10 16:02:25 2020
-NAMESPACE: kube-system
-STATUS: deployed
-REVISION: 1
-NOTES:
-The metric server has been deployed.
-
-In a few minutes you should be able to list metrics using the following
-command:
-
-  kubectl get --raw "/apis/metrics.k8s.io/v1beta1/nodes"
 ```
