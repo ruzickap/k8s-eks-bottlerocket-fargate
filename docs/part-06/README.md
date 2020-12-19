@@ -60,7 +60,7 @@ clusterawsadm bootstrap iam delete-cloudformation-stack
 Remove EKS cluster:
 
 ```bash
-if eksctl get cluster --name k1 2>/dev/null ; then
+if eksctl get cluster --name=${CLUSTER_NAME} 2>/dev/null ; then
   eksctl delete cluster --name=${CLUSTER_NAME} --wait
 fi
 ```
@@ -105,7 +105,7 @@ aws cloudformation delete-stack --stack-name "${CLUSTER_NAME}-route53-iam-s3"
 Remove Volumes related to the cluster:
 
 ```bash
-VOLUMES=$(aws ec2 describe-volumes --filter Name=tag:kubernetes.io/cluster/${CLUSTER_NAME},Values=owned --query 'Volumes[].VolumeId' --output text) && \
+VOLUMES=$(aws ec2 describe-volumes --filter Name=tag:kubernetes.io/cluster/${CLUSTER_FQDN},Values=owned --query 'Volumes[].VolumeId' --output text) && \
 for VOLUME in ${VOLUMES}; do
   echo "Removing: ${VOLUME}"
   aws ec2 delete-volume --volume-id "${VOLUME}"
