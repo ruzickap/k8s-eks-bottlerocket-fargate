@@ -459,15 +459,15 @@ nodeGroups:
     #   settings:
     #     motd: "Hello, eksctl!"
 fargateProfiles:
-  - name: fp-default
+  - name: fp-fgtest
     selectors:
-      - namespace: fargate-test
+      - namespace: fgtest
         labels:
           fargate: "true"
     tags: *tags
-  - name: fp-fargate-workload
+  - name: fp-fgworkload
     selectors:
-      - namespace: fargate-workload
+      - namespace: fgworkload
     tags: *tags
 
 cloudWatch:

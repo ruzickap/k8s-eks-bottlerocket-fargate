@@ -48,8 +48,9 @@ The `aws-cloudwatch-metrics` populates "Container insights" in CloudWatch
 ## aws-ebs-csi-driver
 
 ```bash
-EBS_CONTROLLER_ROLE_ARN=$(eksctl get iamserviceaccount --cluster=${CLUSTER_NAME} --namespace kube-system -o json  | jq -r ".iam.serviceAccounts[] | select(.metadata.name==\"ebs-csi-controller-sa\") .status.roleARN")
-EBS_SNAPSHOT_ROLE_ARN=$(eksctl get iamserviceaccount --cluster=${CLUSTER_NAME} --namespace kube-system -o json  | jq -r ".iam.serviceAccounts[] | select(.metadata.name==\"ebs-snapshot-controller\") .status.roleARN")
+EKSCTL_IAM_SERVICE_ACCOUNTS=$(eksctl get iamserviceaccount --cluster=${CLUSTER_NAME} --namespace kube-system -o json)
+EBS_CONTROLLER_ROLE_ARN=$(echo "${EKSCTL_IAM_SERVICE_ACCOUNTS}" | jq -r ".iam.serviceAccounts[] | select(.metadata.name==\"ebs-csi-controller-sa\") .status.roleARN")
+EBS_SNAPSHOT_ROLE_ARN=$(echo "${EKSCTL_IAM_SERVICE_ACCOUNTS}" | jq -r ".iam.serviceAccounts[] | select(.metadata.name==\"ebs-snapshot-controller\") .status.roleARN")
 ```
 
 Install Amazon EBS CSI Driver `aws-ebs-csi-driver`
@@ -721,20 +722,17 @@ To verify that oauth2-proxy has started, run:
 
 ## Gangway
 
-::: danger
-This is not working...
-:::
-
 Install gangway:
 
-```shell
+```bash
 helm install --version 0.4.3 --namespace gangway --create-namespace --values - gangway stable/gangway << EOF
 # https://github.com/helm/charts/blob/master/stable/gangway/values.yaml
+trustedCACert: |
+$(curl -s https://letsencrypt.org/certs/fakelerootx1.pem | sed  "s/^/  /" )
 gangway:
-  clusterName: gangway.${CLUSTER_FQDN}
+  clusterName: ${CLUSTER_FQDN}
   authorizeURL: https://dex.${CLUSTER_FQDN}/auth
-  # Needs to be http only because of non-valid certificate
-  tokenURL: http://dex.${CLUSTER_FQDN}/token
+  tokenURL: https://dex.${CLUSTER_FQDN}/token
   audience: https://dex.${CLUSTER_FQDN}/userinfo
   redirectURL: https://gangway.${CLUSTER_FQDN}/callback
   clientID: gangway.${CLUSTER_FQDN}
@@ -742,6 +740,9 @@ gangway:
   apiServerURL: https://kube-oidc-proxy.${CLUSTER_FQDN}
 ingress:
   enabled: true
+  annotations:
+    nginx.ingress.kubernetes.io/auth-url: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/auth
+    nginx.ingress.kubernetes.io/auth-signin: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/start?rd=\$scheme://\$host\$request_uri
   hosts:
     - gangway.${CLUSTER_FQDN}
   tls:
@@ -767,26 +768,27 @@ NOTES:
 
 ## kube-oidc-proxy
 
-::: danger
-This is not working...
-:::
+The `kube-oidc-proxy` accepting connections only via HTTPS. It's necessary to
+configure ingress to communicate with the backend over HTTPS.
 
 Install kube-oidc-proxy:
 
-```shell
+```bash
 git clone --quiet https://github.com/jetstack/kube-oidc-proxy.git tmp/kube-oidc-proxy
 git -C tmp/kube-oidc-proxy checkout --quiet v0.3.0
 
 helm install --namespace kube-oidc-proxy --create-namespace --values - kube-oidc-proxy tmp/kube-oidc-proxy/deploy/charts/kube-oidc-proxy << EOF
 # https://github.com/jetstack/kube-oidc-proxy/blob/master/deploy/charts/kube-oidc-proxy/values.yaml
 oidc:
-  clientId: kube-oidc-proxy.${CLUSTER_FQDN}
+  clientId: gangway.${CLUSTER_FQDN}
   issuerUrl: https://dex.${CLUSTER_FQDN}
   usernameClaim: email
   caPEM: |
 $(curl -s https://letsencrypt.org/certs/fakelerootx1.pem | sed  "s/^/    /" )
 ingress:
-  enabled: false
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: HTTPS
+  enabled: true
   hosts:
     - host: kube-oidc-proxy.${CLUSTER_FQDN}
       paths:
@@ -798,13 +800,164 @@ ingress:
 EOF
 ```
 
+If you get the credentials form the [https://gangway.k1.k8s.mylabs.dev](https://gangway.k1.k8s.mylabs.dev)
+you will have the access to the cluster, but no rights there.
+
+Add access rights to the user:
+
+```bash
+kubectl apply -f - << EOF
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: kube-prometheus-stack
+  name: secret-reader
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get", "watch", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: read-secrets
+  namespace: kube-prometheus-stack
+subjects:
+- kind: User
+  name: ${MY_EMAIL}
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: secret-reader
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: pods-reader
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "watch", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: read-pods
+subjects:
+- kind: User
+  name: ${MY_EMAIL}
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: pods-reader
+  apiGroup: rbac.authorization.k8s.io
+EOF
+```
+
+The user should be able to read the secrets in `kube-prometheus-stack`
+namespace:
+
+```shell
+kubectl describe secrets --insecure-skip-tls-verify -n kube-prometheus-stack "ingress-cert-${LETSENCRYPT_ENVIRONMENT}"
+```
+
+Output:
+
+```text
+Name:         ingress-cert-staging
+Namespace:    kube-prometheus-stack
+Labels:       kubed.appscode.com/origin.cluster=k1.k8s.mylabs.dev
+              kubed.appscode.com/origin.name=ingress-cert-staging
+              kubed.appscode.com/origin.namespace=cert-manager
+Annotations:  cert-manager.io/alt-names: *.k1.k8s.mylabs.dev,k1.k8s.mylabs.dev
+              cert-manager.io/certificate-name: ingress-cert-staging
+              cert-manager.io/common-name: *.k1.k8s.mylabs.dev
+              cert-manager.io/ip-sans:
+              cert-manager.io/issuer-group:
+              cert-manager.io/issuer-kind: ClusterIssuer
+              cert-manager.io/issuer-name: letsencrypt-staging-dns
+              cert-manager.io/uri-sans:
+              kubed.appscode.com/origin:
+                {"namespace":"cert-manager","name":"ingress-cert-staging","uid":"f1ed062c-23d9-4cf7-ad51-cfafd8a3b788","resourceVersion":"5296"}
+
+Type:  kubernetes.io/tls
+
+Data
+====
+tls.crt:  3586 bytes
+tls.key:  1679 bytes
+```
+
+But it's not allowed to delete the secrets for the user:
+
+```shell
+kubectl delete secrets --insecure-skip-tls-verify -n kube-prometheus-stack "ingress-cert-${LETSENCRYPT_ENVIRONMENT}"
+```
+
+Output:
+
+```text
+Error from server (Forbidden): secrets "ingress-cert-staging" is forbidden: User "petr.ruzicka@gmail.com" cannot delete resource "secrets" in API group "" in the namespace "kube-prometheus-stack"
+```
+
+The user can not read secrets outside the `kube-prometheus-stack`:
+
+```shell
+kubectl get secrets --insecure-skip-tls-verify -n kube-system
+```
+
+Output:
+
+```text
+Error from server (Forbidden): secrets is forbidden: User "petr.ruzicka@gmail.com" cannot list resource "secrets" in API group "" in the namespace "kube-system"
+```
+
+You can see the pods "everywhere":
+
+```shell
+kubectl get pods --insecure-skip-tls-verify -n kube-system
+```
+
+Output:
+
+```text
+NAME                                                         READY   STATUS    RESTARTS   AGE
+aws-for-fluent-bit-5hxlt                                     1/1     Running   0          32m
+aws-for-fluent-bit-dmvzq                                     1/1     Running   0          32m
+aws-node-ggfft                                               1/1     Running   0          32m
+aws-node-lhlvf                                               1/1     Running   0          32m
+cluster-autoscaler-aws-cluster-autoscaler-7f878bccc8-s279k   1/1     Running   0          25m
+coredns-59b69b4849-6v487                                     1/1     Running   0          46m
+coredns-59b69b4849-tw2dg                                     1/1     Running   0          46m
+ebs-csi-controller-86785d75db-7brbr                          5/5     Running   0          31m
+ebs-csi-controller-86785d75db-gn4ll                          5/5     Running   0          31m
+ebs-csi-node-6h9zv                                           3/3     Running   0          31m
+ebs-csi-node-r5rj7                                           3/3     Running   0          31m
+kube-proxy-m6dm8                                             1/1     Running   0          32m
+kube-proxy-pdmv9                                             1/1     Running   0          32m
+```
+
+But you can not delete them:
+
+```shell
+kubectl delete pods --insecure-skip-tls-verify -n kube-oidc-proxy --all
+```
+
+Output:
+
+```text
+Error from server (Forbidden): pods "kube-oidc-proxy-74bf5679fd-jhdmr" is forbidden: User "petr.ruzicka@gmail.com" cannot delete resource "pods" in API group "" in the namespace "kube-oidc-proxy"
+```
+
 ## Istio
 
 Download `istioctl`:
 
-```bash
+```shell
+ISTIO_VERSION="1.8.2"
+
 if [[ ! -f /usr/local/bin/istioctl ]]; then
-  ISTIO_VERSION="1.8.1"
   if [[ $(uname) == "Darwin" ]]; then
     ISTIOCTL_URL="https://github.com/istio/istio/releases/download/${ISTIO_VERSION}/istioctl-${ISTIO_VERSION}-osx.tar.gz"
   else
@@ -816,8 +969,8 @@ fi
 
 Install Istio Operator:
 
-```bash
-# istioctl operator init --revision 1-8-2
+```shell
+istioctl operator init --revision ${ISTIO_VERSION//./-}
 ```
 
 ## cluster-autoscaler

@@ -66,8 +66,7 @@ export ROUTE53_ROLE_ARN_EXTERNAL_DNS="test_arn"
 export RDS_DB_HOST="testdomain123.com"
 export EFS_FS_ID="123"
 export EFS_AP_ID="123"
-export EBS_CONTROLLER_ROLE_ARN="test123"
-export EBS_SNAPSHOT_ROLE_ARN="test123"
+export EKSCTL_IAM_SERVICE_ACCOUNTS='{"iam":{"serviceAccounts":[{"metadata":{"name":"ebs-snapshot-controller"},"status":{"roleARN":"arn2"}},{"metadata":{"name":"ebs-csi-controller-sa"},"status":{"roleARN":"arn1"}}]}}'
 
 # shellcheck disable=SC1004
 sed docs/part-0{2..4}/README.md \
