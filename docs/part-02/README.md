@@ -89,12 +89,18 @@ kind: StorageClass
 apiVersion: storage.k8s.io/v1
 metadata:
   name: gp3
-provisioner: ebs.csi.aws.com # Amazon EBS CSI driver
+provisioner: ebs.csi.aws.com
 parameters:
   type: gp3
-  encrypted: "true" # EBS volumes will always be encrypted by default
+  encrypted: "true"
 reclaimPolicy: Delete
 EOF
+```
+
+Set `gp3` as default StorageClass:
+
+```bash
+kubectl patch storageclass gp3 -p "{\"metadata\": {\"annotations\":{\"storageclass.kubernetes.io/is-default-class\":\"true\"}}}"
 ```
 
 ## metrics-server
@@ -144,7 +150,6 @@ alertmanager:
     storage:
       volumeClaimTemplate:
         spec:
-          storageClassName: gp3
           accessModes: ["ReadWriteOnce"]
           resources:
             requests:
@@ -250,7 +255,6 @@ prometheus:
     storageSpec:
       volumeClaimTemplate:
         spec:
-          storageClassName: gp3
           accessModes: ["ReadWriteOnce"]
           resources:
             requests:
@@ -521,7 +525,7 @@ and modify the
 
 ```bash
 helm repo add --force-update ingress-nginx https://kubernetes.github.io/ingress-nginx ; helm repo update > /dev/null
-helm install --version 3.15.2 --namespace ingress-nginx --create-namespace --wait --values - ingress-nginx ingress-nginx/ingress-nginx << EOF
+helm install --version 3.16.1 --namespace ingress-nginx --create-namespace --wait --values - ingress-nginx ingress-nginx/ingress-nginx << EOF
 controller:
   extraArgs:
     default-ssl-certificate: cert-manager/ingress-cert-${LETSENCRYPT_ENVIRONMENT}

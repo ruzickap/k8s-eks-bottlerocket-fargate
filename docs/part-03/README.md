@@ -108,191 +108,6 @@ kubectl port-forward --namespace polaris svc/polaris-dashboard 8080:80
 Then open http://localhost:8080 in your browser.
 ```
 
-## HashiCorp Vault
-
-Create a secret with your EKS access key/secret:
-
-```bash
-kubectl create namespace vault
-kubectl create secret generic -n vault eks-creds \
-  --from-literal=AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID?}" \
-  --from-literal=AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY?}"
-```
-
-Install `vault`
-[helm chart](https://artifacthub.io/packages/helm/hashicorp/vault)
-and modify the
-[default values](https://github.com/hashicorp/vault-helm/blob/master/values.yaml).
-
-```bash
-helm repo add --force-update hashicorp https://helm.releases.hashicorp.com ; helm repo update > /dev/null
-helm install --version 0.8.0 --namespace vault --wait --values - vault hashicorp/vault << EOF
-injector:
-  metrics:
-    enabled: false
-server:
-  ingress:
-    enabled: true
-    hosts:
-      - host: vault.${CLUSTER_FQDN}
-    tls:
-      - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
-        hosts:
-          - vault.${CLUSTER_FQDN}
-  extraSecretEnvironmentVars:
-    - envName: AWS_ACCESS_KEY_ID
-      secretName: eks-creds
-      secretKey: AWS_ACCESS_KEY_ID
-    - envName: AWS_SECRET_ACCESS_KEY
-      secretName: eks-creds
-      secretKey: AWS_SECRET_ACCESS_KEY
-  dataStorage:
-    size: 1Gi
-    storageClass: gp3
-  standalone:
-    enabled: true
-    config: |
-      ui = true
-      log_level = "trace"
-      listener "tcp" {
-        tls_disable = 1
-        address = "[::]:8200"
-        cluster_address = "[::]:8201"
-      }
-      seal "awskms" {
-        region     = "${AWS_DEFAULT_REGION}"
-        kms_key_id = "${KMS_KEY_ID}"
-      }
-      storage "file" {
-        path = "/vault/data"
-      }
-EOF
-sleep 60 # wait for DNS
-```
-
-Output:
-
-```text
-"hashicorp" has been added to your repositories
-NAME: vault
-LAST DEPLOYED: Thu Dec 10 16:02:50 2020
-NAMESPACE: vault
-STATUS: deployed
-REVISION: 1
-TEST SUITE: None
-NOTES:
-Thank you for installing HashiCorp Vault!
-
-Now that you have deployed Vault, you should look over the docs on using
-Vault with Kubernetes available here:
-
-https://www.vaultproject.io/docs/
-
-
-Your release is named vault. To learn more about the release, try:
-
-  $ helm status vault
-  $ helm get manifest vault
-```
-
-Check the status of the vault server - it should be sealed and uninitialized:
-
-```bash
-kubectl exec -n vault vault-0 -- vault status || true
-```
-
-Output:
-
-```text
-Key                      Value
----                      -----
-Recovery Seal Type       awskms
-Initialized              false
-Sealed                   true
-Total Recovery Shares    0
-Threshold                0
-Unseal Progress          0/0
-Unseal Nonce             n/a
-Version                  n/a
-HA Enabled               false
-```
-
-Initialize the vault server:
-
-```bash
-kubectl exec -ti -n vault vault-0 -- vault operator init -format=json | tee tmp/vault_cluster-keys.json
-```
-
-The vault server should be initialized + unsealed now:
-
-```bash
-kubectl exec -n vault vault-0 -- vault status
-```
-
-Output:
-
-```text
-Key                      Value
----                      -----
-Recovery Seal Type       shamir
-Initialized              true
-Sealed                   false
-Total Recovery Shares    5
-Threshold                3
-Version                  1.5.4
-Cluster Name             vault-cluster-678ea3b1
-Cluster ID               b61bcecc-1730-14fc-e07c-dc479de0adde
-HA Enabled               false
-```
-
-Configure vault policy + authentication:
-
-```bash
-export VAULT_ROOT_TOKEN=$(jq -r ".root_token" tmp/vault_cluster-keys.json)
-export VAULT_ADDR="https://vault.${CLUSTER_FQDN}"
-```
-
-Create admin policy:
-
-```bash
-vault login "${VAULT_ROOT_TOKEN}"
-cat << EOF | vault policy write my-admin-policy -
-path "*" {
-  capabilities = ["create", "read", "update", "delete", "list", "sudo"]
-}
-EOF
-```
-
-Configure GitHub + Dex OIDC authentication:
-
-```bash
-vault auth enable github
-vault write auth/github/config organization="${MY_GITHUB_ORG_NAME}"
-vault write auth/github/map/teams/cluster-admin value=my-admin-policy
-
-wget -q https://letsencrypt.org/certs/fakelerootx1.pem -O tmp/fakelerootx1.pem
-vault auth enable oidc
-vault write auth/oidc/config \
-  oidc_discovery_ca_pem=@tmp/fakelerootx1.pem \
-  oidc_discovery_url="https://dex.${CLUSTER_FQDN}" \
-  oidc_client_id="vault.${CLUSTER_FQDN}" \
-  oidc_client_secret="${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET}" \
-  default_role="my-oidc-role"
-vault write auth/oidc/role/my-oidc-role \
-  bound_audiences="vault.${CLUSTER_FQDN}" \
-  allowed_redirect_uris="https://vault.${CLUSTER_FQDN}/ui/vault/auth/oidc/oidc/callback,http://localhost:8250/oidc/callback" \
-  user_claim="sub" \
-  policies="my-admin-policy"
-```
-
-You should be now able to login using OIDC (Dex):
-
-```shell
-rm ~/.vault-token
-vault login -method=oidc
-vault secrets list
-```
-
 ## Cluster API
 
 Install `clusterctl`:
@@ -561,6 +376,227 @@ REVISION: 1
 NOTES:
 1. Get the application URL by running these commands:
   https://octant.k1.k8s.mylabs.dev/
+```
+
+## kubeview
+
+Install `kubeview`
+[helm chart](https://artifacthub.io/packages/helm/kubeview/kubeview)
+and modify the
+[default values](https://github.com/benc-uk/kubeview/blob/master/charts/kubeview/values.yaml).
+
+```bash
+helm repo add kubeview https://benc-uk.github.io/kubeview/charts
+helm install --version 0.1.17 --namespace kubeview --create-namespace --values - kubeview kubeview/kubeview << EOF
+ingress:
+  enabled: true
+  annotations:
+    nginx.ingress.kubernetes.io/auth-url: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/auth
+    nginx.ingress.kubernetes.io/auth-signin: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/start?rd=\$scheme://\$host\$request_uri
+  hosts:
+    - host: kubeview.${CLUSTER_FQDN}
+      paths: [ "/" ]
+  tls:
+    - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
+      hosts:
+        - kubeview.${CLUSTER_FQDN}
+EOF
+```
+
+## HashiCorp Vault
+
+Create a secret with your EKS access key/secret:
+
+```bash
+kubectl create namespace vault
+kubectl create secret generic -n vault eks-creds \
+  --from-literal=AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID?}" \
+  --from-literal=AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY?}"
+```
+
+Install `vault`
+[helm chart](https://artifacthub.io/packages/helm/hashicorp/vault)
+and modify the
+[default values](https://github.com/hashicorp/vault-helm/blob/master/values.yaml).
+
+```bash
+helm repo add --force-update hashicorp https://helm.releases.hashicorp.com ; helm repo update > /dev/null
+helm install --version 0.8.0 --namespace vault --values - vault hashicorp/vault << EOF
+injector:
+  metrics:
+    enabled: false
+server:
+  ingress:
+    enabled: true
+    hosts:
+      - host: vault.${CLUSTER_FQDN}
+    tls:
+      - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
+        hosts:
+          - vault.${CLUSTER_FQDN}
+  extraSecretEnvironmentVars:
+    - envName: AWS_ACCESS_KEY_ID
+      secretName: eks-creds
+      secretKey: AWS_ACCESS_KEY_ID
+    - envName: AWS_SECRET_ACCESS_KEY
+      secretName: eks-creds
+      secretKey: AWS_SECRET_ACCESS_KEY
+  dataStorage:
+    size: 1Gi
+  standalone:
+    enabled: true
+    config: |
+      ui = true
+      log_level = "trace"
+      listener "tcp" {
+        tls_disable = 1
+        address = "[::]:8200"
+        cluster_address = "[::]:8201"
+      }
+      seal "awskms" {
+        region     = "${AWS_DEFAULT_REGION}"
+        kms_key_id = "${KMS_KEY_ID}"
+      }
+      storage "file" {
+        path = "/vault/data"
+      }
+EOF
+sleep 60
+```
+
+Output:
+
+```text
+"hashicorp" has been added to your repositories
+NAME: vault
+LAST DEPLOYED: Thu Dec 10 16:02:50 2020
+NAMESPACE: vault
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+Thank you for installing HashiCorp Vault!
+
+Now that you have deployed Vault, you should look over the docs on using
+Vault with Kubernetes available here:
+
+https://www.vaultproject.io/docs/
+
+
+Your release is named vault. To learn more about the release, try:
+
+  $ helm status vault
+  $ helm get manifest vault
+```
+
+Check the status of the vault server - it should be sealed and uninitialized:
+
+```bash
+kubectl exec -n vault vault-0 -- vault status || true
+```
+
+Output:
+
+```text
+Key                      Value
+---                      -----
+Recovery Seal Type       awskms
+Initialized              false
+Sealed                   true
+Total Recovery Shares    0
+Threshold                0
+Unseal Progress          0/0
+Unseal Nonce             n/a
+Version                  n/a
+HA Enabled               false
+```
+
+Initialize the vault server:
+
+```bash
+kubectl exec -n vault vault-0 -- vault operator init -format=json | tee tmp/vault_cluster-keys.json
+```
+
+The vault server should be initialized + unsealed now:
+
+```bash
+kubectl exec -n vault vault-0 -- vault status
+```
+
+Output:
+
+```text
+Key                      Value
+---                      -----
+Recovery Seal Type       shamir
+Initialized              true
+Sealed                   false
+Total Recovery Shares    5
+Threshold                3
+Version                  1.5.4
+Cluster Name             vault-cluster-678ea3b1
+Cluster ID               b61bcecc-1730-14fc-e07c-dc479de0adde
+HA Enabled               false
+```
+
+Configure vault policy + authentication:
+
+```bash
+VAULT_ROOT_TOKEN=$(jq -r ".root_token" tmp/vault_cluster-keys.json)
+export VAULT_ROOT_TOKEN
+export VAULT_ADDR="https://vault.${CLUSTER_FQDN}"
+```
+
+Login to vault as root user:
+
+```bash
+vault login "${VAULT_ROOT_TOKEN}"
+```
+
+Output:
+
+```text
+```
+
+Create admin policy:
+
+```bash
+cat > tmp/my-admin-policy.hcl << EOF
+path "*" {
+  capabilities = ["create", "read", "update", "delete", "list", "sudo"]
+}
+EOF
+vault policy write my-admin-policy tmp/my-admin-policy.hcl
+```
+
+Configure GitHub + Dex OIDC authentication:
+
+```bash
+vault auth enable github
+vault write auth/github/config organization="${MY_GITHUB_ORG_NAME}"
+vault write auth/github/map/teams/cluster-admin value=my-admin-policy
+
+wget -q https://letsencrypt.org/certs/fakelerootx1.pem -O tmp/fakelerootx1.pem
+vault auth enable oidc
+vault write auth/oidc/config \
+  oidc_discovery_ca_pem=@tmp/fakelerootx1.pem \
+  oidc_discovery_url="https://dex.${CLUSTER_FQDN}" \
+  oidc_client_id="vault.${CLUSTER_FQDN}" \
+  oidc_client_secret="${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET}" \
+  default_role="my-oidc-role"
+vault write auth/oidc/role/my-oidc-role \
+  bound_audiences="vault.${CLUSTER_FQDN}" \
+  allowed_redirect_uris="https://vault.${CLUSTER_FQDN}/ui/vault/auth/oidc/oidc/callback,http://localhost:8250/oidc/callback" \
+  user_claim="sub" \
+  policies="my-admin-policy"
+```
+
+You should be now able to login using OIDC (Dex):
+
+```shell
+rm ~/.vault-token
+vault login -method=oidc
+vault secrets list
 ```
 
 ## Velero

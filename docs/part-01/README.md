@@ -102,8 +102,18 @@ Install [AWS IAM Authenticator for Kubernetes](https://github.com/kubernetes-sig
 ```bash
 if [[ ! -x /usr/local/bin/aws-iam-authenticator ]]; then
   # https://docs.aws.amazon.com/eks/latest/userguide/install-aws-iam-authenticator.html
-  sudo curl -s -Lo /usr/local/bin/aws-iam-authenticator "https://amazon-eks.s3.us-west-2.amazonaws.com/1.18.9/2020-11-02/bin/$(uname | sed "s/./\L&/g" )/amd64/aws-iam-authenticator"
+  sudo curl -s -Lo /usr/local/bin/aws-iam-authenticator "https://amazon-eks.s3.us-west-2.amazonaws.com/1.18.9/2020-11-02/bin/$(uname | sed "s/./\L&/g")/amd64/aws-iam-authenticator"
   sudo chmod a+x /usr/local/bin/aws-iam-authenticator
+fi
+```
+
+Install [vault](https://www.vaultproject.io/downloads):
+
+```bash
+if [[ ! -x /usr/local/bin/vault ]]; then
+  curl -s -L "https://releases.hashicorp.com/vault/1.6.1/vault_1.6.1_$(uname | sed "s/./\L&/g")_amd64.zip" -o /tmp/vault.zip
+  unzip /tmp/vault.zip -d /usr/local/bin/
+  rm /tmp/vault.zip
 fi
 ```
 
