@@ -16,7 +16,7 @@ test -s ./demo-magic.sh || curl --silent https://raw.githubusercontent.com/paxto
 #
 # speed at which to simulate typing. bigger num = faster
 #
-export TYPE_SPEED=600
+export TYPE_SPEED=6000
 
 # Uncomment to run non-interactively
 export PROMPT_TIMEOUT=0

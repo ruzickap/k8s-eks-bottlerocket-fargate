@@ -641,6 +641,12 @@ config:
         - https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/callback
       name: OAuth2 Proxy
       secret: ${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET}
+    - id: vault.${CLUSTER_FQDN}
+      redirectURIs:
+        - https://vault.${CLUSTER_FQDN}/ui/vault/auth/oidc/oidc/callback
+        - http://localhost:8250/oidc/callback
+      name: Vault
+      secret: ${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET}
   enablePasswordDB: false
 EOF
 ```

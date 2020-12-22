@@ -313,7 +313,39 @@ Resources:
       Type: NS
       TTL: 60
       ResourceRecords: !GetAtt HostedZone.NameServers
+  VaultSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Description: "Vault Root/Recovery key"
+      KmsKeyId: !Ref VaultKmsKey
+      SecretString: "empty"
+  VaultKmsAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: alias/Vault_key
+      TargetKeyId: !Ref VaultKmsKey
+  VaultKmsKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: "Vault Seal/Unseal key"
+      KeyPolicy:
+        Version: "2012-10-17"
+        Id: key-default-1
+        Statement:
+        - Sid: Enable IAM User Permissions
+          Effect: Allow
+          Principal:
+            AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+          Action: kms:*
+          Resource: "*"
 Outputs:
+  EBSPolicy:
+    Description: The ARN of the created AmazonEBS policy
+    Value:
+      Ref: EBSPolicy
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-EBSPolicy"
   Route53Policy:
     Description: The ARN of the created AmazonRoute53Domains policy
     Value:
@@ -342,15 +374,35 @@ Outputs:
     Export:
       Name:
         Fn::Sub: "${AWS::StackName}-HostedZone"
+  VaultSecret:
+    Value: !Ref "VaultSecret"
+    Description: The AWS Secrets Manager Secret containing the ROOT TOKEN and Recovery Secret for HashiCorp Vault.
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-VaultSecret"
+  VaultKMSKeyId:
+    Value: !Ref "VaultKmsKey"
+    Description: The AWS KMS Key used to Auto Unseal HashiCorp Vault and encrypt the ROOT TOKEN and Recovery Secret.
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-VaultKMSKeyId"
+  VaultKMSKeyArn:
+    Value: !GetAtt "VaultKmsKey.Arn"
+    Description: The AWS KMS Key used to Auto Unseal HashiCorp Vault and encrypt the ROOT TOKEN and Recovery Secret.
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-VaultKMSKeyArn"
 EOF
 
 eval aws cloudformation deploy --capabilities CAPABILITY_NAMED_IAM \
   --parameter-overrides "ClusterFQDN=${CLUSTER_FQDN} BaseDomain=${BASE_DOMAIN}" \
   --stack-name "${CLUSTER_NAME}-route53-iam-s3" --template-file tmp/aws_policies.yml --tags "${TAGS}"
 
-EBS_POLICY_ARN=$(aws iam list-policies --query "Policies[?PolicyName==\`${CLUSTER_FQDN}-AmazonEBS\`].{ARN:Arn}" --output text)
-ROUTE53_POLICY_ARN=$(aws iam list-policies --query "Policies[?PolicyName==\`${CLUSTER_FQDN}-AmazonRoute53Domains\`].{ARN:Arn}" --output text)
-S3_POLICY_ARN=$(aws iam list-policies --query "Policies[?PolicyName==\`${CLUSTER_FQDN}-AmazonS3\`].{ARN:Arn}" --output text)
+AWS_CLOUDFORMATION_DETAILS=$(aws cloudformation describe-stacks --stack-name "${CLUSTER_NAME}-route53-iam-s3")
+EBS_POLICY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"EBSPolicy\") .OutputValue")
+ROUTE53_POLICY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"Route53Policy\") .OutputValue")
+S3_POLICY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"S3Policy\") .OutputValue")
+KMS_KEY_ID=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"VaultKMSKeyId\") .OutputValue")
 ```
 
 ## Create Amazon EKS
@@ -436,7 +488,7 @@ nodeGroups:
     instanceType: t3.large
     desiredCapacity: 2
     minSize: 2
-    maxSize: 2
+    maxSize: 4
     volumeSize: 0
     ssh:
       # Enable ssh access (via the admin container)
