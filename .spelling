@@ -1,4 +1,3 @@
-
 Ansible
 ArgoCD
 Autoscaler
@@ -25,6 +24,7 @@ Polaris
 ReadWriteMany
 Route53
 ServiceAccount
+StorageClass
 Velero
 Weaveworks
 aws-cloudwatch-metrics
@@ -45,6 +45,7 @@ kube2iam
 kubectl
 kubed
 kubernetes-dashboard
+kubeview
 mylabs.dev
 nameservers
 oauth2-proxy
