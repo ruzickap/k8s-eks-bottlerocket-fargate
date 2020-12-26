@@ -3,6 +3,7 @@ ArgoCD
 Autoscaler
 Base64
 Bottlerocket
+CRDs
 ChartMuseum
 Cleanup
 CloudFlare
@@ -29,6 +30,7 @@ Velero
 Weaveworks
 aws-cloudwatch-metrics
 aws-ebs-csi-driver
+aws-efs-csi-driver
 aws-for-fluent-bit
 awscli
 backend
@@ -37,6 +39,7 @@ cluster-autoscaler
 config
 eksctl
 external-dns
+external-snapshotter
 ingress-nginx
 k8s-eks-bottlerocket-fargate
 kube-oidc-proxy

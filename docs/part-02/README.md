@@ -45,6 +45,35 @@ EOF
 
 The `aws-cloudwatch-metrics` populates "Container insights" in CloudWatch
 
+## aws-efs-csi-driver
+
+Install [Amazon EFS CSI Driver](https://github.com/kubernetes-sigs/aws-efs-csi-driver),
+which supports ReadWriteMany PVC, is installed.
+
+Install [Amazon EFS CSI Driver](https://github.com/kubernetes-sigs/aws-efs-csi-driver)
+`aws-efs-csi-driver`
+[helm chart](https://github.com/kubernetes-sigs/aws-efs-csi-driver/tree/master/helm)
+and modify the
+[default values](https://github.com/kubernetes-sigs/aws-efs-csi-driver/blob/master/helm/values.yaml):
+
+```bash
+helm repo add aws-efs-csi-driver https://kubernetes-sigs.github.io/aws-efs-csi-driver/
+kubectl delete CSIDriver efs.csi.aws.com
+helm install --version 0.1.0 --namespace kube-system aws-efs-csi-driver aws-efs-csi-driver/aws-efs-csi-driver
+```
+
+Create storage class for EFS:
+
+```bash
+kubectl apply -f - << EOF
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: efs
+provisioner: efs.csi.aws.com
+EOF
+```
+
 ## aws-ebs-csi-driver
 
 ```bash
@@ -63,7 +92,7 @@ helm repo add aws-ebs-csi-driver https://kubernetes-sigs.github.io/aws-ebs-csi-d
 helm install --version 0.7.0 --namespace kube-system --values - aws-ebs-csi-driver aws-ebs-csi-driver/aws-ebs-csi-driver << EOF
 enableVolumeScheduling: true
 enableVolumeResizing: true
-enableVolumeSnapshot: false
+enableVolumeSnapshot: true
 k8sTagClusterId: ${CLUSTER_FQDN}
 serviceAccount:
   controller:
@@ -73,12 +102,6 @@ serviceAccount:
     annotations:
       eks.amazonaws.com/role-arn: ${EBS_SNAPSHOT_ROLE_ARN}
 EOF
-```
-
-Delete default `gp2` storage class:
-
-```bash
-kubectl delete storageclass gp2
 ```
 
 Create new `gp3` storage class using `aws-ebs-csi-driver`:
@@ -94,6 +117,7 @@ parameters:
   type: gp3
   encrypted: "true"
 reclaimPolicy: Delete
+allowVolumeExpansion: true
 EOF
 ```
 
@@ -101,6 +125,35 @@ Set `gp3` as default StorageClass:
 
 ```bash
 kubectl patch storageclass gp3 -p "{\"metadata\": {\"annotations\":{\"storageclass.kubernetes.io/is-default-class\":\"true\"}}}"
+kubectl patch storageclass gp2 -p "{\"metadata\": {\"annotations\":{\"storageclass.kubernetes.io/is-default-class\":\"false\"}}}"
+```
+
+## external-snapshotter CRDs
+
+Details about EKS and external-snapshotter can be found here: [https://aws.amazon.com/blogs/containers/using-ebs-snapshots-for-persistent-storage-with-your-eks-cluster](https://aws.amazon.com/blogs/containers/using-ebs-snapshots-for-persistent-storage-with-your-eks-cluster)
+
+Install  Volume Snapshot Custom Resource Definitions (CRDs)
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/master/client/config/crd/snapshot.storage.k8s.io_volumesnapshotclasses.yaml
+kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/master/client/config/crd/snapshot.storage.k8s.io_volumesnapshotcontents.yaml
+kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/master/client/config/crd/snapshot.storage.k8s.io_volumesnapshots.yaml
+```
+
+Create the Volume Snapshot Class:
+
+```bash
+kubectl apply -f - << EOF
+apiVersion: snapshot.storage.k8s.io/v1beta1
+kind: VolumeSnapshotClass
+metadata:
+  name: csi-ebs-snapclass
+  labels:
+    velero.io/csi-volumesnapshot-class: "true"
+    snapshot.storage.kubernetes.io/is-default-class: "true"
+driver: ebs.csi.aws.com
+deletionPolicy: Retain
+EOF
 ```
 
 ## metrics-server
@@ -653,6 +706,7 @@ config:
       secret: ${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET}
   enablePasswordDB: false
 EOF
+sleep 50
 ```
 
 Output:
@@ -985,7 +1039,7 @@ istioctl operator init --revision ${ISTIO_VERSION//./-}
 
 ## cluster-autoscaler
 
-Install `autoscaler`
+Install `cluster-autoscaler`
 [helm chart](https://artifacthub.io/packages/helm/cluster-autoscaler/cluster-autoscaler)
 and modify the
 [default values](https://github.com/kubernetes/autoscaler/blob/master/charts/cluster-autoscaler/values.yaml).
@@ -1016,4 +1070,34 @@ NOTES:
 To verify that cluster-autoscaler has started, run:
 
   kubectl --namespace=kube-system get pods -l "app.kubernetes.io/name=aws-cluster-autoscaler,app.kubernetes.io/instance=cluster-autoscaler"
+```
+
+You can test it by running:
+
+```shell
+kubectl create deployment autoscaler-demo --image=nginx
+kubectl scale deployment autoscaler-demo --replicas=50
+```
+
+The `cluster-autoscaler` should start one more node and run there the pods:
+
+```shell
+kubectl get nodes
+```
+
+Output:
+
+```text
+NAME                                              STATUS   ROLES    AGE     VERSION
+ip-192-168-25-231.eu-central-1.compute.internal   Ready    <none>   18m     v1.18.9-eks-d1db3c
+ip-192-168-55-65.eu-central-1.compute.internal    Ready    <none>   2m17s   v1.18.9-eks-d1db3c
+ip-192-168-59-105.eu-central-1.compute.internal   Ready    <none>   18m     v1.18.9-eks-d1db3c
+```
+
+If you delete the deployment `autoscaler-demo` the `cluster-autoscaler` will
+decrease the number of nodes:
+
+```shell
+kubectl delete deployment autoscaler-demo
+kubectl get nodes
 ```

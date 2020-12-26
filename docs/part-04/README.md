@@ -246,12 +246,8 @@ Please login using a database username and password.
 
 ### EFS
 
-Install [Amazon EFS CSI Driver](https://github.com/kubernetes-sigs/aws-efs-csi-driver),
-which supports ReadWriteMany PVC, is installed:
-
-```bash
-kubectl apply -k "github.com/kubernetes-sigs/aws-efs-csi-driver/deploy/kubernetes/overlays/dev/?ref=master"
-```
+The [Amazon EFS CSI Driver](https://github.com/kubernetes-sigs/aws-efs-csi-driver)
+supports ReadWriteMany PVC.
 
 Apply CloudFormation template to create Amazon EFS.
 The template below is inspired by: [https://github.com/so008mo/inkubator-play/blob/64a150dbdc35b9ade48ff21b9ae6ba2710d18b5d/roles/eks/files/amazon-eks-efs.yaml](https://github.com/so008mo/inkubator-play/blob/64a150dbdc35b9ade48ff21b9ae6ba2710d18b5d/roles/eks/files/amazon-eks-efs.yaml)
@@ -365,18 +361,6 @@ Waiting for stack create/update to complete
 Successfully created/updated stack - kube1-efs
 ```
 
-Create storage class:
-
-```bash
-kubectl apply -f - << EOF
-kind: StorageClass
-apiVersion: storage.k8s.io/v1
-metadata:
-  name: efs-sc
-provisioner: efs.csi.aws.com
-EOF
-```
-
 Create ReadWriteMany persistent volume like described [here](https://github.com/kubernetes-sigs/aws-efs-csi-driver/blob/master/examples/kubernetes/multiple_pods/README.md):
 
 ```bash
@@ -392,7 +376,7 @@ spec:
   accessModes:
     - ReadWriteMany
   persistentVolumeReclaimPolicy: Retain
-  storageClassName: efs-sc
+  storageClassName: efs
   csi:
     driver: efs.csi.aws.com
     volumeHandle: ${EFS_FS_ID}::${EFS_AP_ID}
@@ -421,7 +405,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteMany
-  storageClassName: efs-sc
+  storageClassName: efs
   resources:
     requests:
       storage: 1Gi
@@ -465,7 +449,7 @@ ingress:
         - drupal.${CLUSTER_FQDN}
 persistence:
   enabled: true
-  storageClass: efs-sc
+  storageClass: efs
   accessMode: ReadWriteMany
   size: 1Gi
   existingClaim: drupal-efs-pvc

@@ -2,4 +2,4 @@
 
 set -eu
 
-sed -n "/^\`\`\`bash.*/,/^\`\`\`$/p" docs/part-06/README.md | sed "/^\`\`\`*/d" | bash -eux
+sed -n "/^\`\`\`bash.*/,/^\`\`\`$/p" docs/part-07/README.md | sed "/^\`\`\`*/d" | bash -eux

@@ -11,7 +11,7 @@ demo-magic.sh
 kubeconfig*.conf*
 
 # README.sh script
-README.sh
+README*.sh
 
 # Vuepress Pages
 docs/.vuepress/dist
