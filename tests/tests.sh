@@ -76,6 +76,7 @@ export KMS_KEY_ID="test"
 sed docs/part-0{2..4}/README.md \
   -e 's/.*aws /# &/' \
   -e 's/.*eksctl /# &/' \
+  -e '/kubectl delete CSIDriver efs.csi.aws.com/d' \
   -e 's/^kubectl patch storageclass gp3/# &/' \
   -e 's/^vault /# &/ ; s/^kubectl exec -n vault vault-0/# &/ ; s/.*VAULT_ROOT_TOKEN/# &/' \
   -e '/^# Create ClusterIssuer for production/i \

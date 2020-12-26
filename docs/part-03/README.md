@@ -461,7 +461,7 @@ server:
         path = "/vault/data"
       }
 EOF
-sleep 60
+sleep 50
 ```
 
 Output:
@@ -597,59 +597,4 @@ You should be now able to login using OIDC (Dex):
 rm ~/.vault-token
 vault login -method=oidc
 vault secrets list
-```
-
-## Velero
-
-::: danger
-This is not working due to dependency on [kube2iam](https://github.com/jtblin/kube2iam)
-See: [https://github.com/vmware-tanzu/velero/issues/2198](https://github.com/vmware-tanzu/velero/issues/2198)
-:::
-
-Install `velero`
-[helm chart](https://artifacthub.io/packages/helm/vmware-tanzu/velero)
-and modify the
-[default values](https://github.com/vmware-tanzu/helm-charts/blob/main/charts/velero/values.yaml).
-
-```shell
-helm repo add vmware-tanzu https://vmware-tanzu.github.io/helm-charts
-helm install --version 2.14.1 --namespace velero --create-namespace --values - velero vmware-tanzu/velero << EOF
-# https://github.com/vmware-tanzu/helm-charts/blob/main/charts/velero/values.yaml
-initContainers:
-  - name: velero-plugin-for-aws
-    image: velero/velero-plugin-for-aws:v1.0.0
-    imagePullPolicy: IfNotPresent
-    volumeMounts:
-      - mountPath: /target
-        name: plugins
-configuration:
-  provider: aws
-  backupStorageLocation:
-    bucket: ${CLUSTER_FQDN}
-    prefix: velero
-    config:
-      region: ${AWS_DEFAULT_REGION}
-  volumeSnapshotLocation:
-    name: aws
-    config:
-      region: ${AWS_DEFAULT_REGION}
-# IRSA not working due to bug: https://github.com/vmware-tanzu/velero/issues/2198
-# serviceAccount:
-#   server:
-#     annotations:
-#       eks.amazonaws.com/role-arn: ${S3_POLICY_ARN}
-# This should be removed in favor of IRSA (see above)
-credentials:
-  secretContents:
-    cloud: |
-      [default]
-      aws_access_key=${AWS_ACCESS_KEY_ID}
-      aws_secret_access_key=${AWS_SECRET_ACCESS_KEY}
-deployRestic: true
-EOF
-```
-
-Output:
-
-```text
 ```

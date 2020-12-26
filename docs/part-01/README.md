@@ -209,7 +209,7 @@ localhost | CHANGED => {
 }
 ```
 
-## Add new domain to Route 53, Policies, S3
+## Add new domain to Route 53, Policies, S3, EBS
 
 Details with examples are described on these links:
 
@@ -338,6 +338,7 @@ Resources:
     Type: AWS::KMS::Key
     Properties:
       Description: "Vault Seal/Unseal key"
+      PendingWindowInDays: 7
       KeyPolicy:
         Version: "2012-10-17"
         Id: key-default-1
@@ -406,9 +407,9 @@ EOF
 
 eval aws cloudformation deploy --capabilities CAPABILITY_NAMED_IAM \
   --parameter-overrides "ClusterFQDN=${CLUSTER_FQDN} BaseDomain=${BASE_DOMAIN}" \
-  --stack-name "${CLUSTER_NAME}-route53-iam-s3" --template-file tmp/aws_policies.yml --tags "${TAGS}"
+  --stack-name "${CLUSTER_NAME}-route53-iam-s3-ebs" --template-file tmp/aws_policies.yml --tags "${TAGS}"
 
-AWS_CLOUDFORMATION_DETAILS=$(aws cloudformation describe-stacks --stack-name "${CLUSTER_NAME}-route53-iam-s3")
+AWS_CLOUDFORMATION_DETAILS=$(aws cloudformation describe-stacks --stack-name "${CLUSTER_NAME}-route53-iam-s3-ebs")
 EBS_POLICY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"EBSPolicy\") .OutputValue")
 ROUTE53_POLICY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"Route53Policy\") .OutputValue")
 S3_POLICY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"S3Policy\") .OutputValue")

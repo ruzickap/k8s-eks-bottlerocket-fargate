@@ -22,4 +22,5 @@
 * [Part 03 - Workload](part-03/README.md)
 * [Part 04 - Drupal](part-04/README.md)
 * [Part 05 - Harbor](part-05/README.md)
-* [Part 06 - Cleanup](part-06/README.md)
+* [Part 06 - Velero](part-06/README.md)
+* [Part 07 - Cleanup](part-07/README.md)
