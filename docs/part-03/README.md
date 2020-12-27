@@ -62,6 +62,39 @@ ingress:
 EOF
 ```
 
+## kuard
+
+Install [kuard](https://github.com/kubernetes-up-and-running/kuard):
+
+```bash
+kubectl run kuard --image=gcr.io/kuar-demo/kuard-amd64:blue --port=8080 --expose=true --labels="app=kuard"
+
+kubectl apply -f - << EOF
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    nginx.ingress.kubernetes.io/auth-url: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/auth
+    nginx.ingress.kubernetes.io/auth-signin: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/start?rd=\$scheme://\$host\$request_uri
+  name: kuard
+  labels:
+    app: kuard
+spec:
+  rules:
+    - host: kuard.${CLUSTER_FQDN}
+      http:
+        paths:
+          - backend:
+              serviceName: kuard
+              servicePort: 8080
+            path: /
+  tls:
+    - hosts:
+        - kuard.${CLUSTER_FQDN}
+      secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
+EOF
+```
+
 ## Polaris
 
 Install `polaris`
@@ -461,7 +494,7 @@ server:
         path = "/vault/data"
       }
 EOF
-sleep 50
+sleep 100
 ```
 
 Output:

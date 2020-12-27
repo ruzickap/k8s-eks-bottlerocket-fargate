@@ -42,6 +42,7 @@ external-dns
 external-snapshotter
 ingress-nginx
 k8s-eks-bottlerocket-fargate
+kuard
 kube-oidc-proxy
 kube-prometheus-stack
 kube2iam
