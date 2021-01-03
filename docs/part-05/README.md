@@ -14,7 +14,7 @@ and modify the
 ```bash
 HARBOR_ADMIN_PASSWORD="harbor_supersecret_admin_password"
 
-helm repo add --force-update harbor https://helm.goharbor.io ; helm repo update > /dev/null
+helm repo add harbor https://helm.goharbor.io
 helm install --wait --version 1.5.1 --namespace harbor --values - harbor harbor/harbor << EOF
 # https://github.com/goharbor/harbor-helm/blob/master/values.yaml
 expose:

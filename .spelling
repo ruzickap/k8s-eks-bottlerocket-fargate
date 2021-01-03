@@ -44,6 +44,7 @@ ingress-nginx
 k8s-eks-bottlerocket-fargate
 kuard
 kube-oidc-proxy
+kube-ops-view
 kube-prometheus-stack
 kube2iam
 kubectl
