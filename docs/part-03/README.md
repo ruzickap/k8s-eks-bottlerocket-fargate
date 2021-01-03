@@ -10,7 +10,7 @@ and modify the
 [default values](https://github.com/stefanprodan/podinfo/blob/master/charts/podinfo/values.yaml).
 
 ```bash
-helm repo add --force-update sp https://stefanprodan.github.io/podinfo ; helm repo update > /dev/null
+helm repo add sp https://stefanprodan.github.io/podinfo
 helm install --version 5.1.1 --values - podinfo sp/podinfo << EOF
 serviceMonitor:
   enabled: true
@@ -381,7 +381,6 @@ helm install --version 0.16.2 --namespace octant --create-namespace --values - o
 plugins:
   install:
     - https://github.com/bloodorangeio/octant-helm/releases/download/v0.1.0/octant-helm_0.1.0_linux_amd64.tar.gz
-    -
 ingress:
   enabled: true
   annotations:
@@ -436,6 +435,31 @@ ingress:
 EOF
 ```
 
+## kube-ops-view
+
+Install `kube-ops-view`
+[helm chart](https://hub.kubeapps.com/charts/stable/kube-ops-view)
+and modify the
+[default values](https://github.com/helm/charts/blob/master/stable/kube-ops-view/values.yaml).
+
+```bash
+helm repo add stable https://charts.helm.sh/stable
+helm install --version 1.2.4 --namespace kube-ops-view --create-namespace --values - kube-ops-view stable/kube-ops-view << EOF
+ingress:
+  enabled: true
+  hostname: kube-ops-view.${CLUSTER_FQDN}
+  annotations:
+    nginx.ingress.kubernetes.io/auth-url: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/auth
+    nginx.ingress.kubernetes.io/auth-signin: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/start?rd=\$scheme://\$host\$request_uri
+  tls:
+    - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
+      hosts:
+        - kube-ops-view.${CLUSTER_FQDN}
+rbac:
+  create: true
+EOF
+```
+
 ## HashiCorp Vault
 
 Create a secret with your EKS access key/secret:
@@ -453,7 +477,7 @@ and modify the
 [default values](https://github.com/hashicorp/vault-helm/blob/master/values.yaml).
 
 ```bash
-helm repo add --force-update hashicorp https://helm.releases.hashicorp.com ; helm repo update > /dev/null
+helm repo add hashicorp https://helm.releases.hashicorp.com
 helm install --version 0.8.0 --namespace vault --values - vault hashicorp/vault << EOF
 injector:
   metrics:

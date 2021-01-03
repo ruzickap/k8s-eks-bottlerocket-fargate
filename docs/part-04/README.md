@@ -421,7 +421,7 @@ and modify the
 DRUPAL_USERNAME="myuser"
 DRUPAL_PASSWORD="mypassword12345"
 
-helm repo add --force-update bitnami https://charts.bitnami.com/bitnami ; helm repo update > /dev/null
+helm repo add bitnami https://charts.bitnami.com/bitnami
 helm install --version 10.0.6 --namespace drupal --values - drupal bitnami/drupal << EOF
 # https://github.com/bitnami/charts/blob/master/bitnami/drupal/values.yaml
 replicaCount: 2
