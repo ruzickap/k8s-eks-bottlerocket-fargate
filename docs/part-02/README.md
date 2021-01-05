@@ -59,7 +59,12 @@ and modify the
 ```bash
 helm repo add aws-efs-csi-driver https://kubernetes-sigs.github.io/aws-efs-csi-driver/
 kubectl delete CSIDriver efs.csi.aws.com
-helm install --version 0.1.0 --namespace kube-system aws-efs-csi-driver aws-efs-csi-driver/aws-efs-csi-driver
+helm install --version 0.1.0 --namespace kube-system --values - aws-efs-csi-driver aws-efs-csi-driver/aws-efs-csi-driver << EOF
+# Use newer version of the container image due to the bug:
+# https://github.com/kubernetes-sigs/aws-efs-csi-driver/issues/192
+image:
+  tag: "9c4d851"
+EOF
 ```
 
 Create storage class for EFS:
@@ -179,7 +184,7 @@ and modify the
 [default values](https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/values.yaml):
 
 ```bash
-helm repo add --force-update prometheus-community https://prometheus-community.github.io/helm-charts ; helm repo update > /dev/null
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm install --version 12.7.0 --namespace kube-prometheus-stack --create-namespace --values - kube-prometheus-stack prometheus-community/kube-prometheus-stack << EOF
 defaultRules:
   rules:
@@ -342,9 +347,8 @@ The the previously created Role ARN will be used to annotate service account.
 ```bash
 ROUTE53_ROLE_ARN_CERT_MANAGER=$(eksctl get iamserviceaccount --cluster=${CLUSTER_NAME} --namespace cert-manager -o json  | jq -r ".iam.serviceAccounts[] | select(.metadata.name==\"cert-manager\") .status.roleARN")
 
-helm repo add --force-update jetstack https://charts.jetstack.io ; helm repo update > /dev/null
+helm repo add jetstack https://charts.jetstack.io
 helm install --version v1.1.0 --namespace cert-manager --create-namespace --wait --values - cert-manager jetstack/cert-manager << EOF
-# https://github.com/jetstack/cert-manager/blob/master/deploy/charts/cert-manager/values.yaml
 installCRDs: true
 prometheus:
   servicemonitor:
@@ -469,7 +473,7 @@ ROUTE53_ROLE_ARN_EXTERNAL_DNS=$(eksctl get iamserviceaccount --cluster=${CLUSTER
 ```
 
 ```bash
-helm repo add --force-update bitnami https://charts.bitnami.com/bitnami ; helm repo update > /dev/null
+helm repo add bitnami https://charts.bitnami.com/bitnami
 helm install --version 4.4.1 --namespace external-dns --create-namespace --values - external-dns bitnami/external-dns << EOF
 image:
   pullPolicy: Always
@@ -537,7 +541,7 @@ and modify the
 [default values](https://github.com/appscode/kubed/blob/master/charts/kubed/values.yaml).
 
 ```bash
-helm repo add --force-update appscode https://charts.appscode.com/stable/ ; helm repo update > /dev/null
+helm repo add appscode https://charts.appscode.com/stable/
 helm install --version v0.12.0 --namespace kubed --create-namespace --values - kubed appscode/kubed << EOF
 imagePullPolicy: Always
 config:
@@ -577,7 +581,7 @@ and modify the
 [default values](https://github.com/kubernetes/ingress-nginx/blob/master/charts/ingress-nginx/values.yaml).
 
 ```bash
-helm repo add --force-update ingress-nginx https://kubernetes.github.io/ingress-nginx ; helm repo update > /dev/null
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 helm install --version 3.16.1 --namespace ingress-nginx --create-namespace --wait --values - ingress-nginx ingress-nginx/ingress-nginx << EOF
 controller:
   extraArgs:
@@ -645,7 +649,7 @@ If TLS is enabled for the Ingress, a Secret containing the certificate and key m
 ## Dex
 
 ```bash
-helm repo add --force-update stable https://charts.helm.sh/stable ; helm repo update > /dev/null
+helm repo add stable https://charts.helm.sh/stable
 helm install --version 2.15.1 --namespace dex --create-namespace --values - dex stable/dex << EOF
 # https://github.com/helm/charts/blob/master/stable/dex/values.yaml
 grpc: false

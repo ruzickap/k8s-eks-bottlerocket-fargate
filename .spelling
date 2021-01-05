@@ -11,6 +11,7 @@ CloudFormation
 CloudWatch
 ClusterAPI
 ClusterIssuers
+ConfigMap
 Dex
 Drupal
 Fargate
