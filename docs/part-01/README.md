@@ -236,6 +236,21 @@ Parameters:
     Description: "Base domain where cluster domains + their subdomains will live. Ex: k8s.mylabs.dev"
     Type: String
 Resources:
+  CloudWatchPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: !Sub "${ClusterFQDN}-CloudWatch"
+      Description: !Sub "Policy required by Fargate to log to CloudWatch for ${ClusterFQDN}"
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Effect: Allow
+          Action:
+          - logs:CreateLogStream
+          - logs:CreateLogGroup
+          - logs:DescribeLogStreams
+          - logs:PutLogEvents
+          Resource: "*"
   EBSPolicy:
     Type: AWS::IAM::ManagedPolicy
     Properties:
@@ -262,6 +277,18 @@ Resources:
           - ec2:DetachVolume
           - ec2:ModifyVolume
           Resource: "*"
+  HostedZone:
+    Type: AWS::Route53::HostedZone
+    Properties:
+      Name: !Ref ClusterFQDN
+  RecordSet:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: !Sub "${BaseDomain}."
+      Name: !Ref ClusterFQDN
+      Type: NS
+      TTL: 60
+      ResourceRecords: !GetAtt HostedZone.NameServers
   Route53Policy:
     Type: AWS::IAM::ManagedPolicy
     Properties:
@@ -311,18 +338,6 @@ Resources:
     Properties:
       AccessControl: Private
       BucketName: !Sub "${ClusterFQDN}"
-  HostedZone:
-    Type: AWS::Route53::HostedZone
-    Properties:
-      Name: !Ref ClusterFQDN
-  RecordSet:
-    Type: AWS::Route53::RecordSet
-    Properties:
-      HostedZoneName: !Sub "${BaseDomain}."
-      Name: !Ref ClusterFQDN
-      Type: NS
-      TTL: 60
-      ResourceRecords: !GetAtt HostedZone.NameServers
   VaultSecret:
     Type: AWS::SecretsManager::Secret
     Properties:
@@ -350,6 +365,13 @@ Resources:
           Action: kms:*
           Resource: "*"
 Outputs:
+  CloudWatchPolicy:
+    Description: The ARN of the created CloudWatchPolicy
+    Value:
+      Ref: CloudWatchPolicy
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-CloudWatchPolicy"
   EBSPolicy:
     Description: The ARN of the created AmazonEBS policy
     Value:
@@ -357,6 +379,13 @@ Outputs:
     Export:
       Name:
         Fn::Sub: "${AWS::StackName}-EBSPolicy"
+  HostedZone:
+    Description: The ARN of the created Route53 Zone for K8s cluster
+    Value:
+      Ref: HostedZone
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-HostedZone"
   Route53Policy:
     Description: The ARN of the created AmazonRoute53Domains policy
     Value:
@@ -378,13 +407,6 @@ Outputs:
     Export:
       Name:
         Fn::Sub: "${AWS::StackName}-S3Bucket"
-  HostedZone:
-    Description: The ARN of the created Route53 Zone for K8s cluster
-    Value:
-      Ref: HostedZone
-    Export:
-      Name:
-        Fn::Sub: "${AWS::StackName}-HostedZone"
   VaultSecret:
     Value: !Ref "VaultSecret"
     Description: The AWS Secrets Manager Secret containing the ROOT TOKEN and Recovery Secret for HashiCorp Vault.
@@ -414,6 +436,7 @@ EBS_POLICY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Output
 ROUTE53_POLICY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"Route53Policy\") .OutputValue")
 S3_POLICY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"S3Policy\") .OutputValue")
 KMS_KEY_ID=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"VaultKMSKeyId\") .OutputValue")
+CLOUDWATCH_POLICY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"CloudWatchPolicy\") .OutputValue")
 ```
 
 ## Create Amazon EKS
@@ -525,12 +548,6 @@ fargateProfiles:
   - name: fp-fgtest
     selectors:
       - namespace: fgtest
-        labels:
-          fargate: "true"
-    tags: *tags
-  - name: fp-fgworkload
-    selectors:
-      - namespace: fgworkload
     tags: *tags
 
 cloudWatch:
@@ -626,3 +643,41 @@ NAME                                             STATUS   ROLES    AGE     VERSI
 ip-192-168-46-39.eu-central-1.compute.internal   Ready    <none>   2m13s   v1.18.9-eks-d1db3c   192.168.46.39   18.193.105.122   Amazon Linux 2   4.14.203-156.332.amzn2.x86_64   docker://19.3.6
 ip-192-168-8-205.eu-central-1.compute.internal   Ready    <none>   2m7s    v1.18.9-eks-d1db3c   192.168.8.205   54.93.80.77      Amazon Linux 2   4.14.203-156.332.amzn2.x86_64   docker://19.3.6
 ```
+
+Attach the policy to the [pod execution role](https://docs.aws.amazon.com/eks/latest/userguide/pod-execution-role.html)
+of your EKS on Fargate cluster:
+
+```bash
+FARGATE_POD_EXECUTION_ROLE_ARN=$(eksctl get iamidentitymapping --cluster=${CLUSTER_NAME} -o json | jq -r ".[] | select (.rolearn | contains(\"FargatePodExecutionRole\")) .rolearn")
+aws iam attach-role-policy --policy-arn "${CLOUDWATCH_POLICY_ARN}" --role-name "${FARGATE_POD_EXECUTION_ROLE_ARN#*/}"
+```
+
+Create the dedicated `aws-observability` namespace and the ConfigMap for Fluent Bit:
+
+```bash
+kubectl apply -f - << EOF
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: aws-observability
+  labels:
+    aws-observability: enabled
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: aws-logging
+  namespace: aws-observability
+data:
+  output.conf: |
+    [OUTPUT]
+        Name cloudwatch_logs
+        Match   *
+        region ${AWS_DEFAULT_REGION}
+        log_group_name /aws/eks/${CLUSTER_FQDN}/logs
+        log_stream_prefix fluentbit-
+        auto_create_group On
+EOF
+```
+
+All the Fargate pods should now send the log to CloudWatch...
