@@ -516,9 +516,7 @@ iam:
 
 nodeGroups:
   - name: ng01
-    # Bottlerocket can not be used because of https://github.com/kubernetes-sigs/aws-efs-csi-driver/issues/246
-    # amiFamily: Bottlerocket
-    amiFamily: AmazonLinux2
+    amiFamily: Bottlerocket
     instanceType: t3.large
     desiredCapacity: 2
     minSize: 2
@@ -540,10 +538,10 @@ nodeGroups:
         xRay: true
     volumeType: gp2
     volumeEncrypted: true
-    # bottlerocket:
-    #   enableAdminContainer: true
-    #   settings:
-    #     motd: "Hello, eksctl!"
+    bottlerocket:
+      enableAdminContainer: true
+      settings:
+        motd: "Hello, eksctl!"
 fargateProfiles:
   - name: fp-fgtest
     selectors:
