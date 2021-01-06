@@ -39,7 +39,7 @@ reclaimPolicy: Delete
 EOF
 
 echo -e "\n*** Install MetalLB"
-helm repo add --force-update bitnami https://charts.bitnami.com/bitnami ; helm repo update > /dev/null
+helm repo add bitnami https://charts.bitnami.com/bitnami
 helm install --version 0.1.28 --namespace metallb --create-namespace --values - metallb bitnami/metallb << EOF
 configInline:
   address-pools:
