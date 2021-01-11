@@ -518,7 +518,7 @@ nodeGroups:
   - name: ng01
     amiFamily: Bottlerocket
     instanceType: t3.large
-    desiredCapacity: 2
+    desiredCapacity: 3
     minSize: 2
     maxSize: 4
     volumeSize: 0

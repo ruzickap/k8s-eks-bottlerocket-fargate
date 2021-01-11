@@ -44,7 +44,6 @@ persistence:
       region: ${AWS_DEFAULT_REGION}
       bucket: ${CLUSTER_FQDN}
       # This should be replaced by IRSA once these bugs will be fixed:
-      # https://github.com/goharbor/harbor/issues/12888
       # https://github.com/goharbor/harbor-helm/issues/725
       accesskey: ${AWS_ACCESS_KEY_ID}
       secretkey: ${AWS_SECRET_ACCESS_KEY}
