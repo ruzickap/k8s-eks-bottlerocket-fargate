@@ -73,10 +73,10 @@ kubectl apply -f - << EOF
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
+  name: kuard
   annotations:
     nginx.ingress.kubernetes.io/auth-url: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/auth
     nginx.ingress.kubernetes.io/auth-signin: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/start?rd=\$scheme://\$host\$request_uri
-  name: kuard
   labels:
     app: kuard
 spec:
@@ -139,6 +139,39 @@ To view the dashboard execute this command:
 kubectl port-forward --namespace polaris svc/polaris-dashboard 8080:80
 
 Then open http://localhost:8080 in your browser.
+```
+
+## kubei
+
+Kubei installation is done through the K8s manifest (not helm chart).
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/Portshift/kubei/master/deploy/kubei.yaml
+
+kubectl apply -f - << EOF
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  namespace: kubei
+  name: kubei
+  annotations:
+    nginx.ingress.kubernetes.io/auth-url: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/auth
+    nginx.ingress.kubernetes.io/auth-signin: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/start?rd=\$scheme://\$host\$request_uri
+    nginx.ingress.kubernetes.io/app-root: /view
+spec:
+  rules:
+    - host: kubei.${CLUSTER_FQDN}
+      http:
+        paths:
+          - backend:
+              serviceName: kubei
+              servicePort: 8080
+            path: /
+  tls:
+    - hosts:
+        - kubei.${CLUSTER_FQDN}
+      secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
+EOF
 ```
 
 ## Cluster API

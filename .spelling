@@ -1,3 +1,4 @@
+
 Ansible
 ArgoCD
 Autoscaler
@@ -33,6 +34,7 @@ aws-cloudwatch-metrics
 aws-ebs-csi-driver
 aws-efs-csi-driver
 aws-for-fluent-bit
+aws-node-termination-handler
 awscli
 backend
 bookinfo
@@ -50,10 +52,12 @@ kube-prometheus-stack
 kube2iam
 kubectl
 kubed
+kubei
 kubernetes-dashboard
 kubeview
 mylabs.dev
 nameservers
+nri-bundle
 oauth2-proxy
 phpMyAdmin
 podinfo

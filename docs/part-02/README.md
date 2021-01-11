@@ -45,6 +45,28 @@ EOF
 
 The `aws-cloudwatch-metrics` populates "Container insights" in CloudWatch
 
+## aws-node-termination-handler
+
+Install [AWS Node Termination Handler](https://github.com/aws/aws-node-termination-handler)
+which gracefully handle EC2 instance shutdown within Kubernetes.
+This may happen when one of the K8s workers needs to be replaced by scheduling
+the event: [https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/monitoring-instances-status-check_sched.html](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/monitoring-instances-status-check_sched.html)
+
+Install `aws-node-termination-handler`
+[helm chart](https://artifacthub.io/packages/helm/aws/aws-node-termination-handler)
+and modify the
+[default values](https://github.com/aws/aws-node-termination-handler/blob/main/config/helm/aws-node-termination-handler/values.yaml).
+
+```bash
+helm install --version 0.13.2 --namespace kube-system --create-namespace --values - aws-node-termination-handler eks/aws-node-termination-handler << EOF
+enableRebalanceMonitoring: true
+awsRegion: ${AWS_DEFAULT_REGION}
+enableSpotInterruptionDraining: true
+enableScheduledEventDraining: true
+deleteLocalData: true
+EOF
+```
+
 ## aws-efs-csi-driver
 
 Install [Amazon EFS CSI Driver](https://github.com/kubernetes-sigs/aws-efs-csi-driver),
@@ -63,7 +85,7 @@ helm install --version 0.1.0 --namespace kube-system --values - aws-efs-csi-driv
 # Use newer version of the container image due to the bug:
 # https://github.com/kubernetes-sigs/aws-efs-csi-driver/issues/192
 image:
-  tag: "9c4d851"
+  tag: "latest"
 EOF
 ```
 
@@ -259,6 +281,22 @@ grafana:
         gnetId: 9852
         revision: 1
         datasource: Prometheus
+      # https://grafana.com/grafana/dashboards/12006
+      kubernetes-apiserver:
+        gnetId: 12006
+        revision: 1
+        datasource: Prometheus
+      # https://grafana.com/grafana/dashboards/9614
+      ingress-nginx:
+        gnetId: 9614
+        revision: 1
+        datasource: Prometheus
+      # https://grafana.com/grafana/dashboards/11875
+      ingress-nginx2:
+        gnetId: 11875
+        revision: 1
+        datasource: Prometheus
+
   grafana.ini:
     server:
       root_url: https://grafana.${CLUSTER_FQDN}
@@ -334,6 +372,28 @@ kube-prometheus-stack has been installed. Check its status by running:
   kubectl --namespace kube-prometheus-stack get pods -l "release=kube-prometheus-stack"
 
 Visit https://github.com/prometheus-operator/kube-prometheus for instructions on how to create & configure Alertmanager and Prometheus instances using the Operator.
+```
+
+## nri-bundle
+
+Install `nri-bundle`
+[helm chart](https://artifacthub.io/packages/helm/newrelic/nri-bundle)
+and modify the
+[default values](https://github.com/newrelic/helm-charts/blob/master/charts/nri-bundle/values.yaml).
+
+```shell
+helm repo add newrelic https://helm-charts.newrelic.com
+helm install --version 2.1.2 --namespace nri-bundle --create-namespace --values - nri-bundle newrelic/nri-bundle << EOF
+prometheus:
+  enabled: true
+kubeEvents:
+  enabled: true
+logging:
+  enabled: true
+global:
+  licenseKey: ${NEW_RELIC_LICENSE_KEY}
+  cluster: ruzickap-${CLUSTER_FQDN}
+EOF
 ```
 
 ## cert-manager
