@@ -84,7 +84,7 @@ Install [Helm](https://helm.sh/):
 ```bash
 if [[ ! -x /usr/local/bin/helm ]]; then
   # https://github.com/helm/helm/releases
-  curl -s https://raw.githubusercontent.com/helm/helm/master/scripts/get | bash -s -- --version v3.4.0
+  curl -s https://raw.githubusercontent.com/helm/helm/master/scripts/get | bash -s -- --version v3.5.0
 fi
 ```
 

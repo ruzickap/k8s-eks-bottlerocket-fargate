@@ -46,6 +46,7 @@ external-snapshotter
 ingress-nginx
 k8s-eks-bottlerocket-fargate
 kuard
+kube-bench
 kube-oidc-proxy
 kube-ops-view
 kube-prometheus-stack
@@ -62,3 +63,4 @@ oauth2-proxy
 phpMyAdmin
 podinfo
 serviceaccounts
+splunk-connect

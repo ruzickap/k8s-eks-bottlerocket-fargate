@@ -36,4 +36,6 @@ jobs:
           fi
 
       - name: Run tests/tests.sh
-        run: script -e -c tests/tests.sh
+        run: |
+          sudo rm /usr/local/bin/helm
+          script -e -c tests/tests.sh
