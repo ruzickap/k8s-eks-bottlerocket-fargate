@@ -81,7 +81,7 @@ and modify the
 ```bash
 helm repo add aws-efs-csi-driver https://kubernetes-sigs.github.io/aws-efs-csi-driver/
 kubectl delete CSIDriver efs.csi.aws.com
-helm install --version 0.1.0 --namespace kube-system --values - aws-efs-csi-driver aws-efs-csi-driver/aws-efs-csi-driver << EOF
+helm install --version 1.0.0 --namespace kube-system --values - aws-efs-csi-driver aws-efs-csi-driver/aws-efs-csi-driver << EOF
 # Use newer version of the container image due to the bug:
 # https://github.com/kubernetes-sigs/aws-efs-csi-driver/issues/192
 image:
@@ -192,7 +192,7 @@ and modify the
 
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
-helm install --version 5.3.2 --namespace metrics-server --create-namespace --values - metrics-server bitnami/metrics-server << EOF
+helm install --version 5.3.2 --namespace kube-system --values - metrics-server bitnami/metrics-server << EOF
 apiService:
   create: true
 EOF
@@ -396,6 +396,31 @@ global:
 EOF
 ```
 
+## splunk-connect
+
+Install `splunk-connect`
+[helm chart](https://github.com/splunk/splunk-connect-for-kubernetes/)
+and modify the
+[default values](https://github.com/splunk/splunk-connect-for-kubernetes/blob/develop/helm-chart/splunk-connect-for-kubernetes/values.yaml).
+
+```shell
+helm repo add splunk https://splunk.github.io/splunk-connect-for-kubernetes/
+helm install --version 1.4.3 --namespace splunk-connect --create-namespace --values - splunk-connect splunk/splunk-connect-for-kubernetes << EOF
+global:
+  splunk:
+    hec:
+      host: ${SPLUNK_HOST}
+      token: ${SPLUNK_TOKEN}
+      indexName: ${SPLUNK_INDEX_NAME}
+  kubernetes:
+    clusterName: ruzickap-${CLUSTER_FQDN}
+  prometheus_enabled: true
+  monitoring_agent_enabled: true
+  podSecurityPolicy:
+    apparmor_security: false
+EOF
+```
+
 ## cert-manager
 
 Install `cert-manager`
@@ -408,7 +433,7 @@ The the previously created Role ARN will be used to annotate service account.
 ROUTE53_ROLE_ARN_CERT_MANAGER=$(eksctl get iamserviceaccount --cluster=${CLUSTER_NAME} --namespace cert-manager -o json  | jq -r ".iam.serviceAccounts[] | select(.metadata.name==\"cert-manager\") .status.roleARN")
 
 helm repo add jetstack https://charts.jetstack.io
-helm install --version v1.1.0 --namespace cert-manager --create-namespace --wait --values - cert-manager jetstack/cert-manager << EOF
+helm install --version v1.1.0 --namespace cert-manager --create-namespace --wait --wait-for-jobs --values - cert-manager jetstack/cert-manager << EOF
 installCRDs: true
 prometheus:
   servicemonitor:
@@ -519,72 +544,6 @@ spec:
 EOF
 ```
 
-## external-dns
-
-Install `external-dns`
-[helm chart](https://artifacthub.io/packages/helm/bitnami/external-dns)
-and modify the
-[default values](https://github.com/bitnami/charts/blob/master/bitnami/external-dns/values.yaml).
-`external-dns` will take care about DNS records.
-(`ROUTE53_ROLE_ARN` variable was defined before for `cert-manager`)
-
-```bash
-ROUTE53_ROLE_ARN_EXTERNAL_DNS=$(eksctl get iamserviceaccount --cluster=${CLUSTER_NAME} --namespace external-dns -o json  | jq -r ".iam.serviceAccounts[] | select(.metadata.name==\"external-dns\") .status.roleARN")
-```
-
-```bash
-helm repo add bitnami https://charts.bitnami.com/bitnami
-helm install --version 4.4.1 --namespace external-dns --create-namespace --values - external-dns bitnami/external-dns << EOF
-image:
-  pullPolicy: Always
-aws:
-  region: ${AWS_DEFAULT_REGION}
-domainFilters:
-  - ${CLUSTER_FQDN}
-interval: 10s
-policy: sync
-replicas: 1
-serviceAccount:
-  annotations:
-    eks.amazonaws.com/role-arn: ${ROUTE53_ROLE_ARN_EXTERNAL_DNS}
-securityContext:
-  allowPrivilegeEscalation: false
-  readOnlyRootFilesystem: true
-  capabilities:
-    drop: ["ALL"]
-  runAsNonRoot: true
-resources:
-  limits:
-    cpu: 50m
-    memory: 50Mi
-  requests:
-    memory: 50Mi
-    cpu: 10m
-metrics:
-  enabled: true
-  serviceMonitor:
-    enabled: true
-EOF
-```
-
-Output:
-
-```text
-"bitnami" has been added to your repositories
-NAME: external-dns
-LAST DEPLOYED: Thu Dec 10 15:57:16 2020
-NAMESPACE: external-dns
-STATUS: deployed
-REVISION: 1
-TEST SUITE: None
-NOTES:
-** Please be patient while the chart is being deployed **
-
-To verify that external-dns has started, run:
-
-  kubectl --namespace=external-dns get pods -l "app.kubernetes.io/name=external-dns,app.kubernetes.io/instance=external-dns"
-```
-
 ## kubed
 
 `kubed` - tool which helps with copying the certificate secretes across the
@@ -642,7 +601,7 @@ and modify the
 
 ```bash
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-helm install --version 3.16.1 --namespace ingress-nginx --create-namespace --wait --values - ingress-nginx ingress-nginx/ingress-nginx << EOF
+helm install --version 3.20.1 --namespace ingress-nginx --create-namespace --wait --wait-for-jobs --values - ingress-nginx ingress-nginx/ingress-nginx << EOF
 controller:
   extraArgs:
     default-ssl-certificate: cert-manager/ingress-cert-${LETSENCRYPT_ENVIRONMENT}
@@ -770,7 +729,6 @@ config:
       secret: ${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET}
   enablePasswordDB: false
 EOF
-sleep 50
 ```
 
 Output:
@@ -786,6 +744,72 @@ TEST SUITE: None
 NOTES:
 1. Get the application URL by running these commands:
   https://dex.k1.k8s.mylabs.dev/
+```
+
+## external-dns
+
+Install `external-dns`
+[helm chart](https://artifacthub.io/packages/helm/bitnami/external-dns)
+and modify the
+[default values](https://github.com/bitnami/charts/blob/master/bitnami/external-dns/values.yaml).
+`external-dns` will take care about DNS records.
+(`ROUTE53_ROLE_ARN` variable was defined before for `cert-manager`)
+
+```bash
+ROUTE53_ROLE_ARN_EXTERNAL_DNS=$(eksctl get iamserviceaccount --cluster=${CLUSTER_NAME} --namespace external-dns -o json  | jq -r ".iam.serviceAccounts[] | select(.metadata.name==\"external-dns\") .status.roleARN")
+```
+
+```bash
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm install --version 4.5.3 --namespace external-dns --create-namespace --wait --wait-for-jobs --values - external-dns bitnami/external-dns << EOF
+image:
+  pullPolicy: Always
+aws:
+  region: ${AWS_DEFAULT_REGION}
+domainFilters:
+  - ${CLUSTER_FQDN}
+interval: 10s
+policy: sync
+replicas: 1
+serviceAccount:
+  annotations:
+    eks.amazonaws.com/role-arn: ${ROUTE53_ROLE_ARN_EXTERNAL_DNS}
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: ["ALL"]
+  runAsNonRoot: true
+resources:
+  limits:
+    cpu: 50m
+    memory: 50Mi
+  requests:
+    memory: 50Mi
+    cpu: 10m
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+EOF
+```
+
+Output:
+
+```text
+"bitnami" has been added to your repositories
+NAME: external-dns
+LAST DEPLOYED: Thu Dec 10 15:57:16 2020
+NAMESPACE: external-dns
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+** Please be patient while the chart is being deployed **
+
+To verify that external-dns has started, run:
+
+  kubectl --namespace=external-dns get pods -l "app.kubernetes.io/name=external-dns,app.kubernetes.io/instance=external-dns"
 ```
 
 ## oauth2-proxy

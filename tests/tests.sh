@@ -15,6 +15,15 @@ export KUBECONFIG="${PWD}/kubeconfig-test-${CLUSTER_NAME}.conf"
 
 test -d tests || ( echo -e "\n*** Run in top level of git repository\n"; exit 1 )
 
+if [[ ! -x /usr/local/bin/kind ]]; then
+  sudo curl -s -Lo /usr/local/bin/kind "https://kind.sigs.k8s.io/dl/v0.9.0/kind-$(uname | sed "s/./\L&/g" )-amd64"
+  sudo chmod a+x /usr/local/bin/kind
+fi
+
+if [[ ! -x /usr/local/bin/helm ]]; then
+  curl -s https://raw.githubusercontent.com/helm/helm/master/scripts/get | bash -s -- --version v3.5.0
+fi
+
 echo "*** Remove cluster (if exists)"
 kind get clusters | grep "${CLUSTER_NAME}" && kind delete cluster --name "${CLUSTER_NAME}"
 

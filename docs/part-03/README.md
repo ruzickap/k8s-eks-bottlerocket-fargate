@@ -11,7 +11,7 @@ and modify the
 
 ```bash
 helm repo add sp https://stefanprodan.github.io/podinfo
-helm install --version 5.1.1 --values - podinfo sp/podinfo << EOF
+helm install --version 5.1.1 --namespace default --values - podinfo sp/podinfo << EOF
 serviceMonitor:
   enabled: true
 ingress:
@@ -43,7 +43,7 @@ NOTES:
 Install `podinfo` secured by `oauth2`:
 
 ```bash
-helm install --version 5.0.2 --values - podinfo-oauth sp/podinfo << EOF
+helm install --version 5.0.2 --namespace default --values - podinfo-oauth sp/podinfo << EOF
 # https://github.com/stefanprodan/podinfo/blob/master/charts/podinfo/values.yaml
 serviceMonitor:
   enabled: true
@@ -172,6 +172,16 @@ spec:
         - kubei.${CLUSTER_FQDN}
       secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
 EOF
+```
+
+## kube-bench
+
+Install [kube-bench](https://github.com/aquasecurity/kube-bench) according the [https://github.com/aquasecurity/kube-bench/blob/main/docs/asff.md](https://github.com/aquasecurity/kube-bench/blob/main/docs/asff.md):
+
+```bash
+curl -s https://raw.githubusercontent.com/aquasecurity/kube-bench/main/job-eks.yaml | \
+  sed "s@image: .*@image: aquasec/kube-bench:latest@" | \
+  kubectl apply -f -
 ```
 
 ## Cluster API
@@ -511,7 +521,7 @@ and modify the
 
 ```bash
 helm repo add hashicorp https://helm.releases.hashicorp.com
-helm install --version 0.8.0 --namespace vault --values - vault hashicorp/vault << EOF
+helm install --version 0.8.0 --namespace vault --wait --wait-for-jobs --values - vault hashicorp/vault << EOF
 injector:
   metrics:
     enabled: false
