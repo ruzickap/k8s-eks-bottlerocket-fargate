@@ -82,7 +82,7 @@ export KMS_KEY_ID="test"
 
 # Changes to run test in kind like disable vault requests / change StorageClass / remove aws, eksctl commands ...
 # shellcheck disable=SC1004
-sed docs/part-0{2..4}/README.md \
+sed docs/part-{02..08}/README.md \
   -e 's/.*aws /# &/' \
   -e 's/.*eksctl /# &/' \
   -e '/kubectl delete CSIDriver efs.csi.aws.com/d' \

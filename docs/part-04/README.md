@@ -1,217 +1,34 @@
-# Drupal
+# DNS, Ingress, Certificates
 
-Few notes about Drupal installation with RDS + EFS.
+Install the basic tools, before running some applications like DNS integration
+([external-dns](https://github.com/kubernetes-sigs/external-dns)), Ingress ([ingress-nginx](https://kubernetes.github.io/ingress-nginx/)),
+certificate management ([cert-manager](https://cert-manager.io/)), ...
 
-## Drupal installation
+## cert-manager
 
-Get details about AWS environment where is the EKS cluster and store it into
-variables:
-
-```bash
-EKS_VPC_ID=$(aws eks describe-cluster --name "${CLUSTER_NAME}" --query "cluster.resourcesVpcConfig.vpcId" --output text)
-EKS_VPC_CIDR=$(aws ec2 describe-vpcs --vpc-ids "${EKS_VPC_ID}" --query "Vpcs[].CidrBlock" --output text)
-RDS_DB_USERNAME="root"
-RDS_DB_PASSWORD="123-My_Secret_Password-456"
-```
-
-### RDS
-
-Apply CloudFormation template to create Amazon RDS MariaDB database.
-The template below is inspired by: [https://github.com/aquasecurity/marketplaces/blob/master/aws/cloudformation/AquaRDS.yaml](https://github.com/aquasecurity/marketplaces/blob/master/aws/cloudformation/AquaRDS.yaml)
+Install `cert-manager`
+[helm chart](https://artifacthub.io/packages/helm/jetstack/cert-manager)
+and modify the
+[default values](https://github.com/jetstack/cert-manager/blob/master/deploy/charts/cert-manager/values.yaml).
+The the previously created Role ARN will be used to annotate service account.
 
 ```bash
-cat > tmp/cf_rds.yml << \EOF
-AWSTemplateFormatVersion: 2010-09-09
-Description: This AWS CloudFormation template installs the AWS RDS MariaDB database.
-Parameters:
-  VpcIPCidr:
-    Description: "Enter VPC CIDR that hosts the EKS cluster. Ex: 10.0.0.0/16"
-    Type: String
-  RdsMasterUsername:
-    Description: Enter the master username for the RDS instance.
-    Type: String
-    MinLength: "1"
-    MaxLength: "63"
-    AllowedPattern: "^[a-zA-Z0-9]*$"
-    ConstraintDescription: >-
-      Must be 1 to 63 characters long, begin with a letter, contain only
-      alphanumeric characters, and not be a reserved word by PostgreSQL engine.
-  RdsMasterPassword:
-    NoEcho: "true"
-    Description: >-
-      Enter the master password for the RDS instance. This password must contain
-      8 to 128 characters and can be any printable ASCII character except @, /,
-      or ".
-    Type: String
-    MinLength: "8"
-    MaxLength: "128"
-    AllowedPattern: >-
-      ^((?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])|(?=.*[0-9])(?=.*[a-z])(?=.*[!@#$%^&*])|(?=.*[0-9])(?=.*[A-Z])(?=.*[!@#$%^&*])|(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*])).{8,128}$
-    ConstraintDescription: >-
-      Password must be at least 9 characters long and have 3 out of the
-      following: one number, one lower case, one upper case, or one special
-      character.
-  RdsInstanceClass:
-    Type: String
-    Default: db.t2.medium
-    AllowedValues:
-      - db.t2.micro
-      - db.t2.small
-      - db.t2.medium
-      - db.t2.large
-      - db.t2.xlarge
-      - db.t2.2xlarge
-      - db.m4.large
-      - db.m4.xlarge
-      - db.m4.2xlarge
-      - db.m4.4xlarge
-      - db.m4.10xlarge
-      - db.m4.16xlarge
-      - db.r4.large
-      - db.r4.xlarge
-      - db.r4.2xlarge
-      - db.r4.4xlarge
-      - db.r4.8xlarge
-      - db.r4.16xlarge
-      - db.r3.large
-      - db.r3.2xlarge
-      - db.r3.4xlarge
-      - db.r3.8xlarge
-    ConstraintDescription: Must be a valid EC2 RDS instance type
-  RdsStorage:
-    Default: "40"
-    Type: Number
-    MinValue: "40"
-    MaxValue: "1024"
-    ConstraintDescription: Must be set to between 40 and 1024GB.
-  MultiAzDatabase:
-    Default: "false"
-    Type: String
-    AllowedValues:
-      - "true"
-      - "false"
-    ConstraintDescription: Must be either true or false.
-  ClusterName:
-    Default: "k1"
-    Description: K8s Cluster name
-    Type: String
-Resources:
-  RdsInstance:
-    Type: "AWS::RDS::DBInstance"
-    DependsOn:
-      - DbSecurityGroup
-      - RdsInstanceSubnetGroup
-    DeletionPolicy: Delete
-    Properties:
-      AllocatedStorage: !Ref RdsStorage
-      AutoMinorVersionUpgrade: "false"
-      VPCSecurityGroups:
-        - !Ref DbSecurityGroup
-      DBName: !Sub "${ClusterName}db"
-      BackupRetentionPeriod: "0"
-      DBInstanceIdentifier: !Sub "${ClusterName}db"
-      DBInstanceClass: !Ref RdsInstanceClass
-      DBSubnetGroupName: !Ref RdsInstanceSubnetGroup
-      CopyTagsToSnapshot: true
-      EnableCloudwatchLogsExports:
-        - slowquery
-      Engine: mariadb
-      EngineVersion: 10.4
-      MasterUsername: !Ref RdsMasterUsername
-      MasterUserPassword: !Ref RdsMasterPassword
-      MultiAZ: !Ref MultiAzDatabase
-      StorageType: gp2
-  RdsInstanceSubnetGroup:
-    Type: "AWS::RDS::DBSubnetGroup"
-    Properties:
-      DBSubnetGroupDescription: Source subnet
-      SubnetIds:
-      - Fn::Select:
-        - 0
-        - Fn::Split:
-          - ","
-          - Fn::ImportValue: !Sub "eksctl-${ClusterName}-cluster::SubnetsPrivate"
-      - Fn::Select:
-        - 1
-        - Fn::Split:
-          - ","
-          - Fn::ImportValue: !Sub "eksctl-${ClusterName}-cluster::SubnetsPrivate"
-  # Create DB Security Group
-  DbSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: For RDS Instance
-      VpcId:
-        Fn::ImportValue:
-          Fn::Sub: "eksctl-${ClusterName}-cluster::VPC"
-  # Attach Security Group Rule
-  DbIngress1:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      GroupId: !Ref DbSecurityGroup
-      IpProtocol: tcp
-      FromPort: "3306"
-      ToPort: "3306"
-      CidrIp: !Ref "VpcIPCidr"
-Outputs:
-  RdsInstanceEndpoint:
-    Description: MariaDB endpoint
-    Value: !GetAtt RdsInstance.Endpoint.Address
-    Export:
-      Name:
-        Fn::Sub: "${AWS::StackName}-RdsInstanceEndpoint"
-  RdsInstancePort:
-    Description: MariaDB port
-    Value: !GetAtt RdsInstance.Endpoint.Port
-    Export:
-      Name:
-        Fn::Sub: "${AWS::StackName}-RdsInstancePort"
-  RdsInstanceUser:
-    Description: Username for the MariaDB instance
-    Value: !Ref RdsMasterUsername
-    Export:
-      Name:
-        Fn::Sub: "${AWS::StackName}-RdsInstanceUser"
-  RdsMasterPassword:
-    Description: Password for the MariaDB instance
-    Value: !Ref RdsMasterPassword
-    Export:
-      Name:
-        Fn::Sub: "${AWS::StackName}-RdsMasterPassword"
-EOF
+ROUTE53_ROLE_ARN_CERT_MANAGER=$(eksctl get iamserviceaccount --cluster=${CLUSTER_NAME} --namespace cert-manager -o json  | jq -r ".iam.serviceAccounts[] | select(.metadata.name==\"cert-manager\") .status.roleARN")
 
-eval aws cloudformation deploy --stack-name "${CLUSTER_NAME}-rds" --parameter-overrides "ClusterName=${CLUSTER_NAME} RdsMasterPassword=${RDS_DB_PASSWORD} RdsMasterUsername=${RDS_DB_USERNAME} VpcIPCidr=${EKS_VPC_CIDR}" --template-file tmp/cf_rds.yml --tags "${TAGS}"
-
-RDS_DB_HOST=$(aws rds describe-db-instances --query "DBInstances[?DBInstanceIdentifier==\`${CLUSTER_NAME}db\`].[Endpoint.Address]" --output text)
-```
-
-Output:
-
-```text
-Waiting for changeset to be created..
-Waiting for stack create/update to complete
-Successfully created/updated stack - kube1-rds
-```
-
-Install [phpMyAdmin](https://www.phpmyadmin.net/):
-
-```bash
-helm install --version 6.5.4 --namespace phpmyadmin --create-namespace --values - phpmyadmin bitnami/phpmyadmin << EOF
-db:
-  allowArbitraryServer: false
-  host: ${RDS_DB_HOST}
-ingress:
-  enabled: true
+helm repo add jetstack https://charts.jetstack.io
+helm install --version v1.1.0 --namespace cert-manager --create-namespace --wait --wait-for-jobs --values - cert-manager jetstack/cert-manager << EOF
+installCRDs: true
+prometheus:
+  servicemonitor:
+    enabled: true
+image:
+  pullPolicy: Always
+serviceAccount:
   annotations:
-    nginx.ingress.kubernetes.io/auth-url: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/auth
-    nginx.ingress.kubernetes.io/auth-signin: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/start?rd=\$scheme://\$host\$request_uri
-  hosts:
-    - name: phpmyadmin.${CLUSTER_FQDN}
-  tls: true
-  tlsHosts:
-    - phpmyadmin.${CLUSTER_FQDN}
-  tlsSecret: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
-metrics:
+    eks.amazonaws.com/role-arn: ${ROUTE53_ROLE_ARN_CERT_MANAGER}
+extraArgs:
+  - --enable-certificate-owner-ref=true
+securityContext:
   enabled: true
 EOF
 ```
@@ -219,239 +36,263 @@ EOF
 Output:
 
 ```text
-NAME: phpmyadmin
-LAST DEPLOYED: Thu Dec 10 16:09:35 2020
-NAMESPACE: phpmyadmin
+"jetstack" has been added to your repositories
+NAME: cert-manager
+LAST DEPLOYED: Thu Dec 10 15:56:33 2020
+NAMESPACE: cert-manager
 STATUS: deployed
 REVISION: 1
 TEST SUITE: None
 NOTES:
-1. Get the application URL by running these commands:
-  You should be able to access your new phpMyAdmin installation through
-  https://your-cluster-ip
+cert-manager has been deployed successfully!
 
+In order to begin issuing certificates, you will need to set up a ClusterIssuer
+or Issuer resource (for example, by creating a 'letsencrypt-staging' issuer).
 
-  Find out your cluster ip address by running:
-  $ kubectl cluster-info
+More information on the different types of issuers and how to configure them
+can be found in our documentation:
 
+https://cert-manager.io/docs/configuration/
 
+For information on how to configure cert-manager to automatically provision
+Certificates for Ingress resources, take a look at the `ingress-shim`
+documentation:
 
-2. How to log in
-
-phpMyAdmin has been configured to connect to a database in k1db.crssduk1yxyx.eu-central-1.rds.amazonaws.comwith port 3306
-Please login using a database username and password.
-
-** Please be patient while the chart is being deployed **
+https://cert-manager.io/docs/usage/ingress/
 ```
 
-### EFS
-
-The [Amazon EFS CSI Driver](https://github.com/kubernetes-sigs/aws-efs-csi-driver)
-supports ReadWriteMany PVC.
-
-Apply CloudFormation template to create Amazon EFS.
-The template below is inspired by: [https://github.com/so008mo/inkubator-play/blob/64a150dbdc35b9ade48ff21b9ae6ba2710d18b5d/roles/eks/files/amazon-eks-efs.yaml](https://github.com/so008mo/inkubator-play/blob/64a150dbdc35b9ade48ff21b9ae6ba2710d18b5d/roles/eks/files/amazon-eks-efs.yaml)
+Add ClusterIssuers for Let's Encrypt staging and production:
 
 ```bash
-cat > tmp/cf_efs.yml << \EOF
-AWSTemplateFormatVersion: 2010-09-09
-Description: Create EFS, mount points, security groups for EKS
-Parameters:
-  VpcIPCidr:
-    Description: "Enter VPC CIDR that hosts the EKS cluster. Ex: 10.0.0.0/16"
-    Type: String
-  ClusterName:
-    Description: "K8s Cluster name. Ex: k1"
-    Type: String
-Resources:
-  MountTargetSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      VpcId:
-        Fn::ImportValue:
-          Fn::Sub: "eksctl-${ClusterName}-cluster::VPC"
-      GroupName: !Sub "${ClusterName}-efs-sg-groupname"
-      GroupDescription: Security group for mount target
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: "2049"
-          ToPort: "2049"
-          CidrIp:
-            Ref: VpcIPCidr
-      Tags:
-        - Key: Name
-          Value: !Sub "${ClusterName}-efs-sg-tagname"
-  FileSystem:
-    Type: AWS::EFS::FileSystem
-    Properties:
-      FileSystemTags:
-      - Key: Name
-        Value: !Sub "${ClusterName}-efs"
-  MountTargetAZ1:
-    Type: AWS::EFS::MountTarget
-    Properties:
-      FileSystemId:
-        Ref: FileSystem
-      SubnetId:
-        Fn::Select:
-        - 0
-        - Fn::Split:
-          - ","
-          - Fn::ImportValue: !Sub "eksctl-${ClusterName}-cluster::SubnetsPrivate"
-      SecurityGroups:
-      - Ref: MountTargetSecurityGroup
-  MountTargetAZ2:
-    Type: AWS::EFS::MountTarget
-    Properties:
-      FileSystemId:
-        Ref: FileSystem
-      SubnetId:
-        Fn::Select:
-        - 1
-        - Fn::Split:
-          - ","
-          - Fn::ImportValue: !Sub "eksctl-${ClusterName}-cluster::SubnetsPrivate"
-      SecurityGroups:
-      - Ref: MountTargetSecurityGroup
-  AccessPoint:
-    Type: AWS::EFS::AccessPoint
-    Properties:
-      FileSystemId: !Ref FileSystem
-      # Set proper uid/gid: https://github.com/bitnami/bitnami-docker-drupal/blob/02f7e41c88eee96feb90c8b7845ee7aeb5927c38/9/debian-10/Dockerfile#L49
-      PosixUser:
-        Uid: "1001"
-        Gid: "1001"
-      RootDirectory:
-        CreationInfo:
-          OwnerGid: "1001"
-          OwnerUid: "1001"
-          Permissions: "0775"
-        Path: "/drupal"
-      AccessPointTags:
-        - Key: Name
-          Value: !Sub "${ClusterName}-efs-ap"
-Outputs:
-  FileSystemId:
-    Description: Id of Elastic File System
-    Value:
-      Ref: FileSystem
-    Export:
-      Name:
-        Fn::Sub: "${AWS::StackName}-FileSystemId"
-  AccessPoint:
-    Description: EFS AccessPoint ID
-    Value:
-      Ref: AccessPoint
-    Export:
-      Name:
-        Fn::Sub: "${AWS::StackName}-AccessPoint"
+kubectl apply -f - << EOF
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-staging-dns
+  namespace: cert-manager
+spec:
+  acme:
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    email: ${MY_EMAIL}
+    privateKeySecretRef:
+      name: letsencrypt-staging-dns
+    solvers:
+      - selector:
+          dnsZones:
+            - ${CLUSTER_FQDN}
+        dns01:
+          route53:
+            region: ${AWS_DEFAULT_REGION}
+---
+# Create ClusterIssuer for production to get real signed certificates
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-production-dns
+  namespace: cert-manager
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: ${MY_EMAIL}
+    privateKeySecretRef:
+      name: letsencrypt-production-dns
+    solvers:
+      - selector:
+          dnsZones:
+            - ${CLUSTER_FQDN}
+        dns01:
+          route53:
+            region: ${AWS_DEFAULT_REGION}
 EOF
+```
 
-eval aws cloudformation deploy --stack-name "${CLUSTER_NAME}-efs" --parameter-overrides "ClusterName=${CLUSTER_NAME} VpcIPCidr=${EKS_VPC_CIDR}" --template-file tmp/cf_efs.yml --tags "${TAGS}"
+Create wildcard certificate using `cert-manager`:
 
-EFS_FS_ID=$(aws efs describe-file-systems --query "FileSystems[?Name==\`${CLUSTER_NAME}-efs\`].[FileSystemId]" --output text)
-EFS_AP_ID=$(aws efs describe-access-points --query "AccessPoints[?FileSystemId==\`${EFS_FS_ID}\`].[AccessPointId]" --output text)
+```bash
+kubectl apply -f - << EOF
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
+  namespace: cert-manager
+spec:
+  secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
+  issuerRef:
+    name: letsencrypt-${LETSENCRYPT_ENVIRONMENT}-dns
+    kind: ClusterIssuer
+  commonName: "*.${CLUSTER_FQDN}"
+  dnsNames:
+    - "*.${CLUSTER_FQDN}"
+    - "${CLUSTER_FQDN}"
+EOF
+```
+
+## kubed
+
+`kubed` - tool which helps with copying the certificate secretes across the
+namespaces.
+
+See the details:
+
+* [https://cert-manager.io/docs/faq/kubed/](https://cert-manager.io/docs/faq/kubed/)
+* [https://appscode.com/products/kubed/v0.12.0/guides/config-syncer/intra-cluster/](https://appscode.com/products/kubed/v0.12.0/guides/config-syncer/intra-cluster/)
+
+Install `kubed`
+[helm chart](https://artifacthub.io/packages/helm/appscode/kubed)
+and modify the
+[default values](https://github.com/appscode/kubed/blob/master/charts/kubed/values.yaml).
+
+```bash
+helm repo add appscode https://charts.appscode.com/stable/
+helm install --version v0.12.0 --namespace kubed --create-namespace --values - kubed appscode/kubed << EOF
+imagePullPolicy: Always
+config:
+  clusterName: ${CLUSTER_FQDN}
+EOF
 ```
 
 Output:
 
 ```text
-Waiting for changeset to be created..
-Waiting for stack create/update to complete
-Successfully created/updated stack - kube1-efs
+"appscode" has been added to your repositories
+NAME: kubed
+LAST DEPLOYED: Thu Dec 10 15:57:21 2020
+NAMESPACE: kubed
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+To verify that Kubed has started, run:
+
+  kubectl get deployment --namespace kubed -l "app.kubernetes.io/name=kubed,app.kubernetes.io/instance=kubed"
 ```
 
-Create ReadWriteMany persistent volume like described [here](https://github.com/kubernetes-sigs/aws-efs-csi-driver/blob/master/examples/kubernetes/multiple_pods/README.md):
+Annotate the wildcard certificate secret. It will allow `kubed` to distribute
+it to all namespaces.
 
 ```bash
-kubectl apply -f - << EOF
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: efs-pv
-spec:
-  capacity:
-    storage: 1Gi
-  volumeMode: Filesystem
-  accessModes:
-    - ReadWriteMany
-  persistentVolumeReclaimPolicy: Retain
-  storageClassName: efs
-  csi:
-    driver: efs.csi.aws.com
-    volumeHandle: ${EFS_FS_ID}::${EFS_AP_ID}
-EOF
+kubectl wait --timeout=10m --namespace cert-manager --for=condition=Ready certificate "ingress-cert-${LETSENCRYPT_ENVIRONMENT}"
+kubectl annotate secret "ingress-cert-${LETSENCRYPT_ENVIRONMENT}" -n cert-manager kubed.appscode.com/sync=""
 ```
 
-### Install Drupal
+## ingress-nginx
 
-Create `drupal` database inside MariaDB:
-
-```bash
-kubectl create namespace drupal
-kubectl run -n drupal --env MYSQL_PWD=${RDS_DB_PASSWORD} --image=mysql:5.7 --restart=Never mysql-client-drupal -- \
-  mysql -h "${RDS_DB_HOST}" -u "${RDS_DB_USERNAME}" -e "CREATE DATABASE drupal"
-```
-
-Create `drupal` namespace and PVC:
-
-```bash
-kubectl apply -f - << EOF
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: drupal-efs-pvc
-  namespace: drupal
-spec:
-  accessModes:
-    - ReadWriteMany
-  storageClassName: efs
-  resources:
-    requests:
-      storage: 1Gi
-EOF
-```
-
-Install `drupal`
-[helm chart](https://artifacthub.io/packages/helm/bitnami/drupal)
+Install `ingress-nginx`
+[helm chart](https://artifacthub.io/packages/helm/ingress-nginx/ingress-nginx)
 and modify the
-[default values](https://github.com/bitnami/charts/blob/master/bitnami/drupal/values.yaml).
+[default values](https://github.com/kubernetes/ingress-nginx/blob/master/charts/ingress-nginx/values.yaml).
 
 ```bash
-DRUPAL_USERNAME="myuser"
-DRUPAL_PASSWORD="mypassword12345"
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm install --version 3.20.1 --namespace ingress-nginx --create-namespace --wait --wait-for-jobs --values - ingress-nginx ingress-nginx/ingress-nginx << EOF
+controller:
+  extraArgs:
+    default-ssl-certificate: cert-manager/ingress-cert-${LETSENCRYPT_ENVIRONMENT}
+  replicaCount: 1
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+EOF
+```
 
+Output:
+
+```text
+"ingress-nginx" has been added to your repositories
+NAME: ingress-nginx
+LAST DEPLOYED: Thu Dec 10 16:00:57 2020
+NAMESPACE: ingress-nginx
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+The ingress-nginx controller has been installed.
+It may take a few minutes for the LoadBalancer IP to be available.
+You can watch the status by running 'kubectl --namespace ingress-nginx get services -o wide -w ingress-nginx-controller'
+
+An example Ingress that makes use of the controller:
+
+  apiVersion: networking.k8s.io/v1beta1
+  kind: Ingress
+  metadata:
+    annotations:
+      kubernetes.io/ingress.class: nginx
+    name: example
+    namespace: foo
+  spec:
+    rules:
+      - host: www.example.com
+        http:
+          paths:
+            - backend:
+                serviceName: exampleService
+                servicePort: 80
+              path: /
+    # This section is only required if TLS is to be enabled for the Ingress
+    tls:
+        - hosts:
+            - www.example.com
+          secretName: example-tls
+
+If TLS is enabled for the Ingress, a Secret containing the certificate and key must also be provided:
+
+  apiVersion: v1
+  kind: Secret
+  metadata:
+    name: example-tls
+    namespace: foo
+  data:
+    tls.crt: <base64 encoded cert>
+    tls.key: <base64 encoded key>
+  type: kubernetes.io/tls
+```
+
+## external-dns
+
+Install `external-dns`
+[helm chart](https://artifacthub.io/packages/helm/bitnami/external-dns)
+and modify the
+[default values](https://github.com/bitnami/charts/blob/master/bitnami/external-dns/values.yaml).
+`external-dns` will take care about DNS records.
+(`ROUTE53_ROLE_ARN` variable was defined before for `cert-manager`)
+
+```bash
+ROUTE53_ROLE_ARN_EXTERNAL_DNS=$(eksctl get iamserviceaccount --cluster=${CLUSTER_NAME} --namespace external-dns -o json  | jq -r ".iam.serviceAccounts[] | select(.metadata.name==\"external-dns\") .status.roleARN")
+```
+
+```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
-helm install --version 10.0.8 --namespace drupal --values - drupal bitnami/drupal << EOF
-replicaCount: 2
-drupalUsername: ${DRUPAL_USERNAME}
-drupalPassword: ${DRUPAL_PASSWORD}
-drupalEmail: ${MY_EMAIL}
-externalDatabase:
-  host: ${RDS_DB_HOST}
-  user: ${RDS_DB_USERNAME}
-  password: ${RDS_DB_PASSWORD}
-  database: drupal
-mariadb:
-  enabled: false
-service:
-  type: ClusterIP
-ingress:
-  enabled: true
+helm install --version 4.5.3 --namespace external-dns --create-namespace --wait --values - external-dns bitnami/external-dns << EOF
+image:
+  pullPolicy: Always
+aws:
+  region: ${AWS_DEFAULT_REGION}
+domainFilters:
+  - ${CLUSTER_FQDN}
+interval: 10s
+policy: sync
+replicas: 1
+serviceAccount:
   annotations:
-    nginx.ingress.kubernetes.io/auth-url: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/auth
-    nginx.ingress.kubernetes.io/auth-signin: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/start?rd=\$scheme://\$host\$request_uri
-  hostname: drupal.${CLUSTER_FQDN}
-  tls:
-    - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
-      hosts:
-        - drupal.${CLUSTER_FQDN}
-persistence:
+    eks.amazonaws.com/role-arn: ${ROUTE53_ROLE_ARN_EXTERNAL_DNS}
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: ["ALL"]
+  runAsNonRoot: true
+resources:
+  limits:
+    cpu: 50m
+    memory: 50Mi
+  requests:
+    memory: 50Mi
+    cpu: 10m
+metrics:
   enabled: true
-  storageClass: efs
-  accessMode: ReadWriteMany
-  size: 1Gi
-  existingClaim: drupal-efs-pvc
+  serviceMonitor:
+    enabled: true
 EOF
 ```
 
@@ -459,25 +300,16 @@ Output:
 
 ```text
 "bitnami" has been added to your repositories
-NAME: drupal
-LAST DEPLOYED: Thu Dec 10 16:12:00 2020
-NAMESPACE: drupal
+NAME: external-dns
+LAST DEPLOYED: Thu Dec 10 15:57:16 2020
+NAMESPACE: external-dns
 STATUS: deployed
 REVISION: 1
 TEST SUITE: None
 NOTES:
-*******************************************************************
-*** PLEASE BE PATIENT: Drupal may take a few minutes to install ***
-*******************************************************************
+** Please be patient while the chart is being deployed **
 
-1. Get the Drupal URL:
+To verify that external-dns has started, run:
 
-  You should be able to access your new Drupal installation through
-
-  http://drupal.k1.k8s.mylabs.dev/
-
-2. Get your Drupal login credentials by running:
-
-  echo Username: myuser
-  echo Password: $(kubectl get secret --namespace drupal drupal -o jsonpath="{.data.drupal-password}" | base64 --decode)
+  kubectl --namespace=external-dns get pods -l "app.kubernetes.io/name=external-dns,app.kubernetes.io/instance=external-dns"
 ```

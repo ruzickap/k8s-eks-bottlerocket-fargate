@@ -112,8 +112,16 @@ Install [vault](https://www.vaultproject.io/downloads):
 ```bash
 if [[ ! -x /usr/local/bin/vault ]]; then
   curl -s -L "https://releases.hashicorp.com/vault/1.6.1/vault_1.6.1_$(uname | sed "s/./\L&/g")_amd64.zip" -o /tmp/vault.zip
-  unzip /tmp/vault.zip -d /usr/local/bin/
+  unzip -q /tmp/vault.zip -d /usr/local/bin/
   rm /tmp/vault.zip
+fi
+```
+
+Install [velero](https://github.com/vmware-tanzu/velero/releases):
+
+```bash
+if [[ ! -x /usr/local/bin/velero ]]; then
+  curl -s -L "https://github.com/vmware-tanzu/velero/releases/download/v1.5.3/velero-v1.5.3-$(uname | sed "s/./\L&/g")-amd64.tar.gz" | sudo tar xz -C /usr/local/bin/ --strip-components 1 "velero-v1.5.3-$(uname | sed "s/./\L&/g")-amd64/velero"
 fi
 ```
 

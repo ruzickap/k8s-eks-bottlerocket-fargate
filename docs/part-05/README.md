@@ -1,169 +1,372 @@
-# Harbor
+# Authentication
 
-The S3 bucket where Harbor will store container images
-(registry and ChartMuseum) was already created using CloudFormation.
-
-The ServiceAccount for Harbor's registry and ChartMuseum to access S3 without
-additional secrets was created by `eksctl`.
-
-Install `harbor`
-[helm chart](https://artifacthub.io/packages/helm/harbor/harbor)
-and modify the
-[default values](https://github.com/goharbor/harbor-helm/blob/master/values.yaml).
+## Dex
 
 ```bash
-HARBOR_ADMIN_PASSWORD="harbor_supersecret_admin_password"
-
-helm repo add harbor https://helm.goharbor.io
-helm install --version 1.5.1 --namespace harbor --wait --wait-for-jobs --values - harbor harbor/harbor << EOF
-# https://github.com/goharbor/harbor-helm/blob/master/values.yaml
-expose:
+helm repo add stable https://charts.helm.sh/stable
+helm install --version 2.15.1 --namespace dex --create-namespace --wait --values - dex stable/dex << EOF
+# https://github.com/helm/charts/blob/master/stable/dex/values.yaml
+grpc: false
+telemetry: true
+ingress:
+  enabled: true
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+  hosts:
+    - dex.${CLUSTER_FQDN}
   tls:
-    certSource: secret
-  secret:
-    secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
-    notarySecretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
-  ingress:
-    hosts:
-      core: harbor.${CLUSTER_FQDN}
-      notary: notary.${CLUSTER_FQDN}
-externalURL: https://harbor.${CLUSTER_FQDN}
-persistence:
-  enabled: false
-  # resourcePolicy: delete
-  # persistentVolumeClaim:
-  #   registry:
-  #     size: 1Gi
-  #   chartmuseum:
-  #     size: 1Gi
-  #   trivy:
-  #     size: 1Gi
-  imageChartStorage:
-    type: s3
-    s3:
-      region: ${AWS_DEFAULT_REGION}
-      bucket: ${CLUSTER_FQDN}
-      # This should be replaced by IRSA once these bugs will be fixed:
-      # https://github.com/goharbor/harbor-helm/issues/725
-      accesskey: ${AWS_ACCESS_KEY_ID}
-      secretkey: ${AWS_SECRET_ACCESS_KEY}
-      rootdirectory: /harbor
-      storageclass: REDUCED_REDUNDANCY
-imagePullPolicy: Always
-harborAdminPassword: ${HARBOR_ADMIN_PASSWORD}
+    - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
+      hosts:
+        - dex.${CLUSTER_FQDN}
+config:
+  issuer: https://dex.${CLUSTER_FQDN}
+  connectors:
+    - type: github
+      id: github
+      name: GitHub
+      config:
+        clientID: ${MY_GITHUB_ORG_OAUTH_CLIENT_ID}
+        clientSecret: ${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET}
+        redirectURI: https://dex.${CLUSTER_FQDN}/callback
+        orgs:
+          - name: ${MY_GITHUB_ORG_NAME}
+  staticClients:
+    - id: argocd.${CLUSTER_FQDN}
+      redirectURIs:
+        - https://argocd.${CLUSTER_FQDN}/auth/callback
+      name: ArgoCD
+      secret: ${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET}
+    - id: gangway.${CLUSTER_FQDN}
+      redirectURIs:
+        - https://gangway.${CLUSTER_FQDN}/callback
+      name: Gangway
+      secret: ${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET}
+    - id: grafana.${CLUSTER_FQDN}
+      redirectURIs:
+        - https://grafana.${CLUSTER_FQDN}/login/generic_oauth
+      name: Grafana
+      secret: ${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET}
+    - id: harbor.${CLUSTER_FQDN}
+      redirectURIs:
+        - https://harbor.${CLUSTER_FQDN}/c/oidc/callback
+      name: Harbor
+      secret: ${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET}
+    - id: oauth2-proxy.${CLUSTER_FQDN}
+      redirectURIs:
+        - https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/callback
+      name: OAuth2 Proxy
+      secret: ${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET}
+    - id: vault.${CLUSTER_FQDN}
+      redirectURIs:
+        - https://vault.${CLUSTER_FQDN}/ui/vault/auth/oidc/oidc/callback
+        - http://localhost:8250/oidc/callback
+      name: Vault
+      secret: ${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET}
+  enablePasswordDB: false
 EOF
 ```
 
 Output:
 
 ```text
-"harbor" has been added to your repositories
-NAME: harbor
-LAST DEPLOYED: Thu Dec 10 16:12:10 2020
-NAMESPACE: harbor
+"stable" has been added to your repositories
+NAME: dex
+LAST DEPLOYED: Thu Dec 10 16:01:52 2020
+NAMESPACE: dex
 STATUS: deployed
 REVISION: 1
 TEST SUITE: None
 NOTES:
-Please wait for several minutes for Harbor deployment to complete.
-Then you should be able to visit the Harbor portal at https://harbor.k1.k8s.mylabs.dev
-For more details, please visit https://github.com/goharbor/harbor
+1. Get the application URL by running these commands:
+  https://dex.k1.k8s.mylabs.dev/
 ```
 
-Configure OIDC for Harbor:
+## oauth2-proxy
+
+Install [oauth2-proxy](https://github.com/oauth2-proxy/oauth2-proxy) to secure
+the endpoints like (`prometheus.`, `alertmanager.`).
 
 ```bash
-curl -sk -u "admin:${HARBOR_ADMIN_PASSWORD}" -X PUT "https://harbor.${CLUSTER_FQDN}/api/v2.0/configurations" -H "Content-Type: application/json" -d \
-"{
-  \"auth_mode\": \"oidc_auth\",
-  \"self_registration\": \"false\",
-  \"oidc_name\": \"Dex\",
-  \"oidc_endpoint\": \"https://dex.${CLUSTER_FQDN}\",
-  \"oidc_client_id\": \"harbor.${CLUSTER_FQDN}\",
-  \"oidc_client_secret\": \"${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET}\",
-  \"oidc_verify_cert\": \"false\",
-  \"oidc_scope\": \"openid,profile,email\",
-  \"oidc_auto_onboard\": \"true\"
-}"
+kubectl create namespace oauth2-proxy
+helm install --version 3.2.5 --namespace oauth2-proxy --create-namespace --values - oauth2-proxy stable/oauth2-proxy << EOF
+# https://github.com/helm/charts/blob/master/stable/oauth2-proxy/values.yaml
+config:
+  clientID: oauth2-proxy.${CLUSTER_FQDN}
+  clientSecret: "${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET}"
+  cookieSecret: "$(openssl rand -base64 32 | head -c 32 | base64 )"
+  configFile: |-
+    email_domains = [ "*" ]
+    upstreams = [ "file:///dev/null" ]
+    whitelist_domains = ".${CLUSTER_FQDN}"
+    cookie_domain = ".${CLUSTER_FQDN}"
+    provider = "oidc"
+    # Use http of non-valid certificates
+    oidc_issuer_url = "https://dex.${CLUSTER_FQDN}"
+    ssl_insecure_skip_verify = "true"
+    insecure_oidc_skip_issuer_verification = "true"
+image:
+  pullPolicy: Always
+ingress:
+  enabled: true
+  hosts:
+    - oauth2-proxy.${CLUSTER_FQDN}
+  tls:
+    - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
+      hosts:
+        - oauth2-proxy.${CLUSTER_FQDN}
+resources:
+  limits:
+    cpu: 100m
+    memory: 300Mi
+  requests:
+    cpu: 100m
+    memory: 300Mi
+EOF
 ```
 
-Enable automated vulnerability scan after each "image push" to the project:
-`library`:
+Output:
 
-```bash
-PROJECT_ID=$(curl -sk -u "admin:${HARBOR_ADMIN_PASSWORD}" -X GET "https://harbor.${CLUSTER_FQDN}/api/v2.0/projects?name=library" | jq ".[].project_id")
-curl -sk -u "admin:${HARBOR_ADMIN_PASSWORD}" -X PUT "https://harbor.${CLUSTER_FQDN}/api/v2.0/projects/${PROJECT_ID}" -H  "Content-Type: application/json" -d \
-"{
-  \"metadata\": {
-    \"auto_scan\": \"true\"
-  }
-}"
+```text
+namespace/oauth2-proxy created
+WARNING: This chart is deprecated
+NAME: oauth2-proxy
+LAST DEPLOYED: Thu Dec 10 16:02:08 2020
+NAMESPACE: oauth2-proxy
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+To verify that oauth2-proxy has started, run:
+
+  kubectl --namespace=oauth2-proxy get pods -l "app=oauth2-proxy"
 ```
 
-Create new Registry Endpoint:
+## Gangway
+
+Install gangway:
 
 ```bash
-curl -sk -X POST -H "Content-Type: application/json" -u "admin:${HARBOR_ADMIN_PASSWORD}" "https://harbor.${CLUSTER_FQDN}/api/v2.0/registries" -d \
-"{
-  \"name\": \"Docker Hub\",
-  \"type\": \"docker-hub\",
-  \"url\": \"https://hub.docker.com\",
-  \"description\": \"Docker Hub Registry Endpoint\"
-}"
+helm install --version 0.4.3 --namespace gangway --create-namespace --values - gangway stable/gangway << EOF
+# https://github.com/helm/charts/blob/master/stable/gangway/values.yaml
+trustedCACert: |
+$(curl -s https://letsencrypt.org/certs/fakelerootx1.pem | sed  "s/^/  /" )
+gangway:
+  clusterName: ${CLUSTER_FQDN}
+  authorizeURL: https://dex.${CLUSTER_FQDN}/auth
+  tokenURL: https://dex.${CLUSTER_FQDN}/token
+  audience: https://dex.${CLUSTER_FQDN}/userinfo
+  redirectURL: https://gangway.${CLUSTER_FQDN}/callback
+  clientID: gangway.${CLUSTER_FQDN}
+  clientSecret: ${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET}
+  apiServerURL: https://kube-oidc-proxy.${CLUSTER_FQDN}
+ingress:
+  enabled: true
+  annotations:
+    nginx.ingress.kubernetes.io/auth-url: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/auth
+    nginx.ingress.kubernetes.io/auth-signin: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/start?rd=\$scheme://\$host\$request_uri
+  hosts:
+    - gangway.${CLUSTER_FQDN}
+  tls:
+    - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
+      hosts:
+        - gangway.${CLUSTER_FQDN}
+EOF
 ```
 
-Create new Replication Rule:
+Output:
 
-I'm going to replicate the "bookinfo" application used for testing Istio:
-[https://istio.io/docs/examples/bookinfo/](https://istio.io/docs/examples/bookinfo/)
-When the replication completes all images should be automatically scanned
-because I'm going to replicate everything into `library` project which has
-"Automatically scan images on push" feature enabled.
-
-Create new Replication Rule and initiate replication:
-
-```bash
-COUNTER=0
-for DOCKER_HUB_REPOSITORY in istio/examples-bookinfo-details-v1 istio/examples-bookinfo-ratings-v1; do
-  COUNTER=$((COUNTER+1))
-  echo "Replicating (${COUNTER}): ${DOCKER_HUB_REPOSITORY}"
-  curl -sk -X POST -H "Content-Type: application/json" -u "admin:${HARBOR_ADMIN_PASSWORD}" "https://harbor.${CLUSTER_FQDN}/api/v2.0/replication/policies" -d \
-    "{
-      \"name\": \"Replication of ${DOCKER_HUB_REPOSITORY}\",
-      \"type\": \"docker-hub\",
-      \"url\": \"https://hub.docker.com\",
-      \"description\": \"Replication Rule for ${DOCKER_HUB_REPOSITORY}\",
-      \"enabled\": true,
-      \"src_registry\": {
-        \"id\": 1
-      },
-      \"dest_namespace\": \"library\",
-      \"filters\": [{
-        \"type\": \"name\",
-        \"value\": \"${DOCKER_HUB_REPOSITORY}\"
-      },
-      {
-        \"type\": \"tag\",
-        \"value\": \"1.1*\"
-      }],
-      \"trigger\": {
-        \"type\": \"manual\"
-      }
-    }"
-  POLICY_ID=$(curl -sk -H "Content-Type: application/json" -u "admin:${HARBOR_ADMIN_PASSWORD}" "https://harbor.${CLUSTER_FQDN}/api/v2.0/replication/policies" | jq ".[] | select (.filters[].value==\"${DOCKER_HUB_REPOSITORY}\") .id")
-  curl -sk -X POST -H "Content-Type: application/json" -u "admin:${HARBOR_ADMIN_PASSWORD}" "https://harbor.${CLUSTER_FQDN}/api/v2.0/replication/executions" -d "{ \"policy_id\": ${POLICY_ID} }"
-done
+```text
+NAME: gangway
+LAST DEPLOYED: Fri Nov 13 16:51:53 2020
+NAMESPACE: gangway
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+1. Get the application URL by running these commands:
+  https://gangway.k1.k8s.mylabs.dev/
 ```
 
-After a while all images used by "bookinfo" application should be replicated
-into `library` project and all should be automatically scanned.
+## kube-oidc-proxy
 
-## CloudWatch retention
+The `kube-oidc-proxy` accepting connections only via HTTPS. It's necessary to
+configure ingress to communicate with the backend over HTTPS.
 
-Set retention for all log groups which belongs to the cluster to 1 day:
+Install kube-oidc-proxy:
 
 ```bash
-for LOG_GROUP in $(aws logs describe-log-groups | jq -r ".logGroups[] | select(.logGroupName|test(\"/${CLUSTER_NAME}/|/${CLUSTER_FQDN}/\")) .logGroupName"); do
-  aws logs put-retention-policy --log-group-name "${LOG_GROUP}" --retention-in-days 1
-done
+git clone --quiet https://github.com/jetstack/kube-oidc-proxy.git tmp/kube-oidc-proxy
+git -C tmp/kube-oidc-proxy checkout --quiet v0.3.0
+
+helm install --namespace kube-oidc-proxy --create-namespace --values - kube-oidc-proxy tmp/kube-oidc-proxy/deploy/charts/kube-oidc-proxy << EOF
+# https://github.com/jetstack/kube-oidc-proxy/blob/master/deploy/charts/kube-oidc-proxy/values.yaml
+oidc:
+  clientId: gangway.${CLUSTER_FQDN}
+  issuerUrl: https://dex.${CLUSTER_FQDN}
+  usernameClaim: email
+  caPEM: |
+$(curl -s https://letsencrypt.org/certs/fakelerootx1.pem | sed  "s/^/    /" )
+ingress:
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: HTTPS
+  enabled: true
+  hosts:
+    - host: kube-oidc-proxy.${CLUSTER_FQDN}
+      paths:
+        - /
+  tls:
+   - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
+     hosts:
+       - kube-oidc-proxy.${CLUSTER_FQDN}
+EOF
+```
+
+If you get the credentials form the [https://gangway.k1.k8s.mylabs.dev](https://gangway.k1.k8s.mylabs.dev)
+you will have the access to the cluster, but no rights there.
+
+Add access rights to the user:
+
+```bash
+kubectl apply -f - << EOF
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: kube-prometheus-stack
+  name: secret-reader
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get", "watch", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: read-secrets
+  namespace: kube-prometheus-stack
+subjects:
+- kind: User
+  name: ${MY_EMAIL}
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: secret-reader
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: pods-reader
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "watch", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: read-pods
+subjects:
+- kind: User
+  name: ${MY_EMAIL}
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: pods-reader
+  apiGroup: rbac.authorization.k8s.io
+EOF
+```
+
+The user should be able to read the secrets in `kube-prometheus-stack`
+namespace:
+
+```shell
+kubectl describe secrets --insecure-skip-tls-verify -n kube-prometheus-stack "ingress-cert-${LETSENCRYPT_ENVIRONMENT}"
+```
+
+Output:
+
+```text
+Name:         ingress-cert-staging
+Namespace:    kube-prometheus-stack
+Labels:       kubed.appscode.com/origin.cluster=k1.k8s.mylabs.dev
+              kubed.appscode.com/origin.name=ingress-cert-staging
+              kubed.appscode.com/origin.namespace=cert-manager
+Annotations:  cert-manager.io/alt-names: *.k1.k8s.mylabs.dev,k1.k8s.mylabs.dev
+              cert-manager.io/certificate-name: ingress-cert-staging
+              cert-manager.io/common-name: *.k1.k8s.mylabs.dev
+              cert-manager.io/ip-sans:
+              cert-manager.io/issuer-group:
+              cert-manager.io/issuer-kind: ClusterIssuer
+              cert-manager.io/issuer-name: letsencrypt-staging-dns
+              cert-manager.io/uri-sans:
+              kubed.appscode.com/origin:
+                {"namespace":"cert-manager","name":"ingress-cert-staging","uid":"f1ed062c-23d9-4cf7-ad51-cfafd8a3b788","resourceVersion":"5296"}
+
+Type:  kubernetes.io/tls
+
+Data
+====
+tls.crt:  3586 bytes
+tls.key:  1679 bytes
+```
+
+But it's not allowed to delete the secrets for the user:
+
+```shell
+kubectl delete secrets --insecure-skip-tls-verify -n kube-prometheus-stack "ingress-cert-${LETSENCRYPT_ENVIRONMENT}"
+```
+
+Output:
+
+```text
+Error from server (Forbidden): secrets "ingress-cert-staging" is forbidden: User "petr.ruzicka@gmail.com" cannot delete resource "secrets" in API group "" in the namespace "kube-prometheus-stack"
+```
+
+The user can not read secrets outside the `kube-prometheus-stack`:
+
+```shell
+kubectl get secrets --insecure-skip-tls-verify -n kube-system
+```
+
+Output:
+
+```text
+Error from server (Forbidden): secrets is forbidden: User "petr.ruzicka@gmail.com" cannot list resource "secrets" in API group "" in the namespace "kube-system"
+```
+
+You can see the pods "everywhere":
+
+```shell
+kubectl get pods --insecure-skip-tls-verify -n kube-system
+```
+
+Output:
+
+```text
+NAME                                                         READY   STATUS    RESTARTS   AGE
+aws-for-fluent-bit-5hxlt                                     1/1     Running   0          32m
+aws-for-fluent-bit-dmvzq                                     1/1     Running   0          32m
+aws-node-ggfft                                               1/1     Running   0          32m
+aws-node-lhlvf                                               1/1     Running   0          32m
+cluster-autoscaler-aws-cluster-autoscaler-7f878bccc8-s279k   1/1     Running   0          25m
+coredns-59b69b4849-6v487                                     1/1     Running   0          46m
+coredns-59b69b4849-tw2dg                                     1/1     Running   0          46m
+ebs-csi-controller-86785d75db-7brbr                          5/5     Running   0          31m
+ebs-csi-controller-86785d75db-gn4ll                          5/5     Running   0          31m
+ebs-csi-node-6h9zv                                           3/3     Running   0          31m
+ebs-csi-node-r5rj7                                           3/3     Running   0          31m
+kube-proxy-m6dm8                                             1/1     Running   0          32m
+kube-proxy-pdmv9                                             1/1     Running   0          32m
+```
+
+But you can not delete them:
+
+```shell
+kubectl delete pods --insecure-skip-tls-verify -n kube-oidc-proxy --all
+```
+
+Output:
+
+```text
+Error from server (Forbidden): pods "kube-oidc-proxy-74bf5679fd-jhdmr" is forbidden: User "petr.ruzicka@gmail.com" cannot delete resource "pods" in API group "" in the namespace "kube-oidc-proxy"
 ```

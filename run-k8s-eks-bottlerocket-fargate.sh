@@ -53,7 +53,7 @@ clear
 
 [ ! -d .git ] && git clone --quiet https://github.com/ruzickap/k8s-eks-bottlerocket-fargate && cd k8s-eks-bottlerocket-fargate
 
-sed -n "/^\`\`\`bash.*/,/^\`\`\`$/p;/^-----$/p" docs/part-0{1..6}/README.md \
+sed -n "/^\`\`\`bash.*/,/^\`\`\`$/p;/^-----$/p" docs/part-{01..11}/README.md \
 | \
 sed \
   -e 's/^-----$/\np  ""\np  "################################################################################################### Press <ENTER> to continue"\nwait\n/' \
