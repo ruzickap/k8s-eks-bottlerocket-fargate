@@ -396,7 +396,7 @@ kubectl run -n drupal --env MYSQL_PWD=${RDS_DB_PASSWORD} --image=mysql:5.7 --res
 Create `drupal` namespace and PVC:
 
 ```bash
-kubectl apply -f - <<EOF
+kubectl apply -f - << EOF
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:

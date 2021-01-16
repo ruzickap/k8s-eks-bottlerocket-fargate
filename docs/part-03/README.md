@@ -70,7 +70,7 @@ Install [kuard](https://github.com/kubernetes-up-and-running/kuard):
 kubectl run kuard --image=gcr.io/kuar-demo/kuard-amd64:blue --port=8080 --expose=true --labels="app=kuard"
 
 kubectl apply -f - << EOF
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
   name: kuard
@@ -149,7 +149,7 @@ Kubei installation is done through the K8s manifest (not helm chart).
 kubectl apply -f https://raw.githubusercontent.com/Portshift/kubei/master/deploy/kubei.yaml
 
 kubectl apply -f - << EOF
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
   namespace: kubei
@@ -274,7 +274,7 @@ and modify the
 
 ```bash
 helm repo add argo https://argoproj.github.io/argo-helm
-helm install --version 2.11.0 --namespace argocd --create-namespace --values - argocd argo/argo-cd << EOF
+helm install --version 2.11.2 --namespace argocd --create-namespace --values - argocd argo/argo-cd << EOF
 controller:
   metrics:
     enabled: true
@@ -645,6 +645,7 @@ Configure vault policy + authentication:
 VAULT_ROOT_TOKEN=$(jq -r ".root_token" tmp/vault_cluster-keys.json)
 export VAULT_ROOT_TOKEN
 export VAULT_ADDR="https://vault.${CLUSTER_FQDN}"
+export VAULT_SKIP_VERIFY="true"
 ```
 
 Login to vault as root user:
@@ -676,7 +677,7 @@ vault auth enable github
 vault write auth/github/config organization="${MY_GITHUB_ORG_NAME}"
 vault write auth/github/map/teams/cluster-admin value=my-admin-policy
 
-wget -q https://letsencrypt.org/certs/fakelerootx1.pem -O tmp/fakelerootx1.pem
+curl -s https://letsencrypt.org/certs/fakelerootx1.pem -o tmp/fakelerootx1.pem
 vault auth enable oidc
 vault write auth/oidc/config \
   oidc_discovery_ca_pem=@tmp/fakelerootx1.pem \

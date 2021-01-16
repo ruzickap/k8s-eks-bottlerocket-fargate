@@ -65,7 +65,7 @@ Install necessary software:
 ```bash
 if [[ -x /usr/bin/apt-get ]]; then
   apt update -qq
-  DEBIAN_FRONTEND=noninteractive apt-get install -y -qq ansible awscli git jq sudo
+  DEBIAN_FRONTEND=noninteractive apt-get install -y -qq ansible awscli git jq sudo unzip
 fi
 ```
 
@@ -93,7 +93,7 @@ Install [eksctl](https://eksctl.io/):
 ```bash
 if [[ ! -x /usr/local/bin/eksctl ]]; then
   # https://github.com/weaveworks/eksctl/releases
-  curl -s -L "https://github.com/weaveworks/eksctl/releases/download/0.34.0/eksctl_$(uname)_amd64.tar.gz" | sudo tar xz -C /usr/local/bin/
+  curl -s -L "https://github.com/weaveworks/eksctl/releases/download/0.36.0/eksctl_$(uname)_amd64.tar.gz" | sudo tar xz -C /usr/local/bin/
 fi
 ```
 
