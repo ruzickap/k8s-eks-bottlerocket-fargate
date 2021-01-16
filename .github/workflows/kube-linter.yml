@@ -1,0 +1,32 @@
+name: kube-linter
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - .github/workflows/kube-linter.yml
+      - docs/part**
+  push:
+    branches:
+      - master
+    paths:
+      - .github/workflows/kube-linter.yml
+      - docs/part**
+
+jobs:
+  command-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Extract yamls from README files
+        run: |
+          for FILE in $(find docs/part* -name "*.md" | sort) ; do
+            echo "*** ${FILE}"
+            sed -n '/^kubectl apply -f - << EOF/,/^EOF/p' ${FILE} | sed 's/^EOF/---/;s/^kubectl apply -f - << EOF/---/' >> ${FILE}.yml
+          done
+
+      - name: kube-linter
+        uses: stackrox/kube-linter-action@v1
+        with:
+          directory: docs
