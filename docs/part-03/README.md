@@ -24,7 +24,7 @@ and modify the
 
 ```bash
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm install --version 12.7.0 --namespace kube-prometheus-stack --create-namespace --values - kube-prometheus-stack prometheus-community/kube-prometheus-stack << EOF
+helm install --version 13.2.1  --namespace kube-prometheus-stack --create-namespace --values - kube-prometheus-stack prometheus-community/kube-prometheus-stack << EOF
 defaultRules:
   rules:
     etcd: false
@@ -235,5 +235,26 @@ global:
   monitoring_agent_enabled: true
   podSecurityPolicy:
     apparmor_security: false
+EOF
+```
+
+## sysdig-agent
+
+Install `splunk-connect`
+[helm chart](https://github.com/sysdiglabs/charts/tree/master/charts/sysdig)
+and modify the
+[default values](https://github.com/sysdiglabs/charts/blob/master/charts/sysdig/values.yaml).
+
+```bash
+helm repo add sysdig https://charts.sysdig.com
+helm install --version 1.11.3 --namespace sysdig-agent --create-namespace --values - sysdig-agent sysdig/sysdig << EOF
+clusterName: ${CLUSTER_FQDN}
+sysdig:
+  accessKey: ${SYSDIG_AGENT_ACCESSKEY}
+  settings:
+    collectorEndpoint: ingest-eu1.app.sysdig.com
+    prometheus:
+      enabled: true
+      histograms: true
 EOF
 ```

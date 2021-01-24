@@ -263,7 +263,7 @@ ROUTE53_ROLE_ARN_EXTERNAL_DNS=$(eksctl get iamserviceaccount --cluster=${CLUSTER
 
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
-helm install --version 4.5.3 --namespace external-dns --create-namespace --wait --values - external-dns bitnami/external-dns << EOF
+helm install --version 4.5.3 --namespace external-dns --create-namespace --values - external-dns bitnami/external-dns << EOF
 image:
   pullPolicy: Always
 aws:

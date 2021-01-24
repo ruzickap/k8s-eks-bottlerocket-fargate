@@ -72,6 +72,7 @@ export DEMO_PROMPT="${GREEN}➜ ${CYAN}$ "
 # Variables which are taken from AWS - needs to be created for tests
 export AWS_ACCESS_KEY_ID="test"
 export AWS_SECRET_ACCESS_KEY="test"
+export SYSDIG_AGENT_ACCESSKEY="test"
 export ROUTE53_ROLE_ARN_CERT_MANAGER="test_arn"
 export ROUTE53_ROLE_ARN_EXTERNAL_DNS="test_arn"
 export RDS_DB_HOST="testdomain123.com"

@@ -64,4 +64,5 @@ phpMyAdmin
 podinfo
 serviceaccounts
 splunk-connect
+sysdig-agent
 velero
