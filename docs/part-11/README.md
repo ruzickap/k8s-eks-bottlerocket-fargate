@@ -33,7 +33,6 @@ configuration:
     prefix: velero
     config:
       region: ${AWS_DEFAULT_REGION}
-      kmsKeyId: ${KMS_KEY_ID}
   volumeSnapshotLocation:
     name: aws
     config:
@@ -579,7 +578,7 @@ Get the details about recovery:
 
 ```bash
 velero restore describe restore1
-sleep 50
+sleep 60
 ```
 
 Output:

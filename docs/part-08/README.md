@@ -90,7 +90,7 @@ and modify the
 
 ```bash
 helm repo add argo https://argoproj.github.io/argo-helm
-helm install --version 2.11.2 --namespace argocd --create-namespace --values - argocd argo/argo-cd << EOF
+helm install --version 2.11.3 --namespace argocd --create-namespace --values - argocd argo/argo-cd << EOF
 controller:
   metrics:
     enabled: true
@@ -223,7 +223,7 @@ server:
       }
       seal "awskms" {
         region     = "${AWS_DEFAULT_REGION}"
-        kms_key_id = "${KMS_KEY_ID}"
+        kms_key_id = "${VAULT_KMS_KEY_ID}"
       }
       storage "file" {
         path = "/vault/data"
@@ -345,7 +345,7 @@ vault auth enable github
 vault write auth/github/config organization="${MY_GITHUB_ORG_NAME}"
 vault write auth/github/map/teams/cluster-admin value=my-admin-policy
 
-sleep 50  # Wait for DNS vault.${CLUSTER_FQDN} to be ready...
+sleep 100  # Wait for DNS vault.${CLUSTER_FQDN} to be ready...
 
 curl -s https://letsencrypt.org/certs/fakelerootx1.pem -o tmp/fakelerootx1.pem
 vault auth enable oidc

@@ -422,7 +422,7 @@ DRUPAL_USERNAME="myuser"
 DRUPAL_PASSWORD="mypassword12345"
 
 helm repo add bitnami https://charts.bitnami.com/bitnami
-helm install --version 10.0.8 --namespace drupal --values - drupal bitnami/drupal << EOF
+helm install --version 10.1.1 --namespace drupal --values - drupal bitnami/drupal << EOF
 replicaCount: 2
 drupalUsername: ${DRUPAL_USERNAME}
 drupalPassword: ${DRUPAL_PASSWORD}

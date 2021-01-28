@@ -79,7 +79,7 @@ export RDS_DB_HOST="testdomain123.com"
 export EFS_FS_ID="123"
 export EFS_AP_ID="123"
 export EKSCTL_IAM_SERVICE_ACCOUNTS='{"iam":{"serviceAccounts":[{"metadata":{"name":"ebs-snapshot-controller"},"status":{"roleARN":"arn2"}},{"metadata":{"name":"ebs-csi-controller-sa"},"status":{"roleARN":"arn1"}}]}}'
-export KMS_KEY_ID="test"
+export VAULT_KMS_KEY_ID="test"
 
 # Changes to run test in kind like disable vault requests / change StorageClass / remove aws, eksctl commands ...
 # shellcheck disable=SC1004
