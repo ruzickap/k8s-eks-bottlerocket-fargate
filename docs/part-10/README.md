@@ -15,7 +15,7 @@ and modify the
 HARBOR_ADMIN_PASSWORD="harbor_supersecret_admin_password"
 
 helm repo add harbor https://helm.goharbor.io
-helm install --version 1.5.1 --namespace harbor --wait --wait-for-jobs --values - harbor harbor/harbor << EOF
+helm install --version 1.5.3 --namespace harbor --wait --wait-for-jobs --values - harbor harbor/harbor << EOF
 # https://github.com/goharbor/harbor-helm/blob/master/values.yaml
 expose:
   tls:

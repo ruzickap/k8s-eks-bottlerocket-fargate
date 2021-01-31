@@ -24,7 +24,7 @@ and modify the
 
 ```bash
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm install --version 13.2.1 --namespace kube-prometheus-stack --create-namespace --values - kube-prometheus-stack prometheus-community/kube-prometheus-stack << EOF
+helm install --version 13.4.1 --namespace kube-prometheus-stack --create-namespace --values - kube-prometheus-stack prometheus-community/kube-prometheus-stack << EOF
 defaultRules:
   rules:
     etcd: false
@@ -256,5 +256,15 @@ sysdig:
     prometheus:
       enabled: true
       histograms: true
+auditLog:
+  enabled: true
 EOF
+```
+
+Integrate the Kubernetes Audit facility with Sysdig Secure by enabling
+CloudWatch audit logs for Sysdig [https://github.com/sysdiglabs/ekscloudwatch](https://github.com/sysdiglabs/ekscloudwatch):
+
+```bash
+kubectl --namespace sysdig-agent apply -f https://raw.githubusercontent.com/sysdiglabs/ekscloudwatch/master/ekscloudwatch-config.yaml
+kubectl --namespace sysdig-agent apply -f https://raw.githubusercontent.com/sysdiglabs/ekscloudwatch/master/deployment.yaml
 ```

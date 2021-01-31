@@ -189,7 +189,7 @@ and modify the
 
 ```bash
 helm repo add hashicorp https://helm.releases.hashicorp.com
-helm install --version 0.8.0 --namespace vault --wait --wait-for-jobs --values - vault hashicorp/vault << EOF
+helm install --version 0.9.0 --namespace vault --wait --wait-for-jobs --values - vault hashicorp/vault << EOF
 injector:
   metrics:
     enabled: false
@@ -229,7 +229,6 @@ server:
         path = "/vault/data"
       }
 EOF
-sleep 100
 ```
 
 Output:
@@ -345,7 +344,11 @@ vault auth enable github
 vault write auth/github/config organization="${MY_GITHUB_ORG_NAME}"
 vault write auth/github/map/teams/cluster-admin value=my-admin-policy
 
-sleep 100  # Wait for DNS vault.${CLUSTER_FQDN} to be ready...
+# Wait for DNS vault.${CLUSTER_FQDN} to be ready...
+while [[ -z "$(dig +nocmd +noall +answer +ttlid a vault.${CLUSTER_FQDN})" ]]; do
+  date
+  sleep 5
+done
 
 curl -s https://letsencrypt.org/certs/fakelerootx1.pem -o tmp/fakelerootx1.pem
 vault auth enable oidc

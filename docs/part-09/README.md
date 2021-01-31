@@ -24,9 +24,20 @@ cat > tmp/cf_rds.yml << \EOF
 AWSTemplateFormatVersion: 2010-09-09
 Description: This AWS CloudFormation template installs the AWS RDS MariaDB database.
 Parameters:
-  VpcIPCidr:
-    Description: "Enter VPC CIDR that hosts the EKS cluster. Ex: 10.0.0.0/16"
+  ClusterName:
+    Default: "k1"
+    Description: K8s Cluster name
     Type: String
+  KmsKeyId:
+    Description: The ARN of the AWS Key Management Service (AWS KMS) master key that is used to encrypt the DB instance
+    Type: String
+  MultiAzDatabase:
+    Default: "false"
+    Type: String
+    AllowedValues:
+      - "true"
+      - "false"
+    ConstraintDescription: Must be either true or false.
   RdsMasterUsername:
     Description: Enter the master username for the RDS instance.
     Type: String
@@ -36,21 +47,6 @@ Parameters:
     ConstraintDescription: >-
       Must be 1 to 63 characters long, begin with a letter, contain only
       alphanumeric characters, and not be a reserved word by PostgreSQL engine.
-  RdsMasterPassword:
-    NoEcho: "true"
-    Description: >-
-      Enter the master password for the RDS instance. This password must contain
-      8 to 128 characters and can be any printable ASCII character except @, /,
-      or ".
-    Type: String
-    MinLength: "8"
-    MaxLength: "128"
-    AllowedPattern: >-
-      ^((?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])|(?=.*[0-9])(?=.*[a-z])(?=.*[!@#$%^&*])|(?=.*[0-9])(?=.*[A-Z])(?=.*[!@#$%^&*])|(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*])).{8,128}$
-    ConstraintDescription: >-
-      Password must be at least 9 characters long and have 3 out of the
-      following: one number, one lower case, one upper case, or one special
-      character.
   RdsInstanceClass:
     Type: String
     Default: db.t2.medium
@@ -78,22 +74,29 @@ Parameters:
       - db.r3.4xlarge
       - db.r3.8xlarge
     ConstraintDescription: Must be a valid EC2 RDS instance type
+  RdsMasterPassword:
+    NoEcho: "true"
+    Description: >-
+      Enter the master password for the RDS instance. This password must contain
+      8 to 128 characters and can be any printable ASCII character except @, /,
+      or ".
+    Type: String
+    MinLength: "8"
+    MaxLength: "128"
+    AllowedPattern: >-
+      ^((?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])|(?=.*[0-9])(?=.*[a-z])(?=.*[!@#$%^&*])|(?=.*[0-9])(?=.*[A-Z])(?=.*[!@#$%^&*])|(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*])).{8,128}$
+    ConstraintDescription: >-
+      Password must be at least 9 characters long and have 3 out of the
+      following: one number, one lower case, one upper case, or one special
+      character.
   RdsStorage:
     Default: "40"
     Type: Number
     MinValue: "40"
     MaxValue: "1024"
     ConstraintDescription: Must be set to between 40 and 1024GB.
-  MultiAzDatabase:
-    Default: "false"
-    Type: String
-    AllowedValues:
-      - "true"
-      - "false"
-    ConstraintDescription: Must be either true or false.
-  ClusterName:
-    Default: "k1"
-    Description: K8s Cluster name
+  VpcIPCidr:
+    Description: "Enter VPC CIDR that hosts the EKS cluster. Ex: 10.0.0.0/16"
     Type: String
 Resources:
   RdsInstance:
@@ -117,9 +120,12 @@ Resources:
         - slowquery
       Engine: mariadb
       EngineVersion: 10.4
+      KmsKeyId: !Ref KmsKeyId
       MasterUsername: !Ref RdsMasterUsername
       MasterUserPassword: !Ref RdsMasterPassword
       MultiAZ: !Ref MultiAzDatabase
+      StorageEncrypted: true
+      # gp3 is not supported yet (2021-01-30)
       StorageType: gp2
   RdsInstanceSubnetGroup:
     Type: "AWS::RDS::DBSubnetGroup"
@@ -180,7 +186,7 @@ Outputs:
         Fn::Sub: "${AWS::StackName}-RdsMasterPassword"
 EOF
 
-eval aws cloudformation deploy --stack-name "${CLUSTER_NAME}-rds" --parameter-overrides "ClusterName=${CLUSTER_NAME} RdsMasterPassword=${RDS_DB_PASSWORD} RdsMasterUsername=${RDS_DB_USERNAME} VpcIPCidr=${EKS_VPC_CIDR}" --template-file tmp/cf_rds.yml --tags "${TAGS}"
+eval aws cloudformation deploy --stack-name "${CLUSTER_NAME}-rds" --parameter-overrides "ClusterName=${CLUSTER_NAME} KmsKeyId=${EKS_KMS_KEY_ID} RdsMasterPassword=${RDS_DB_PASSWORD} RdsMasterUsername=${RDS_DB_USERNAME} VpcIPCidr=${EKS_VPC_CIDR}" --template-file tmp/cf_rds.yml --tags "${TAGS}"
 
 RDS_DB_HOST=$(aws rds describe-db-instances --query "DBInstances[?DBInstanceIdentifier==\`${CLUSTER_NAME}db\`].[Endpoint.Address]" --output text)
 ```
@@ -257,11 +263,14 @@ cat > tmp/cf_efs.yml << \EOF
 AWSTemplateFormatVersion: 2010-09-09
 Description: Create EFS, mount points, security groups for EKS
 Parameters:
-  VpcIPCidr:
-    Description: "Enter VPC CIDR that hosts the EKS cluster. Ex: 10.0.0.0/16"
-    Type: String
   ClusterName:
     Description: "K8s Cluster name. Ex: k1"
+    Type: String
+  KmsKeyId:
+    Description: The ID of the AWS KMS customer master key (CMK) to be used to protect the encrypted file system
+    Type: String
+  VpcIPCidr:
+    Description: "Enter VPC CIDR that hosts the EKS cluster. Ex: 10.0.0.0/16"
     Type: String
 Resources:
   MountTargetSecurityGroup:
@@ -284,9 +293,11 @@ Resources:
   FileSystem:
     Type: AWS::EFS::FileSystem
     Properties:
+      Encrypted: true
       FileSystemTags:
       - Key: Name
         Value: !Sub "${ClusterName}-efs"
+      KmsKeyId: !Ref KmsKeyId
   MountTargetAZ1:
     Type: AWS::EFS::MountTarget
     Properties:
@@ -313,7 +324,7 @@ Resources:
           - Fn::ImportValue: !Sub "eksctl-${ClusterName}-cluster::SubnetsPrivate"
       SecurityGroups:
       - Ref: MountTargetSecurityGroup
-  AccessPoint:
+  AccessPointDrupal:
     Type: AWS::EFS::AccessPoint
     Properties:
       FileSystemId: !Ref FileSystem
@@ -329,7 +340,24 @@ Resources:
         Path: "/drupal"
       AccessPointTags:
         - Key: Name
-          Value: !Sub "${ClusterName}-efs-ap"
+          Value: !Sub "${ClusterName}-drupal-efs-ap"
+  AccessPointDrupal2:
+    Type: AWS::EFS::AccessPoint
+    Properties:
+      FileSystemId: !Ref FileSystem
+      # Set proper uid/gid: https://github.com/bitnami/bitnami-docker-drupal/blob/02f7e41c88eee96feb90c8b7845ee7aeb5927c38/9/debian-10/Dockerfile#L49
+      PosixUser:
+        Uid: "1001"
+        Gid: "1001"
+      RootDirectory:
+        CreationInfo:
+          OwnerGid: "1001"
+          OwnerUid: "1001"
+          Permissions: "0775"
+        Path: "/drupal2"
+      AccessPointTags:
+        - Key: Name
+          Value: !Sub "${ClusterName}-drupal2-efs-ap"
 Outputs:
   FileSystemId:
     Description: Id of Elastic File System
@@ -338,19 +366,27 @@ Outputs:
     Export:
       Name:
         Fn::Sub: "${AWS::StackName}-FileSystemId"
-  AccessPoint:
-    Description: EFS AccessPoint ID
+  AccessPointDrupal:
+    Description: EFS AccessPoint ID for Drupal
     Value:
-      Ref: AccessPoint
+      Ref: AccessPointDrupal
     Export:
       Name:
-        Fn::Sub: "${AWS::StackName}-AccessPoint"
+        Fn::Sub: "${AWS::StackName}-AccessPointDrupal"
+  AccessPointDrupal2:
+    Description: EFS AccessPoint2 ID for Drupal2
+    Value:
+      Ref: AccessPointDrupal2
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-AccessPointDrupal2"
 EOF
 
-eval aws cloudformation deploy --stack-name "${CLUSTER_NAME}-efs" --parameter-overrides "ClusterName=${CLUSTER_NAME} VpcIPCidr=${EKS_VPC_CIDR}" --template-file tmp/cf_efs.yml --tags "${TAGS}"
+eval aws cloudformation deploy --stack-name "${CLUSTER_NAME}-efs" --parameter-overrides "ClusterName=${CLUSTER_NAME} KmsKeyId=${EKS_KMS_KEY_ID} VpcIPCidr=${EKS_VPC_CIDR}" --template-file tmp/cf_efs.yml --tags "${TAGS}"
 
 EFS_FS_ID=$(aws efs describe-file-systems --query "FileSystems[?Name==\`${CLUSTER_NAME}-efs\`].[FileSystemId]" --output text)
-EFS_AP_ID=$(aws efs describe-access-points --query "AccessPoints[?FileSystemId==\`${EFS_FS_ID}\`].[AccessPointId]" --output text)
+EFS_AP_DRUPAL_ID=$(aws efs describe-access-points --query "AccessPoints[?(FileSystemId==\`${EFS_FS_ID}\` && RootDirectory.Path==\`/drupal\`)].[AccessPointId]" --output text)
+EFS_AP_DRUPAL2_ID=$(aws efs describe-access-points --query "AccessPoints[?(FileSystemId==\`${EFS_FS_ID}\` && RootDirectory.Path==\`/drupal2\`)].[AccessPointId]" --output text)
 ```
 
 Output:
@@ -361,6 +397,8 @@ Waiting for stack create/update to complete
 Successfully created/updated stack - kube1-efs
 ```
 
+### Install Drupal
+
 Create ReadWriteMany persistent volume like described [here](https://github.com/kubernetes-sigs/aws-efs-csi-driver/blob/master/examples/kubernetes/multiple_pods/README.md):
 
 ```bash
@@ -368,7 +406,7 @@ kubectl apply -f - << EOF
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: efs-pv
+  name: efs-drupal-pv
 spec:
   capacity:
     storage: 1Gi
@@ -379,11 +417,9 @@ spec:
   storageClassName: efs
   csi:
     driver: efs.csi.aws.com
-    volumeHandle: ${EFS_FS_ID}::${EFS_AP_ID}
+    volumeHandle: ${EFS_FS_ID}::${EFS_AP_DRUPAL_ID}
 EOF
 ```
-
-### Install Drupal
 
 Create `drupal` database inside MariaDB:
 
@@ -406,6 +442,7 @@ spec:
   accessModes:
     - ReadWriteMany
   storageClassName: efs
+  volumeName: efs-drupal-pv
   resources:
     requests:
       storage: 1Gi
@@ -480,4 +517,104 @@ NOTES:
 
   echo Username: myuser
   echo Password: $(kubectl get secret --namespace drupal drupal -o jsonpath="{.data.drupal-password}" | base64 --decode)
+```
+
+### Install Drupal2
+
+Create ReadWriteMany persistent volume like described [here](https://github.com/kubernetes-sigs/aws-efs-csi-driver/blob/master/examples/kubernetes/multiple_pods/README.md):
+
+```bash
+kubectl apply -f - << EOF
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: efs-drupal2-pv
+spec:
+  capacity:
+    storage: 1Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: efs
+  csi:
+    driver: efs.csi.aws.com
+    volumeHandle: ${EFS_FS_ID}::${EFS_AP_DRUPAL2_ID}
+EOF
+```
+
+Create `drupal2` database inside MariaDB:
+
+```bash
+kubectl create namespace drupal2
+kubectl run -n drupal2 --env MYSQL_PWD=${RDS_DB_PASSWORD} --image=mysql:5.7 --restart=Never mysql-client-drupal2 -- \
+  mysql -h "${RDS_DB_HOST}" -u "${RDS_DB_USERNAME}" -e "CREATE DATABASE drupal2"
+```
+
+Create `drupal2` namespace and PVC:
+
+```bash
+kubectl apply -f - << EOF
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: drupal2-efs-pvc
+  namespace: drupal2
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: efs
+  volumeName: efs-drupal2-pv
+  resources:
+    requests:
+      storage: 1Gi
+EOF
+```
+
+Install `drupal`
+[helm chart](https://artifacthub.io/packages/helm/bitnami/drupal)
+and modify the
+[default values](https://github.com/bitnami/charts/blob/master/bitnami/drupal/values.yaml).
+
+```bash
+DRUPAL2_USERNAME="myuser"
+DRUPAL2_PASSWORD="mypassword12345"
+
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm install --version 10.1.1 --namespace drupal2 --values - drupal2 bitnami/drupal << EOF
+replicaCount: 2
+drupalUsername: ${DRUPAL2_USERNAME}
+drupalPassword: ${DRUPAL2_PASSWORD}
+drupalEmail: ${MY_EMAIL}
+externalDatabase:
+  host: ${RDS_DB_HOST}
+  user: ${RDS_DB_USERNAME}
+  password: ${RDS_DB_PASSWORD}
+  database: drupal2
+mariadb:
+  enabled: false
+service:
+  type: ClusterIP
+ingress:
+  enabled: true
+  annotations:
+    nginx.ingress.kubernetes.io/auth-url: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/auth
+    nginx.ingress.kubernetes.io/auth-signin: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/start?rd=\$scheme://\$host\$request_uri
+  hostname: drupal2.${CLUSTER_FQDN}
+  tls:
+    - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
+      hosts:
+        - drupal2.${CLUSTER_FQDN}
+persistence:
+  enabled: true
+  storageClass: efs
+  accessMode: ReadWriteMany
+  size: 1Gi
+  existingClaim: drupal2-efs-pvc
+EOF
+```
+
+Output:
+
+```text
 ```

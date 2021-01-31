@@ -93,7 +93,7 @@ Install [eksctl](https://eksctl.io/):
 ```bash
 if [[ ! -x /usr/local/bin/eksctl ]]; then
   # https://github.com/weaveworks/eksctl/releases
-  curl -s -L "https://github.com/weaveworks/eksctl/releases/download/0.36.0/eksctl_$(uname)_amd64.tar.gz" | sudo tar xz -C /usr/local/bin/
+  curl -s -L "https://github.com/weaveworks/eksctl/releases/download/0.37.0/eksctl_$(uname)_amd64.tar.gz" | sudo tar xz -C /usr/local/bin/
 fi
 ```
 
@@ -240,6 +240,9 @@ Parameters:
   ClusterFQDN:
     Description: "Cluster domain where all necessary app subdomains will live (subdomain of BaseDomain). Ex: k1.k8s.mylabs.dev"
     Type: String
+  ClusterName:
+    Description: "Cluster Name Ex: k1"
+    Type: String
   BaseDomain:
     Description: "Base domain where cluster domains + their subdomains will live. Ex: k8s.mylabs.dev"
     Type: String
@@ -289,20 +292,20 @@ Resources:
     Type: AWS::Route53::HostedZone
     Properties:
       Name: !Ref ClusterFQDN
-  EKSStorageKMSAlias:
+  EKSKMSAlias:
     Type: AWS::KMS::Alias
     Properties:
-      AliasName: alias/eks-storage
-      TargetKeyId: !Ref EKSStorageKMSKey
-  EKSStorageKMSKey:
+      AliasName: !Sub "alias/eks-${ClusterName}"
+      TargetKeyId: !Ref EKSKMSKey
+  EKSKMSKey:
     Type: AWS::KMS::Key
     Properties:
-      Description: !Sub "KMS key for EBS storage encryption on ${ClusterFQDN}"
+      Description: !Sub "KMS key for EKS secrets encryption on ${ClusterFQDN}"
       EnableKeyRotation: true
       PendingWindowInDays: 7
       KeyPolicy:
         Version: "2012-10-17"
-        Id: eks-storage-policy
+        Id: !Sub "eks-key-policy-${ClusterName}"
         Statement:
         - Sid: Enable IAM User Permissions
           Effect: Allow
@@ -333,27 +336,6 @@ Resources:
           Condition:
             Bool:
               kms:GrantIsForAWSResource: true
-  EKSSecretsKMSAlias:
-    Type: AWS::KMS::Alias
-    Properties:
-      AliasName: alias/eks-secrets
-      TargetKeyId: !Ref EKSSecretsKMSKey
-  EKSSecretsKMSKey:
-    Type: AWS::KMS::Key
-    Properties:
-      Description: !Sub "KMS key for EKS secrets encryption on ${ClusterFQDN}"
-      EnableKeyRotation: true
-      PendingWindowInDays: 7
-      KeyPolicy:
-        Version: "2012-10-17"
-        Id: eks-secrets-policy
-        Statement:
-        - Sid: Enable IAM User Permissions
-          Effect: Allow
-          Principal:
-            AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
-          Action: kms:*
-          Resource: "*"
   RecordSet:
     Type: AWS::Route53::RecordSet
     Properties:
@@ -420,7 +402,7 @@ Resources:
   VaultKMSAlias:
     Type: AWS::KMS::Alias
     Properties:
-      AliasName: alias/eks-vault
+      AliasName: !Sub "alias/eks-vault-${ClusterName}"
       TargetKeyId: !Ref VaultKMSKey
   VaultKMSKey:
     Type: AWS::KMS::Key
@@ -451,24 +433,24 @@ Outputs:
     Export:
       Name:
         Fn::Sub: "${AWS::StackName}-EBSPolicyArn"
+  EKSKMSKeyArn:
+    Description: The ARN of the created KMS Key to encrypt EKS related services
+    Value: !GetAtt EKSKMSKey.Arn
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-EKSKMSKeyArn"
+  EKSKMSKeyId:
+    Description: The ID of the created KMS Key to encrypt EKS related services
+    Value: !Ref EKSKMSKey
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-EKSKMSKeyId"
   HostedZoneArn:
     Description: The ARN of the created Route53 Zone for K8s cluster
     Value: !Ref HostedZone
     Export:
       Name:
         Fn::Sub: "${AWS::StackName}-HostedZoneArn"
-  EKSSecretsKMSKeyArn:
-    Description: The ARN of the created KMS Key for EKS secrets encryption
-    Value: !GetAtt EKSSecretsKMSKey.Arn
-    Export:
-      Name:
-        Fn::Sub: "${AWS::StackName}-EKSSecretsKMSKeyArn"
-  EKSStorageKMSKeyId:
-    Description: The ID of the created KMS Key for EKS storage encryption
-    Value: !Ref EKSStorageKMSKey
-    Export:
-      Name:
-        Fn::Sub: "${AWS::StackName}-EKSStorageKMSKeyId"
   Route53PolicyArn:
     Description: The ARN of the created AmazonRoute53Domains policy
     Value: !Ref Route53Policy
@@ -490,13 +472,13 @@ Outputs:
 EOF
 
 eval aws cloudformation deploy --capabilities CAPABILITY_NAMED_IAM \
-  --parameter-overrides "ClusterFQDN=${CLUSTER_FQDN} BaseDomain=${BASE_DOMAIN}" \
+  --parameter-overrides "ClusterFQDN=${CLUSTER_FQDN} ClusterName=${CLUSTER_NAME} BaseDomain=${BASE_DOMAIN}" \
   --stack-name "${CLUSTER_NAME}-route53-iam-s3-ebs" --template-file tmp/aws_policies.yml --tags "${TAGS}"
 
 AWS_CLOUDFORMATION_DETAILS=$(aws cloudformation describe-stacks --stack-name "${CLUSTER_NAME}-route53-iam-s3-ebs")
 EBS_POLICY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"EBSPolicyArn\") .OutputValue")
-EKS_SECRET_KMS_KEY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"EKSSecretsKMSKeyArn\") .OutputValue")
-EKS_STORAGE_KMS_KEY_ID=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"EKSStorageKMSKeyId\") .OutputValue")
+EKS_KMS_KEY_ID=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"EKSKMSKeyId\") .OutputValue")
+EKS_KMS_KEY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"EKSKMSKeyArn\") .OutputValue")
 ROUTE53_POLICY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"Route53PolicyArn\") .OutputValue")
 S3_POLICY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"S3PolicyArn\") .OutputValue")
 VAULT_KMS_KEY_ID=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"VaultKMSKeyId\") .OutputValue")
@@ -574,7 +556,7 @@ iam:
 
 nodeGroups:
   - name: ng01
-    amiFamily: Bottlerocket
+    # amiFamily: Bottlerocket
     instanceType: t3.xlarge
     instancePrefix: ruzickap
     desiredCapacity: 2
@@ -595,20 +577,18 @@ nodeGroups:
         ebs: true
         efs: true
     # aws ssm get-parameters --names "/aws/service/bottlerocket/aws-k8s-1.18/x86_64/latest/image_id" --region eu-central-1
-    ami: ami-0a7bcaab486b70db6
-    # Wait for eksctl 0.37 and change it to "gp3"
-    volumeType: gp2
+    # ami: ami-0a7bcaab486b70db6
     volumeEncrypted: true
-    volumeKmsKeyID: ${EKS_STORAGE_KMS_KEY_ID}
-    bottlerocket:
-      enableAdminContainer: true
+    volumeKmsKeyID: ${EKS_KMS_KEY_ID}
+    # bottlerocket:
+    #   enableAdminContainer: true
 fargateProfiles:
   - name: fp-fgtest
     selectors:
       - namespace: fgtest
     tags: *tags
 secretsEncryption:
-  keyARN: ${EKS_SECRET_KMS_KEY_ARN}
+  keyARN: ${EKS_KMS_KEY_ARN}
 cloudWatch:
   clusterLogging:
     enableTypes: ["audit", "authenticator", "controllerManager"]
