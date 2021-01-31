@@ -15,6 +15,7 @@ ClusterIssuers
 ConfigMap
 Dex
 Drupal
+Drupal2
 Fargate
 Grafana
 HashiCorp
@@ -28,6 +29,7 @@ ReadWriteMany
 Route53
 ServiceAccount
 StorageClass
+Sysdig
 Velero
 Weaveworks
 aws-cloudwatch-metrics

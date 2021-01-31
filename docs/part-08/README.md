@@ -90,7 +90,7 @@ and modify the
 
 ```bash
 helm repo add argo https://argoproj.github.io/argo-helm
-helm install --version 2.11.2 --namespace argocd --create-namespace --values - argocd argo/argo-cd << EOF
+helm install --version 2.11.3 --namespace argocd --create-namespace --values - argocd argo/argo-cd << EOF
 controller:
   metrics:
     enabled: true
@@ -189,7 +189,7 @@ and modify the
 
 ```bash
 helm repo add hashicorp https://helm.releases.hashicorp.com
-helm install --version 0.8.0 --namespace vault --wait --wait-for-jobs --values - vault hashicorp/vault << EOF
+helm install --version 0.9.0 --namespace vault --wait --wait-for-jobs --values - vault hashicorp/vault << EOF
 injector:
   metrics:
     enabled: false
@@ -223,13 +223,12 @@ server:
       }
       seal "awskms" {
         region     = "${AWS_DEFAULT_REGION}"
-        kms_key_id = "${KMS_KEY_ID}"
+        kms_key_id = "${VAULT_KMS_KEY_ID}"
       }
       storage "file" {
         path = "/vault/data"
       }
 EOF
-sleep 100
 ```
 
 Output:
@@ -345,7 +344,11 @@ vault auth enable github
 vault write auth/github/config organization="${MY_GITHUB_ORG_NAME}"
 vault write auth/github/map/teams/cluster-admin value=my-admin-policy
 
-sleep 50  # Wait for DNS vault.${CLUSTER_FQDN} to be ready...
+# Wait for DNS vault.${CLUSTER_FQDN} to be ready...
+while [[ -z "$(dig +nocmd +noall +answer +ttlid a vault.${CLUSTER_FQDN})" ]]; do
+  date
+  sleep 5
+done
 
 curl -s https://letsencrypt.org/certs/fakelerootx1.pem -o tmp/fakelerootx1.pem
 vault auth enable oidc

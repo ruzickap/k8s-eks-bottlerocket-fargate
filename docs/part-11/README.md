@@ -9,7 +9,7 @@ and modify the
 
 ```bash
 helm repo add vmware-tanzu https://vmware-tanzu.github.io/helm-charts
-helm install --version 2.14.5 --namespace velero --create-namespace --values - velero vmware-tanzu/velero << EOF
+helm install --version 2.14.7 --namespace velero --create-namespace --values - velero vmware-tanzu/velero << EOF
 initContainers:
   - name: velero-plugin-for-aws
     image: velero/velero-plugin-for-aws:v1.1.0
@@ -33,7 +33,6 @@ configuration:
     prefix: velero
     config:
       region: ${AWS_DEFAULT_REGION}
-      kmsKeyId: ${KMS_KEY_ID}
   volumeSnapshotLocation:
     name: aws
     config:
@@ -579,7 +578,7 @@ Get the details about recovery:
 
 ```bash
 velero restore describe restore1
-sleep 50
+sleep 60
 ```
 
 Output:

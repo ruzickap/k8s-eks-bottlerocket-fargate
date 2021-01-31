@@ -93,7 +93,7 @@ Install [eksctl](https://eksctl.io/):
 ```bash
 if [[ ! -x /usr/local/bin/eksctl ]]; then
   # https://github.com/weaveworks/eksctl/releases
-  curl -s -L "https://github.com/weaveworks/eksctl/releases/download/0.36.0/eksctl_$(uname)_amd64.tar.gz" | sudo tar xz -C /usr/local/bin/
+  curl -s -L "https://github.com/weaveworks/eksctl/releases/download/0.37.0/eksctl_$(uname)_amd64.tar.gz" | sudo tar xz -C /usr/local/bin/
 fi
 ```
 
@@ -240,6 +240,9 @@ Parameters:
   ClusterFQDN:
     Description: "Cluster domain where all necessary app subdomains will live (subdomain of BaseDomain). Ex: k1.k8s.mylabs.dev"
     Type: String
+  ClusterName:
+    Description: "Cluster Name Ex: k1"
+    Type: String
   BaseDomain:
     Description: "Base domain where cluster domains + their subdomains will live. Ex: k8s.mylabs.dev"
     Type: String
@@ -263,7 +266,7 @@ Resources:
     Type: AWS::IAM::ManagedPolicy
     Properties:
       ManagedPolicyName: !Sub "${ClusterFQDN}-AmazonEBS"
-      Description: !Sub "Policy required by  Amazon EBS Container Storage Interface (CSI) Driver (aws-ebs-csi-driver) to manage EBS volumes on ${ClusterFQDN}"
+      Description: !Sub "Policy required by Amazon EBS Container Storage Interface (CSI) Driver (aws-ebs-csi-driver) to manage EBS volumes on ${ClusterFQDN}"
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -289,6 +292,50 @@ Resources:
     Type: AWS::Route53::HostedZone
     Properties:
       Name: !Ref ClusterFQDN
+  EKSKMSAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub "alias/eks-${ClusterName}"
+      TargetKeyId: !Ref EKSKMSKey
+  EKSKMSKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: !Sub "KMS key for EKS secrets encryption on ${ClusterFQDN}"
+      EnableKeyRotation: true
+      PendingWindowInDays: 7
+      KeyPolicy:
+        Version: "2012-10-17"
+        Id: !Sub "eks-key-policy-${ClusterName}"
+        Statement:
+        - Sid: Enable IAM User Permissions
+          Effect: Allow
+          Principal:
+            AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+          Action: kms:*
+          Resource: "*"
+        - Sid: Allow use of the key
+          Effect: Allow
+          Principal:
+            AWS:
+            - !Sub arn:aws:iam::${AWS::AccountId}:role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling
+          Action:
+          - kms:Encrypt
+          - kms:Decrypt
+          - kms:ReEncrypt*
+          - kms:GenerateDataKey*
+          - kms:DescribeKey
+          Resource: "*"
+        - Sid: Allow attachment of persistent resources
+          Effect: Allow
+          Principal:
+            AWS:
+            - !Sub arn:aws:iam::${AWS::AccountId}:role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling
+          Action:
+          - kms:CreateGrant
+          Resource: "*"
+          Condition:
+            Bool:
+              kms:GrantIsForAWSResource: true
   RecordSet:
     Type: AWS::Route53::RecordSet
     Properties:
@@ -350,101 +397,92 @@ Resources:
     Type: AWS::SecretsManager::Secret
     Properties:
       Description: "Vault Root/Recovery key"
-      KmsKeyId: !Ref VaultKmsKey
+      KmsKeyId: !Ref VaultKMSKey
       SecretString: "empty"
-  VaultKmsAlias:
+  VaultKMSAlias:
     Type: AWS::KMS::Alias
     Properties:
-      AliasName: alias/Vault_key
-      TargetKeyId: !Ref VaultKmsKey
-  VaultKmsKey:
+      AliasName: !Sub "alias/eks-vault-${ClusterName}"
+      TargetKeyId: !Ref VaultKMSKey
+  VaultKMSKey:
     Type: AWS::KMS::Key
     Properties:
       Description: "Vault Seal/Unseal key"
+      EnableKeyRotation: true
       PendingWindowInDays: 7
       KeyPolicy:
         Version: "2012-10-17"
-        Id: key-default-1
+        Id: vault-key-policy
         Statement:
-        - Sid: Enable IAM User Permissions
-          Effect: Allow
-          Principal:
-            AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
-          Action: kms:*
-          Resource: "*"
+          - Sid: Enable IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action: kms:*
+            Resource: "*"
 Outputs:
-  CloudWatchPolicy:
+  CloudWatchPolicyArn:
     Description: The ARN of the created CloudWatchPolicy
-    Value:
-      Ref: CloudWatchPolicy
+    Value: !Ref CloudWatchPolicy
     Export:
       Name:
-        Fn::Sub: "${AWS::StackName}-CloudWatchPolicy"
-  EBSPolicy:
+        Fn::Sub: "${AWS::StackName}-CloudWatchPolicyArn"
+  EBSPolicyArn:
     Description: The ARN of the created AmazonEBS policy
-    Value:
-      Ref: EBSPolicy
+    Value: !Ref EBSPolicy
     Export:
       Name:
-        Fn::Sub: "${AWS::StackName}-EBSPolicy"
-  HostedZone:
+        Fn::Sub: "${AWS::StackName}-EBSPolicyArn"
+  EKSKMSKeyArn:
+    Description: The ARN of the created KMS Key to encrypt EKS related services
+    Value: !GetAtt EKSKMSKey.Arn
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-EKSKMSKeyArn"
+  EKSKMSKeyId:
+    Description: The ID of the created KMS Key to encrypt EKS related services
+    Value: !Ref EKSKMSKey
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-EKSKMSKeyId"
+  HostedZoneArn:
     Description: The ARN of the created Route53 Zone for K8s cluster
-    Value:
-      Ref: HostedZone
+    Value: !Ref HostedZone
     Export:
       Name:
-        Fn::Sub: "${AWS::StackName}-HostedZone"
-  Route53Policy:
+        Fn::Sub: "${AWS::StackName}-HostedZoneArn"
+  Route53PolicyArn:
     Description: The ARN of the created AmazonRoute53Domains policy
-    Value:
-      Ref: Route53Policy
+    Value: !Ref Route53Policy
     Export:
       Name:
-        Fn::Sub: "${AWS::StackName}-Route53Policy"
-  S3Policy:
+        Fn::Sub: "${AWS::StackName}-Route53PolicyArn"
+  S3PolicyArn:
     Description: The ARN of the created AmazonS3 policy
-    Value:
-      Ref: S3Policy
+    Value: !Ref S3Policy
     Export:
       Name:
-        Fn::Sub: "${AWS::StackName}-S3Policy"
-  S3Bucket:
-    Description: The ARN of the created S3 bucket for Harbor and Velero
-    Value:
-      Ref: S3Bucket
-    Export:
-      Name:
-        Fn::Sub: "${AWS::StackName}-S3Bucket"
-  VaultSecret:
-    Value: !Ref "VaultSecret"
-    Description: The AWS Secrets Manager Secret containing the ROOT TOKEN and Recovery Secret for HashiCorp Vault.
-    Export:
-      Name:
-        Fn::Sub: "${AWS::StackName}-VaultSecret"
+        Fn::Sub: "${AWS::StackName}-S3PolicyArn"
   VaultKMSKeyId:
-    Value: !Ref "VaultKmsKey"
-    Description: The AWS KMS Key used to Auto Unseal HashiCorp Vault and encrypt the ROOT TOKEN and Recovery Secret.
+    Description: The AWS KMS Key ID used to Auto Unseal HashiCorp Vault and encrypt the ROOT TOKEN and Recovery Secret.
+    Value: !Ref VaultKMSKey
     Export:
       Name:
         Fn::Sub: "${AWS::StackName}-VaultKMSKeyId"
-  VaultKMSKeyArn:
-    Value: !GetAtt "VaultKmsKey.Arn"
-    Description: The AWS KMS Key used to Auto Unseal HashiCorp Vault and encrypt the ROOT TOKEN and Recovery Secret.
-    Export:
-      Name:
-        Fn::Sub: "${AWS::StackName}-VaultKMSKeyArn"
 EOF
 
 eval aws cloudformation deploy --capabilities CAPABILITY_NAMED_IAM \
-  --parameter-overrides "ClusterFQDN=${CLUSTER_FQDN} BaseDomain=${BASE_DOMAIN}" \
+  --parameter-overrides "ClusterFQDN=${CLUSTER_FQDN} ClusterName=${CLUSTER_NAME} BaseDomain=${BASE_DOMAIN}" \
   --stack-name "${CLUSTER_NAME}-route53-iam-s3-ebs" --template-file tmp/aws_policies.yml --tags "${TAGS}"
 
 AWS_CLOUDFORMATION_DETAILS=$(aws cloudformation describe-stacks --stack-name "${CLUSTER_NAME}-route53-iam-s3-ebs")
-EBS_POLICY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"EBSPolicy\") .OutputValue")
-ROUTE53_POLICY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"Route53Policy\") .OutputValue")
-S3_POLICY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"S3Policy\") .OutputValue")
-KMS_KEY_ID=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"VaultKMSKeyId\") .OutputValue")
-CLOUDWATCH_POLICY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"CloudWatchPolicy\") .OutputValue")
+EBS_POLICY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"EBSPolicyArn\") .OutputValue")
+EKS_KMS_KEY_ID=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"EKSKMSKeyId\") .OutputValue")
+EKS_KMS_KEY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"EKSKMSKeyArn\") .OutputValue")
+ROUTE53_POLICY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"Route53PolicyArn\") .OutputValue")
+S3_POLICY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"S3PolicyArn\") .OutputValue")
+VAULT_KMS_KEY_ID=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"VaultKMSKeyId\") .OutputValue")
+CLOUDWATCH_POLICY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"CloudWatchPolicyArn\") .OutputValue")
 ```
 
 ## Create Amazon EKS
@@ -470,7 +508,6 @@ Create the Amazon EKS cluster using `eksctl`:
 
 ```bash
 eksctl create cluster --config-file - --kubeconfig "${KUBECONFIG}" << EOF
-# https://eksctl.io/usage/schema/
 apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
 
@@ -516,20 +553,16 @@ iam:
         namespace: harbor
       attachPolicyARNs:
         - ${S3_POLICY_ARN}
-    # - metadata:
-    #     name: velero-server
-    #     namespace: velero
-    #   attachPolicyARNs:
-    #     - ${S3_POLICY_ARN}
 
 nodeGroups:
   - name: ng01
-    amiFamily: Bottlerocket
-    instanceType: t3.large
-    desiredCapacity: 3
+    # amiFamily: Bottlerocket
+    instanceType: t3.xlarge
+    instancePrefix: ruzickap
+    desiredCapacity: 2
     minSize: 2
     maxSize: 4
-    volumeSize: 0
+    volumeSize: 20
     ssh:
       # Enable ssh access (via the admin container)
       allow: true
@@ -543,19 +576,19 @@ nodeGroups:
         cloudWatch: true
         ebs: true
         efs: true
-        xRay: true
-    volumeType: gp2
+    # aws ssm get-parameters --names "/aws/service/bottlerocket/aws-k8s-1.18/x86_64/latest/image_id" --region eu-central-1
+    # ami: ami-0a7bcaab486b70db6
     volumeEncrypted: true
-    bottlerocket:
-      enableAdminContainer: true
-      settings:
-        motd: "Hello, eksctl!"
+    volumeKmsKeyID: ${EKS_KMS_KEY_ID}
+    # bottlerocket:
+    #   enableAdminContainer: true
 fargateProfiles:
   - name: fp-fgtest
     selectors:
       - namespace: fgtest
     tags: *tags
-
+secretsEncryption:
+  keyARN: ${EKS_KMS_KEY_ARN}
 cloudWatch:
   clusterLogging:
     enableTypes: ["audit", "authenticator", "controllerManager"]
@@ -565,12 +598,12 @@ EOF
 Output:
 
 ```text
-[ℹ]  eksctl version 0.34.0
+[ℹ]  eksctl version 0.36.2
 [ℹ]  using region eu-central-1
 [ℹ]  subnets for eu-central-1a - public:192.168.0.0/19 private:192.168.64.0/19
 [ℹ]  subnets for eu-central-1b - public:192.168.32.0/19 private:192.168.96.0/19
-[ℹ]  nodegroup "ng01" will use "ami-0770b08976be5e4aa" [AmazonLinux2/1.18]
-[ℹ]  using SSH public key "/root/.ssh/id_rsa.pub" as "eksctl-k1-nodegroup-ng01-a3:84:e4:0d:af:5f:c8:40:da:71:68:8a:74:c7:ba:16"
+[ℹ]  nodegroup "ng01" will use "ami-0a7bcaab486b70db6" [Bottlerocket/1.18]
+[ℹ]  using SSH public key "/Users/ruzickap/.ssh/id_rsa.pub" as "eksctl-k1-nodegroup-ng01-a3:84:e4:0d:af:5f:c8:40:da:71:68:8a:74:c7:ba:16"
 [ℹ]  using Kubernetes version 1.18
 [ℹ]  creating EKS cluster "k1" in "eu-central-1" region with Fargate profile and un-managed nodes
 [ℹ]  1 nodegroup (ng01) was included (based on the include/exclude rules)
@@ -578,49 +611,74 @@ Output:
 [ℹ]  will create a CloudFormation stack for cluster itself and 0 managed nodegroup stack(s)
 [ℹ]  if you encounter any issues, check CloudFormation console or try 'eksctl utils describe-stacks --region=eu-central-1 --cluster=k1'
 [ℹ]  Kubernetes API endpoint access will use default of {publicAccess=true, privateAccess=false} for cluster "k1" in "eu-central-1"
-[ℹ]  2 sequential tasks: { create cluster control plane "k1", 3 sequential sub-tasks: { 6 sequential sub-tasks: { tag cluster, update CloudWatch logging configuration, create fargate profiles, associate IAM OIDC provider, 5 parallel sub-tasks: { 2 sequential sub-tasks: { create IAM role for serviceaccount "cert-manager/cert-manager", create serviceaccount "cert-manager/cert-manager" }, 2 sequential sub-tasks: { create IAM role for serviceaccount "external-dns/external-dns", create serviceaccount "external-dns/external-dns" }, 2 sequential sub-tasks: { create IAM role for serviceaccount "harbor/harbor", create serviceaccount "harbor/harbor" }, 2 sequential sub-tasks: { create IAM role for serviceaccount "velero/velero", create serviceaccount "velero/velero" }, 2 sequential sub-tasks: { create IAM role for serviceaccount "kube-system/aws-node", create serviceaccount "kube-system/aws-node" } }, restart daemonset "kube-system/aws-node" }, create addons, create nodegroup "ng01" } }
+[ℹ]  2 sequential tasks: { create cluster control plane "k1", 3 sequential sub-tasks: { 6 sequential sub-tasks: { tag cluster, update CloudWatch logging configuration, create fargate profiles, associate IAM OIDC provider, 6 parallel sub-tasks: { 2 sequential sub-tasks: { create IAM role for serviceaccount "kube-system/ebs-csi-controller-sa", create serviceaccount "kube-system/ebs-csi-controller-sa" }, 2 sequential sub-tasks: { create IAM role for serviceaccount "kube-system/ebs-snapshot-controller", create serviceaccount "kube-system/ebs-snapshot-controller" }, 2 sequential sub-tasks: { create IAM role for serviceaccount "cert-manager/cert-manager", create serviceaccount "cert-manager/cert-manager" }, 2 sequential sub-tasks: { create IAM role for serviceaccount "external-dns/external-dns", create serviceaccount "external-dns/external-dns" }, 2 sequential sub-tasks: { create IAM role for serviceaccount "harbor/harbor", create serviceaccount "harbor/harbor" }, 2 sequential sub-tasks: { create IAM role for serviceaccount "kube-system/aws-node", create serviceaccount "kube-system/aws-node" } }, restart daemonset "kube-system/aws-node" }, create addons, create nodegroup "ng01" } }
 [ℹ]  building cluster stack "eksctl-k1-cluster"
 [ℹ]  deploying stack "eksctl-k1-cluster"
+[ℹ]  waiting for CloudFormation stack "eksctl-k1-cluster"
+[!]  retryable error (RequestError: send request failed
+caused by: Post "https://cloudformation.eu-central-1.amazonaws.com/": dial tcp: lookup cloudformation.eu-central-1.amazonaws.com on 10.17.19.1:53: read udp 10.17.59.8:51561->10.17.19.1:53: i/o timeout) from cloudformation/DescribeStacks - will retry after delay of 32.610685ms
 [✔]  tagged EKS cluster (Environment=Dev, Owner=petr.ruzicka@gmail.com, Squad=Cloud_Container_Platform, Tribe=Cloud_Native)
+[ℹ]  waiting for requested "LoggingUpdate" in cluster "k1" to succeed
+[ℹ]  waiting for requested "LoggingUpdate" in cluster "k1" to succeed
+[ℹ]  waiting for requested "LoggingUpdate" in cluster "k1" to succeed
 [✔]  configured CloudWatch logging for cluster "k1" in "eu-central-1" (enabled types: audit, authenticator, controllerManager & disabled types: api, scheduler)
-[ℹ]  creating Fargate profile "fp-default" on EKS cluster "k1"
-[ℹ]  created Fargate profile "fp-default" on EKS cluster "k1"
-[ℹ]  creating Fargate profile "fp-fargate-workload" on EKS cluster "k1"
-[ℹ]  created Fargate profile "fp-fargate-workload" on EKS cluster "k1"
+[ℹ]  creating Fargate profile "fp-fgtest" on EKS cluster "k1"
+[ℹ]  created Fargate profile "fp-fgtest" on EKS cluster "k1"
+[ℹ]  building iamserviceaccount stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-snapshot-controller"
 [ℹ]  building iamserviceaccount stack "eksctl-k1-addon-iamserviceaccount-external-dns-external-dns"
 [ℹ]  building iamserviceaccount stack "eksctl-k1-addon-iamserviceaccount-cert-manager-cert-manager"
 [ℹ]  building iamserviceaccount stack "eksctl-k1-addon-iamserviceaccount-kube-system-aws-node"
+[ℹ]  building iamserviceaccount stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-csi-controller-sa"
 [ℹ]  building iamserviceaccount stack "eksctl-k1-addon-iamserviceaccount-harbor-harbor"
-[ℹ]  building iamserviceaccount stack "eksctl-k1-addon-iamserviceaccount-velero-velero"
-[ℹ]  deploying stack "eksctl-k1-addon-iamserviceaccount-kube-system-aws-node"
-[ℹ]  deploying stack "eksctl-k1-addon-iamserviceaccount-external-dns-external-dns"
 [ℹ]  deploying stack "eksctl-k1-addon-iamserviceaccount-cert-manager-cert-manager"
-[ℹ]  deploying stack "eksctl-k1-addon-iamserviceaccount-velero-velero"
+[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-cert-manager-cert-manager"
+[ℹ]  deploying stack "eksctl-k1-addon-iamserviceaccount-external-dns-external-dns"
+[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-external-dns-external-dns"
 [ℹ]  deploying stack "eksctl-k1-addon-iamserviceaccount-harbor-harbor"
-[ℹ]  created namespace "harbor"
-[ℹ]  created serviceaccount "harbor/harbor"
-[ℹ]  created namespace "velero"
-[ℹ]  created serviceaccount "velero/velero"
+[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-harbor-harbor"
+[ℹ]  deploying stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-snapshot-controller"
+[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-snapshot-controller"
+[ℹ]  deploying stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-csi-controller-sa"
+[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-csi-controller-sa"
+[ℹ]  deploying stack "eksctl-k1-addon-iamserviceaccount-kube-system-aws-node"
+[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-kube-system-aws-node"
+[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-snapshot-controller"
+[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-harbor-harbor"
+[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-csi-controller-sa"
+[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-external-dns-external-dns"
+[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-kube-system-aws-node"
+[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-cert-manager-cert-manager"
+[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-snapshot-controller"
+[ℹ]  created serviceaccount "kube-system/ebs-snapshot-controller"
+[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-kube-system-aws-node"
 [ℹ]  serviceaccount "kube-system/aws-node" already exists
 [ℹ]  updated serviceaccount "kube-system/aws-node"
+[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-harbor-harbor"
+[ℹ]  created namespace "harbor"
+[ℹ]  created serviceaccount "harbor/harbor"
+[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-csi-controller-sa"
+[ℹ]  created serviceaccount "kube-system/ebs-csi-controller-sa"
+[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-external-dns-external-dns"
 [ℹ]  created namespace "external-dns"
 [ℹ]  created serviceaccount "external-dns/external-dns"
+[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-cert-manager-cert-manager"
 [ℹ]  created namespace "cert-manager"
 [ℹ]  created serviceaccount "cert-manager/cert-manager"
 [ℹ]  daemonset "kube-system/aws-node" restarted
 [ℹ]  building nodegroup stack "eksctl-k1-nodegroup-ng01"
 [ℹ]  deploying stack "eksctl-k1-nodegroup-ng01"
+[ℹ]  waiting for CloudFormation stack "eksctl-k1-nodegroup-ng01"
 [ℹ]  waiting for the control plane availability...
-[✔]  saved kubeconfig as "/mnt/kubeconfig-k1.conf"
+[✔]  saved kubeconfig as "/Users/ruzickap/git/k8s-eks-bottlerocket-fargate/kubeconfig-k1.conf"
 [ℹ]  no tasks
 [✔]  all EKS cluster resources for "k1" have been created
-[ℹ]  adding identity "arn:aws:iam::729560437327:role/eksctl-k1-nodegroup-ng01-NodeInstanceRole-1KP39SOLWQ5T9" to auth ConfigMap
+[ℹ]  adding identity "arn:aws:iam::729560437327:role/eksctl-k1-nodegroup-ng01-NodeInstanceRole-ACUOI3I4SD6J" to auth ConfigMap
 [ℹ]  nodegroup "ng01" has 0 node(s)
 [ℹ]  waiting for at least 2 node(s) to become ready in "ng01"
 [ℹ]  nodegroup "ng01" has 2 node(s)
-[ℹ]  node "ip-192-168-46-39.eu-central-1.compute.internal" is ready
-[ℹ]  node "ip-192-168-8-205.eu-central-1.compute.internal" is ready
-[ℹ]  kubectl command should work with "/mnt/kubeconfig-k1.conf", try 'kubectl --kubeconfig=/mnt/kubeconfig-k1.conf get nodes'
+[ℹ]  node "ip-192-168-20-200.eu-central-1.compute.internal" is ready
+[ℹ]  node "ip-192-168-51-55.eu-central-1.compute.internal" is ready
+[ℹ]  kubectl command should work with "/Users/ruzickap/git/k8s-eks-bottlerocket-fargate/kubeconfig-k1.conf", try 'kubectl --kubeconfig=/Users/ruzickap/git/k8s-eks-bottlerocket-fargate/kubeconfig-k1.conf get nodes'
 [✔]  EKS cluster "k1" in "eu-central-1" region is ready
 ```
 
@@ -646,8 +704,8 @@ Output:
 
 ```text
 NAME                                             STATUS   ROLES    AGE     VERSION              INTERNAL-IP     EXTERNAL-IP      OS-IMAGE         KERNEL-VERSION                  CONTAINER-RUNTIME
-ip-192-168-46-39.eu-central-1.compute.internal   Ready    <none>   2m13s   v1.18.9-eks-d1db3c   192.168.46.39   18.193.105.122   Amazon Linux 2   4.14.203-156.332.amzn2.x86_64   docker://19.3.6
-ip-192-168-8-205.eu-central-1.compute.internal   Ready    <none>   2m7s    v1.18.9-eks-d1db3c   192.168.8.205   54.93.80.77      Amazon Linux 2   4.14.203-156.332.amzn2.x86_64   docker://19.3.6
+ip-192-168-20-200.eu-central-1.compute.internal   Ready    <none>   47s   v1.18.14   192.168.20.200   18.193.89.175   Bottlerocket OS 1.0.5   5.4.80           containerd://1.3.7+bottlerocket
+ip-192-168-51-55.eu-central-1.compute.internal    Ready    <none>   46s   v1.18.14   192.168.51.55    52.28.1.207     Bottlerocket OS 1.0.5   5.4.80           containerd://1.3.7+bottlerocket
 ```
 
 Attach the policy to the [pod execution role](https://docs.aws.amazon.com/eks/latest/userguide/pod-execution-role.html)
