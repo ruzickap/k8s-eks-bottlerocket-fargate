@@ -485,6 +485,26 @@ VAULT_KMS_KEY_ID=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outp
 CLOUDWATCH_POLICY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"CloudWatchPolicyArn\") .OutputValue")
 ```
 
+Change TTL=60 of SOA record for new domain
+(it can not be done in CloudFormation):
+
+```bash
+HOSTED_ZONE_ID=$(aws route53 list-hosted-zones --query "HostedZones[?Name==\`${CLUSTER_FQDN}.\`].Id" --output text)
+RESOURCE_RECORD_SET=$(aws route53 --output json list-resource-record-sets --hosted-zone-id "${HOSTED_ZONE_ID}" --query "(ResourceRecordSets[?Type == \`SOA\`])[0]" | sed "s/\"TTL\":.*/\"TTL\": 60,/")
+cat << EOF | aws route53 --output json change-resource-record-sets --hosted-zone-id "${HOSTED_ZONE_ID}" --change-batch=file:///dev/stdin
+{
+    "Comment": "Update record to reflect new public IP address",
+    "Changes": [
+        {
+            "Action": "UPSERT",
+            "ResourceRecordSet":
+$RESOURCE_RECORD_SET
+        }
+    ]
+}
+EOF
+```
+
 ## Create Amazon EKS
 
 ![EKS](https://raw.githubusercontent.com/aws-samples/eks-workshop/65b766c494a5b4f5420b2912d8373c4957163541/static/images/3-service-animated.gif
@@ -510,7 +530,6 @@ Create the Amazon EKS cluster using `eksctl`:
 eksctl create cluster --config-file - --kubeconfig "${KUBECONFIG}" << EOF
 apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
-
 metadata:
   name: ${CLUSTER_NAME}
   region: ${AWS_DEFAULT_REGION}
@@ -520,11 +539,9 @@ metadata:
     Environment: Dev
     Tribe: Cloud_Native
     Squad: Cloud_Container_Platform
-
 availabilityZones:
   - ${AWS_DEFAULT_REGION}a
   - ${AWS_DEFAULT_REGION}b
-
 iam:
   withOIDC: true
   serviceAccounts:
@@ -553,7 +570,9 @@ iam:
         namespace: harbor
       attachPolicyARNs:
         - ${S3_POLICY_ARN}
-
+vpc:
+  nat:
+    gateway: Disable
 nodeGroups:
   - name: ng01
     # amiFamily: Bottlerocket
@@ -598,7 +617,7 @@ EOF
 Output:
 
 ```text
-[ℹ]  eksctl version 0.36.2
+[ℹ]  eksctl version 0.37.0
 [ℹ]  using region eu-central-1
 [ℹ]  subnets for eu-central-1a - public:192.168.0.0/19 private:192.168.64.0/19
 [ℹ]  subnets for eu-central-1b - public:192.168.32.0/19 private:192.168.96.0/19
@@ -611,56 +630,52 @@ Output:
 [ℹ]  will create a CloudFormation stack for cluster itself and 0 managed nodegroup stack(s)
 [ℹ]  if you encounter any issues, check CloudFormation console or try 'eksctl utils describe-stacks --region=eu-central-1 --cluster=k1'
 [ℹ]  Kubernetes API endpoint access will use default of {publicAccess=true, privateAccess=false} for cluster "k1" in "eu-central-1"
-[ℹ]  2 sequential tasks: { create cluster control plane "k1", 3 sequential sub-tasks: { 6 sequential sub-tasks: { tag cluster, update CloudWatch logging configuration, create fargate profiles, associate IAM OIDC provider, 6 parallel sub-tasks: { 2 sequential sub-tasks: { create IAM role for serviceaccount "kube-system/ebs-csi-controller-sa", create serviceaccount "kube-system/ebs-csi-controller-sa" }, 2 sequential sub-tasks: { create IAM role for serviceaccount "kube-system/ebs-snapshot-controller", create serviceaccount "kube-system/ebs-snapshot-controller" }, 2 sequential sub-tasks: { create IAM role for serviceaccount "cert-manager/cert-manager", create serviceaccount "cert-manager/cert-manager" }, 2 sequential sub-tasks: { create IAM role for serviceaccount "external-dns/external-dns", create serviceaccount "external-dns/external-dns" }, 2 sequential sub-tasks: { create IAM role for serviceaccount "harbor/harbor", create serviceaccount "harbor/harbor" }, 2 sequential sub-tasks: { create IAM role for serviceaccount "kube-system/aws-node", create serviceaccount "kube-system/aws-node" } }, restart daemonset "kube-system/aws-node" }, create addons, create nodegroup "ng01" } }
+[ℹ]  2 sequential tasks: { create cluster control plane "k1", 3 sequential sub-tasks: { 7 sequential sub-tasks: { wait for control plane to become ready, tag cluster, update CloudWatch logging configuration, create fargate profiles, associate IAM OIDC provider, 6 parallel sub-tasks: { 2 sequential sub-tasks: { create IAM role for serviceaccount "kube-system/ebs-csi-controller-sa", create serviceaccount "kube-system/ebs-csi-controller-sa" }, 2 sequential sub-tasks: { create IAM role for serviceaccount "kube-system/ebs-snapshot-controller", create serviceaccount "kube-system/ebs-snapshot-controller" }, 2 sequential sub-tasks: { create IAM role for serviceaccount "cert-manager/cert-manager", create serviceaccount "cert-manager/cert-manager" }, 2 sequential sub-tasks: { create IAM role for serviceaccount "external-dns/external-dns", create serviceaccount "external-dns/external-dns" }, 2 sequential sub-tasks: { create IAM role for serviceaccount "harbor/harbor", create serviceaccount "harbor/harbor" }, 2 sequential sub-tasks: { create IAM role for serviceaccount "kube-system/aws-node", create serviceaccount "kube-system/aws-node" } }, restart daemonset "kube-system/aws-node" }, create addons, create nodegroup "ng01" } }
 [ℹ]  building cluster stack "eksctl-k1-cluster"
 [ℹ]  deploying stack "eksctl-k1-cluster"
 [ℹ]  waiting for CloudFormation stack "eksctl-k1-cluster"
-[!]  retryable error (RequestError: send request failed
-caused by: Post "https://cloudformation.eu-central-1.amazonaws.com/": dial tcp: lookup cloudformation.eu-central-1.amazonaws.com on 10.17.19.1:53: read udp 10.17.59.8:51561->10.17.19.1:53: i/o timeout) from cloudformation/DescribeStacks - will retry after delay of 32.610685ms
-[✔]  tagged EKS cluster (Environment=Dev, Owner=petr.ruzicka@gmail.com, Squad=Cloud_Container_Platform, Tribe=Cloud_Native)
-[ℹ]  waiting for requested "LoggingUpdate" in cluster "k1" to succeed
-[ℹ]  waiting for requested "LoggingUpdate" in cluster "k1" to succeed
+[✔]  tagged EKS cluster (Squad=Cloud_Container_Platform, Tribe=Cloud_Native, Environment=Dev, Owner=petr.ruzicka@gmail.com)
 [ℹ]  waiting for requested "LoggingUpdate" in cluster "k1" to succeed
 [✔]  configured CloudWatch logging for cluster "k1" in "eu-central-1" (enabled types: audit, authenticator, controllerManager & disabled types: api, scheduler)
 [ℹ]  creating Fargate profile "fp-fgtest" on EKS cluster "k1"
 [ℹ]  created Fargate profile "fp-fgtest" on EKS cluster "k1"
-[ℹ]  building iamserviceaccount stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-snapshot-controller"
-[ℹ]  building iamserviceaccount stack "eksctl-k1-addon-iamserviceaccount-external-dns-external-dns"
-[ℹ]  building iamserviceaccount stack "eksctl-k1-addon-iamserviceaccount-cert-manager-cert-manager"
-[ℹ]  building iamserviceaccount stack "eksctl-k1-addon-iamserviceaccount-kube-system-aws-node"
-[ℹ]  building iamserviceaccount stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-csi-controller-sa"
 [ℹ]  building iamserviceaccount stack "eksctl-k1-addon-iamserviceaccount-harbor-harbor"
+[ℹ]  building iamserviceaccount stack "eksctl-k1-addon-iamserviceaccount-cert-manager-cert-manager"
+[ℹ]  building iamserviceaccount stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-snapshot-controller"
+[ℹ]  building iamserviceaccount stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-csi-controller-sa"
+[ℹ]  building iamserviceaccount stack "eksctl-k1-addon-iamserviceaccount-external-dns-external-dns"
+[ℹ]  building iamserviceaccount stack "eksctl-k1-addon-iamserviceaccount-kube-system-aws-node"
 [ℹ]  deploying stack "eksctl-k1-addon-iamserviceaccount-cert-manager-cert-manager"
 [ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-cert-manager-cert-manager"
+[ℹ]  deploying stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-snapshot-controller"
+[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-snapshot-controller"
 [ℹ]  deploying stack "eksctl-k1-addon-iamserviceaccount-external-dns-external-dns"
 [ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-external-dns-external-dns"
 [ℹ]  deploying stack "eksctl-k1-addon-iamserviceaccount-harbor-harbor"
 [ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-harbor-harbor"
-[ℹ]  deploying stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-snapshot-controller"
-[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-snapshot-controller"
-[ℹ]  deploying stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-csi-controller-sa"
-[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-csi-controller-sa"
 [ℹ]  deploying stack "eksctl-k1-addon-iamserviceaccount-kube-system-aws-node"
 [ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-kube-system-aws-node"
-[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-snapshot-controller"
-[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-harbor-harbor"
+[ℹ]  deploying stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-csi-controller-sa"
 [ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-csi-controller-sa"
+[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-kube-system-aws-node"
+[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-snapshot-controller"
+[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-external-dns-external-dns"
+[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-csi-controller-sa"
+[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-harbor-harbor"
+[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-cert-manager-cert-manager"
 [ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-external-dns-external-dns"
 [ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-kube-system-aws-node"
-[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-cert-manager-cert-manager"
-[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-snapshot-controller"
-[ℹ]  created serviceaccount "kube-system/ebs-snapshot-controller"
-[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-kube-system-aws-node"
+[ℹ]  created namespace "external-dns"
+[ℹ]  created serviceaccount "external-dns/external-dns"
 [ℹ]  serviceaccount "kube-system/aws-node" already exists
 [ℹ]  updated serviceaccount "kube-system/aws-node"
+[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-csi-controller-sa"
+[ℹ]  created serviceaccount "kube-system/ebs-csi-controller-sa"
+[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-snapshot-controller"
+[ℹ]  created serviceaccount "kube-system/ebs-snapshot-controller"
 [ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-harbor-harbor"
 [ℹ]  created namespace "harbor"
 [ℹ]  created serviceaccount "harbor/harbor"
-[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-csi-controller-sa"
-[ℹ]  created serviceaccount "kube-system/ebs-csi-controller-sa"
-[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-external-dns-external-dns"
-[ℹ]  created namespace "external-dns"
-[ℹ]  created serviceaccount "external-dns/external-dns"
 [ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-cert-manager-cert-manager"
 [ℹ]  created namespace "cert-manager"
 [ℹ]  created serviceaccount "cert-manager/cert-manager"
@@ -672,12 +687,12 @@ caused by: Post "https://cloudformation.eu-central-1.amazonaws.com/": dial tcp: 
 [✔]  saved kubeconfig as "/Users/ruzickap/git/k8s-eks-bottlerocket-fargate/kubeconfig-k1.conf"
 [ℹ]  no tasks
 [✔]  all EKS cluster resources for "k1" have been created
-[ℹ]  adding identity "arn:aws:iam::729560437327:role/eksctl-k1-nodegroup-ng01-NodeInstanceRole-ACUOI3I4SD6J" to auth ConfigMap
+[ℹ]  adding identity "arn:aws:iam::729560437327:role/eksctl-k1-nodegroup-ng01-NodeInstanceRole-W2R701K444V2" to auth ConfigMap
 [ℹ]  nodegroup "ng01" has 0 node(s)
 [ℹ]  waiting for at least 2 node(s) to become ready in "ng01"
 [ℹ]  nodegroup "ng01" has 2 node(s)
-[ℹ]  node "ip-192-168-20-200.eu-central-1.compute.internal" is ready
-[ℹ]  node "ip-192-168-51-55.eu-central-1.compute.internal" is ready
+[ℹ]  node "ip-192-168-3-46.eu-central-1.compute.internal" is ready
+[ℹ]  node "ip-192-168-37-96.eu-central-1.compute.internal" is ready
 [ℹ]  kubectl command should work with "/Users/ruzickap/git/k8s-eks-bottlerocket-fargate/kubeconfig-k1.conf", try 'kubectl --kubeconfig=/Users/ruzickap/git/k8s-eks-bottlerocket-fargate/kubeconfig-k1.conf get nodes'
 [✔]  EKS cluster "k1" in "eu-central-1" region is ready
 ```
@@ -703,9 +718,9 @@ kubectl get nodes -o wide
 Output:
 
 ```text
-NAME                                             STATUS   ROLES    AGE     VERSION              INTERNAL-IP     EXTERNAL-IP      OS-IMAGE         KERNEL-VERSION                  CONTAINER-RUNTIME
-ip-192-168-20-200.eu-central-1.compute.internal   Ready    <none>   47s   v1.18.14   192.168.20.200   18.193.89.175   Bottlerocket OS 1.0.5   5.4.80           containerd://1.3.7+bottlerocket
-ip-192-168-51-55.eu-central-1.compute.internal    Ready    <none>   46s   v1.18.14   192.168.51.55    52.28.1.207     Bottlerocket OS 1.0.5   5.4.80           containerd://1.3.7+bottlerocket
+NAME                                             STATUS   ROLES    AGE   VERSION    INTERNAL-IP     EXTERNAL-IP     OS-IMAGE                KERNEL-VERSION   CONTAINER-RUNTIME
+ip-192-168-3-46.eu-central-1.compute.internal    Ready    <none>   64s   v1.18.14   192.168.3.46    18.184.208.47   Bottlerocket OS 1.0.5   5.4.80           containerd://1.3.7+bottlerocket
+ip-192-168-37-96.eu-central-1.compute.internal   Ready    <none>   65s   v1.18.14   192.168.37.96   3.127.247.51    Bottlerocket OS 1.0.5   5.4.80           containerd://1.3.7+bottlerocket
 ```
 
 Attach the policy to the [pod execution role](https://docs.aws.amazon.com/eks/latest/userguide/pod-execution-role.html)
