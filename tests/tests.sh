@@ -13,6 +13,18 @@ export MY_GITHUB_ORG_OAUTH_CLIENT_SECRET="7xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 export MY_GITHUB_ORG_NAME="ruzickap-org"
 export KUBECONFIG="${PWD}/kubeconfig-test-${CLUSTER_NAME}.conf"
 
+# Variables which are taken from AWS - needs to be created for tests
+export AWS_ACCESS_KEY_ID="test"
+export AWS_SECRET_ACCESS_KEY="test"
+export SYSDIG_AGENT_ACCESSKEY="test"
+export ROUTE53_ROLE_ARN_CERT_MANAGER="test_arn"
+export ROUTE53_ROLE_ARN_EXTERNAL_DNS="test_arn"
+export RDS_DB_HOST="testdomain123.com"
+export EFS_FS_ID="123"
+export EFS_AP_ID="123"
+export EKSCTL_IAM_SERVICE_ACCOUNTS='{"iam":{"serviceAccounts":[{"metadata":{"name":"ebs-snapshot-controller"},"status":{"roleARN":"arn2"}},{"metadata":{"name":"ebs-csi-controller-sa"},"status":{"roleARN":"arn1"}}]}}'
+export VAULT_KMS_KEY_ID="test"
+
 test -d tests || ( echo -e "\n*** Run in top level of git repository\n"; exit 1 )
 
 if [[ ! -x /usr/local/bin/kind ]]; then
@@ -69,27 +81,16 @@ export PROMPT_TIMEOUT=0
 export NO_WAIT=true
 export DEMO_PROMPT="${GREEN}➜ ${CYAN}$ "
 
-# Variables which are taken from AWS - needs to be created for tests
-export AWS_ACCESS_KEY_ID="test"
-export AWS_SECRET_ACCESS_KEY="test"
-export SYSDIG_AGENT_ACCESSKEY="test"
-export ROUTE53_ROLE_ARN_CERT_MANAGER="test_arn"
-export ROUTE53_ROLE_ARN_EXTERNAL_DNS="test_arn"
-export RDS_DB_HOST="testdomain123.com"
-export EFS_FS_ID="123"
-export EFS_AP_ID="123"
-export EKSCTL_IAM_SERVICE_ACCOUNTS='{"iam":{"serviceAccounts":[{"metadata":{"name":"ebs-snapshot-controller"},"status":{"roleARN":"arn2"}},{"metadata":{"name":"ebs-csi-controller-sa"},"status":{"roleARN":"arn1"}}]}}'
-export VAULT_KMS_KEY_ID="test"
-
 # Changes to run test in kind like disable vault requests / change StorageClass / remove aws, eksctl commands ...
 # shellcheck disable=SC1004
 sed docs/part-{02..08}/README.md \
-  -e 's/--wait/--wait --timeout 15m/' \
+  -e 's/ --wait / --wait --timeout 15m /' \
   -e 's/.*aws /# &/' \
   -e 's/.*eksctl /# &/' \
   -e '/kubectl delete CSIDriver efs.csi.aws.com/d' \
   -e 's/^kubectl patch storageclass gp3/# &/' \
   -e 's/^vault /# &/ ; s/^kubectl exec -n vault vault-0/# &/ ; s/.*VAULT_ROOT_TOKEN/# &/' \
+  -e "s/+ttlid a vault.\${CLUSTER_FQDN}/+ttlid a google.com/" \
   -e '/^# Create ClusterIssuer for production/i \
 apiVersion: cert-manager.io/v1 \
 kind: ClusterIssuer \

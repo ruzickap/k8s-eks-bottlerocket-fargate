@@ -69,9 +69,9 @@ which supports ReadWriteMany PVC, is installed.
 
 Install [Amazon EFS CSI Driver](https://github.com/kubernetes-sigs/aws-efs-csi-driver)
 `aws-efs-csi-driver`
-[helm chart](https://github.com/kubernetes-sigs/aws-efs-csi-driver/tree/master/helm)
+[helm chart](https://github.com/kubernetes-sigs/aws-efs-csi-driver/tree/master/charts/aws-efs-csi-driver)
 and modify the
-[default values](https://github.com/kubernetes-sigs/aws-efs-csi-driver/blob/master/helm/values.yaml):
+[default values](https://github.com/kubernetes-sigs/aws-efs-csi-driver/blob/master/charts/aws-efs-csi-driver/values.yaml):
 
 ```bash
 helm repo add aws-efs-csi-driver https://kubernetes-sigs.github.io/aws-efs-csi-driver/

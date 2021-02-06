@@ -485,20 +485,26 @@ VAULT_KMS_KEY_ID=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outp
 CLOUDWATCH_POLICY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"CloudWatchPolicyArn\") .OutputValue")
 ```
 
-Change TTL=60 of SOA record for new domain
+Change TTL=60 of SOA + NS records for new domain
 (it can not be done in CloudFormation):
 
 ```bash
 HOSTED_ZONE_ID=$(aws route53 list-hosted-zones --query "HostedZones[?Name==\`${CLUSTER_FQDN}.\`].Id" --output text)
-RESOURCE_RECORD_SET=$(aws route53 --output json list-resource-record-sets --hosted-zone-id "${HOSTED_ZONE_ID}" --query "(ResourceRecordSets[?Type == \`SOA\`])[0]" | sed "s/\"TTL\":.*/\"TTL\": 60,/")
+RESOURCE_RECORD_SET_SOA=$(aws route53 --output json list-resource-record-sets --hosted-zone-id "${HOSTED_ZONE_ID}" --query "(ResourceRecordSets[?Type == \`SOA\`])[0]" | sed "s/\"TTL\":.*/\"TTL\": 60,/")
+RESOURCE_RECORD_SET_NS=$(aws route53 --output json list-resource-record-sets --hosted-zone-id "${HOSTED_ZONE_ID}" --query "(ResourceRecordSets[?Type == \`NS\`])[0]" | sed "s/\"TTL\":.*/\"TTL\": 60,/")
 cat << EOF | aws route53 --output json change-resource-record-sets --hosted-zone-id "${HOSTED_ZONE_ID}" --change-batch=file:///dev/stdin
 {
-    "Comment": "Update record to reflect new public IP address",
+    "Comment": "Update record to reflect new TTL for SOA and NS records",
     "Changes": [
         {
             "Action": "UPSERT",
             "ResourceRecordSet":
-$RESOURCE_RECORD_SET
+${RESOURCE_RECORD_SET_SOA}
+        },
+        {
+            "Action": "UPSERT",
+            "ResourceRecordSet":
+${RESOURCE_RECORD_SET_NS}
         }
     ]
 }
