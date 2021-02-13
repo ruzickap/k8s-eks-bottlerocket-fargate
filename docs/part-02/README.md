@@ -76,7 +76,7 @@ and modify the
 ```bash
 helm repo add aws-efs-csi-driver https://kubernetes-sigs.github.io/aws-efs-csi-driver/
 kubectl delete CSIDriver efs.csi.aws.com
-helm install --version 1.1.0 --namespace kube-system aws-efs-csi-driver aws-efs-csi-driver/aws-efs-csi-driver
+helm install --version 1.1.1 --namespace kube-system aws-efs-csi-driver aws-efs-csi-driver/aws-efs-csi-driver
 ```
 
 Create storage class for EFS:
