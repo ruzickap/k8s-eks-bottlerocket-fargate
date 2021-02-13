@@ -220,7 +220,7 @@ Install `splunk-connect`
 and modify the
 [default values](https://github.com/splunk/splunk-connect-for-kubernetes/blob/develop/helm-chart/splunk-connect-for-kubernetes/values.yaml).
 
-```shell
+```bash
 helm repo add splunk https://splunk.github.io/splunk-connect-for-kubernetes/
 helm install --version 1.4.3 --namespace splunk-connect --create-namespace --values - splunk-connect splunk/splunk-connect-for-kubernetes << EOF
 global:
@@ -233,8 +233,6 @@ global:
     clusterName: ruzickap-${CLUSTER_FQDN}
   prometheus_enabled: true
   monitoring_agent_enabled: true
-  podSecurityPolicy:
-    apparmor_security: false
 EOF
 ```
 
@@ -263,6 +261,11 @@ EOF
 
 Integrate the Kubernetes Audit facility with Sysdig Secure by enabling
 CloudWatch audit logs for Sysdig [https://github.com/sysdiglabs/ekscloudwatch](https://github.com/sysdiglabs/ekscloudwatch):
+
+As a "quick and dirty" to make `sysdig-eks-cloudwatch` running you need to add
+`CloudWatchReadOnlyAccess` policy to `eksctl-k1-nodegroup-ng01-NodeInstanceRole`
+role. This should be done better using [IRSA](https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/setting-up-enable-IAM.html)
+but this is enough for non-prod tests...
 
 ```bash
 kubectl --namespace sysdig-agent apply -f https://raw.githubusercontent.com/sysdiglabs/ekscloudwatch/master/ekscloudwatch-config.yaml

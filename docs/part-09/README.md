@@ -455,7 +455,7 @@ and modify the
 [default values](https://github.com/bitnami/charts/blob/master/bitnami/drupal/values.yaml).
 
 ```bash
-DRUPAL_USERNAME="myuser"
+DRUPAL_USERNAME="mydrupaluser"
 DRUPAL_PASSWORD="mypassword12345"
 
 helm repo add bitnami https://charts.bitnami.com/bitnami
@@ -489,6 +489,8 @@ persistence:
   accessMode: ReadWriteMany
   size: 1Gi
   existingClaim: drupal-efs-pvc
+metrics:
+  enabled: true
 EOF
 ```
 
@@ -577,7 +579,7 @@ and modify the
 [default values](https://github.com/bitnami/charts/blob/master/bitnami/drupal/values.yaml).
 
 ```bash
-DRUPAL2_USERNAME="myuser"
+DRUPAL2_USERNAME="mydrupal2user"
 DRUPAL2_PASSWORD="mypassword12345"
 
 helm repo add bitnami https://charts.bitnami.com/bitnami
@@ -611,6 +613,8 @@ persistence:
   accessMode: ReadWriteMany
   size: 1Gi
   existingClaim: drupal2-efs-pvc
+metrics:
+  enabled: true
 EOF
 ```
 

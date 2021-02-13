@@ -153,7 +153,7 @@ rm -rf tmp &> /dev/null
 Remove other files:
 
 ```bash
-rm demo-magic.sh "${KUBECONFIG}" README.sh &> /dev/null || true
+rm demo-magic.sh "${KUBECONFIG}" README.sh "kubeconfig-${CLUSTER_NAME}.conf.eksctl.lock" &> /dev/null || true
 ```
 
 Wait for CloudFormation to be deleted:

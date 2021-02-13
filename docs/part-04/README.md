@@ -18,11 +18,6 @@ ROUTE53_ROLE_ARN_CERT_MANAGER=$(eksctl get iamserviceaccount --cluster=${CLUSTER
 helm repo add jetstack https://charts.jetstack.io
 helm install --version v1.1.0 --namespace cert-manager --create-namespace --wait --wait-for-jobs --values - cert-manager jetstack/cert-manager << EOF
 installCRDs: true
-prometheus:
-  servicemonitor:
-    enabled: true
-image:
-  pullPolicy: Always
 serviceAccount:
   annotations:
     eks.amazonaws.com/role-arn: ${ROUTE53_ROLE_ARN_CERT_MANAGER}
@@ -30,6 +25,9 @@ extraArgs:
   - --enable-certificate-owner-ref=true
 securityContext:
   enabled: true
+prometheus:
+  servicemonitor:
+    enabled: true
 EOF
 ```
 
@@ -171,7 +169,7 @@ Annotate the wildcard certificate secret. It will allow `kubed` to distribute
 it to all namespaces.
 
 ```bash
-kubectl wait --timeout=10m --namespace cert-manager --for=condition=Ready certificate "ingress-cert-${LETSENCRYPT_ENVIRONMENT}"
+kubectl wait --namespace cert-manager --for=condition=Ready --timeout=10m certificate "ingress-cert-${LETSENCRYPT_ENVIRONMENT}"
 kubectl annotate secret "ingress-cert-${LETSENCRYPT_ENVIRONMENT}" -n cert-manager kubed.appscode.com/sync=""
 ```
 
@@ -264,8 +262,6 @@ ROUTE53_ROLE_ARN_EXTERNAL_DNS=$(eksctl get iamserviceaccount --cluster=${CLUSTER
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm install --version 4.6.0 --namespace external-dns --create-namespace --values - external-dns bitnami/external-dns << EOF
-image:
-  pullPolicy: Always
 aws:
   region: ${AWS_DEFAULT_REGION}
 domainFilters:
@@ -282,13 +278,6 @@ securityContext:
   capabilities:
     drop: ["ALL"]
   runAsNonRoot: true
-resources:
-  limits:
-    cpu: 50m
-    memory: 50Mi
-  requests:
-    memory: 50Mi
-    cpu: 10m
 metrics:
   enabled: true
   serviceMonitor:

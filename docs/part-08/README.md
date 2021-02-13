@@ -229,6 +229,7 @@ server:
         path = "/vault/data"
       }
 EOF
+sleep 50
 ```
 
 Output:
