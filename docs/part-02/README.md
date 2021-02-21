@@ -38,29 +38,7 @@ clusterName: ${CLUSTER_FQDN}
 EOF
 ```
 
-The `aws-cloudwatch-metrics` populates "Container insights" in CloudWatch
-
-## aws-node-termination-handler
-
-Install [AWS Node Termination Handler](https://github.com/aws/aws-node-termination-handler)
-which gracefully handle EC2 instance shutdown within Kubernetes.
-This may happen when one of the K8s workers needs to be replaced by scheduling
-the event: [https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/monitoring-instances-status-check_sched.html](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/monitoring-instances-status-check_sched.html)
-
-Install `aws-node-termination-handler`
-[helm chart](https://artifacthub.io/packages/helm/aws/aws-node-termination-handler)
-and modify the
-[default values](https://github.com/aws/aws-node-termination-handler/blob/main/config/helm/aws-node-termination-handler/values.yaml).
-
-```bash
-helm install --version 0.13.2 --namespace kube-system --create-namespace --values - aws-node-termination-handler eks/aws-node-termination-handler << EOF
-enableRebalanceMonitoring: true
-awsRegion: ${AWS_DEFAULT_REGION}
-enableSpotInterruptionDraining: true
-enableScheduledEventDraining: true
-deleteLocalData: true
-EOF
-```
+The `aws-cloudwatch-metrics` populates "Container insights" in CloudWatch...
 
 ## aws-efs-csi-driver
 

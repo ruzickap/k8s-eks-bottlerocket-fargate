@@ -30,7 +30,6 @@ defaultRules:
     etcd: false
     kubernetesSystem: false
     kubeScheduler: false
-
 alertmanager:
   ingress:
     enabled: true
@@ -51,11 +50,13 @@ alertmanager:
           resources:
             requests:
               storage: 1Gi
-
 # https://github.com/grafana/helm-charts/blob/main/charts/grafana/values.yaml
 grafana:
   ingress:
     enabled: true
+    annotations:
+      nginx.ingress.kubernetes.io/auth-url: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/auth
+      nginx.ingress.kubernetes.io/auth-signin: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/start?rd=\$scheme://\$host\$request_uri
     hosts:
       - grafana.${CLUSTER_FQDN}
     tls:
@@ -113,26 +114,48 @@ grafana:
         gnetId: 11875
         revision: 1
         datasource: Prometheus
-
+      # https://grafana.com/grafana/dashboards/7639
+      istio-mesh:
+        gnetId: 7639
+        revision: 54
+        datasource: Prometheus
+      # https://grafana.com/grafana/dashboards/11829
+      istio-performance:
+        gnetId: 11829
+        revision: 54
+        datasource: Prometheus
+      # https://grafana.com/grafana/dashboards/7636
+      istio-service:
+        gnetId: 7636
+        revision: 54
+        datasource: Prometheus
+      # https://grafana.com/grafana/dashboards/7630
+      istio-workload:
+        gnetId: 7630
+        revision: 54
+        datasource: Prometheus
+      # https://grafana.com/grafana/dashboards/7645
+      istio-control-plane:
+        gnetId: 7645
+        revision: 54
+        datasource: Prometheus
+      # https://grafana.com/grafana/dashboards/11055
+      velero-stats:
+        gnetId: 11055
+        revision: 2
+        datasource: Prometheus
+      # https://grafana.com/grafana/dashboards/10001
+      jaeger:
+        gnetId: 10001
+        revision: 2
+        datasource: Prometheus
   grafana.ini:
     server:
       root_url: https://grafana.${CLUSTER_FQDN}
-    auth.basic:
-      disable_login_form: true
-    auth.generic_oauth:
-      name: Dex
+    # Using oauth2-proxy instead of default Grafana Oauth
+    auth.anonymous:
       enabled: true
-      allow_sign_up: true
-      scopes: openid profile email groups
-      auth_url: https://dex.${CLUSTER_FQDN}/auth
-      token_url: https://dex.${CLUSTER_FQDN}/token
-      api_url: https://dex.${CLUSTER_FQDN}/userinfo
-      client_id: grafana.${CLUSTER_FQDN}
-      client_secret: ${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET}
-      tls_skip_verify_insecure: true
-    users:
-      auto_assign_org_role: Admin
-
+      org_role: Admin
 kubeControllerManager:
   enabled: false
 kubeEtcd:
@@ -146,7 +169,6 @@ prometheusOperator:
     enabled: false
   admissionWebhooks:
     enabled: false
-
 prometheus:
   ingress:
     enabled: true
@@ -189,6 +211,30 @@ kube-prometheus-stack has been installed. Check its status by running:
   kubectl --namespace kube-prometheus-stack get pods -l "release=kube-prometheus-stack"
 
 Visit https://github.com/prometheus-operator/kube-prometheus for instructions on how to create & configure Alertmanager and Prometheus instances using the Operator.
+```
+
+## aws-node-termination-handler
+
+Install [AWS Node Termination Handler](https://github.com/aws/aws-node-termination-handler)
+which gracefully handle EC2 instance shutdown within Kubernetes.
+This may happen when one of the K8s workers needs to be replaced by scheduling
+the event: [https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/monitoring-instances-status-check_sched.html](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/monitoring-instances-status-check_sched.html)
+
+Install `aws-node-termination-handler`
+[helm chart](https://artifacthub.io/packages/helm/aws/aws-node-termination-handler)
+and modify the
+[default values](https://github.com/aws/aws-node-termination-handler/blob/main/config/helm/aws-node-termination-handler/values.yaml).
+
+```bash
+helm install --version 0.13.2 --namespace kube-system --create-namespace --values - aws-node-termination-handler eks/aws-node-termination-handler << EOF
+enableRebalanceMonitoring: true
+awsRegion: ${AWS_DEFAULT_REGION}
+enableSpotInterruptionDraining: true
+enableScheduledEventDraining: true
+deleteLocalData: true
+podMonitor:
+  create: true
+EOF
 ```
 
 ## nri-bundle

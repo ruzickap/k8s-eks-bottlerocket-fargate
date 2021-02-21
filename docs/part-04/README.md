@@ -262,6 +262,11 @@ ROUTE53_ROLE_ARN_EXTERNAL_DNS=$(eksctl get iamserviceaccount --cluster=${CLUSTER
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm install --version 4.6.0 --namespace external-dns --create-namespace --values - external-dns bitnami/external-dns << EOF
+sources:
+  - ingress
+  - istio-gateway
+  - istio-virtualservice
+  - service
 aws:
   region: ${AWS_DEFAULT_REGION}
 domainFilters:

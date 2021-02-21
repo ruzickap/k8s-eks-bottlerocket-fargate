@@ -67,7 +67,7 @@ EOF
 Install [kuard](https://github.com/kubernetes-up-and-running/kuard):
 
 ```bash
-kubectl run kuard --image=gcr.io/kuar-demo/kuard-amd64:blue --port=8080 --expose=true --labels="app=kuard"
+kubectl run kuard --image=gcr.io/kuar-demo/kuard-amd64:v0.10.0-green --port=8080 --expose=true --labels="app=kuard,version=v0.10.0"
 
 kubectl apply -f - << EOF
 apiVersion: networking.k8s.io/v1beta1
@@ -250,6 +250,7 @@ kubectl create clusterrolebinding kubernetes-dashboard-admin --clusterrole=clust
 ```bash
 helm repo add octant-dashboard https://aleveille.github.io/octant-dashboard-turnkey/repo
 helm install --version 0.16.2 --namespace octant --create-namespace --values - octant octant-dashboard/octant << EOF
+# https://github.com/aleveille/octant-dashboard-turnkey/blob/master/helm/values.yaml
 plugins:
   install:
     - https://github.com/bloodorangeio/octant-helm/releases/download/v0.1.0/octant-helm_0.1.0_linux_amd64.tar.gz

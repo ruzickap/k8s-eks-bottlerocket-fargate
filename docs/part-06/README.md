@@ -1,11 +1,103 @@
 # Others
 
-## Istio
+## Istio and related tools
+
+### Jaeger
+
+Install `jaeger-operator`
+[helm chart](https://github.com/jaegertracing/helm-charts/tree/master/charts/jaeger-operator)
+and modify the
+[default values](https://github.com/jaegertracing/helm-charts/blob/master/charts/jaeger-operator/values.yaml).
+
+```bash
+helm repo add jaegertracing https://jaegertracing.github.io/helm-charts
+helm install --version 2.19.0 --namespace jaeger-operator --create-namespace --values - jaeger-operator jaegertracing/jaeger-operator << EOF
+rbac:
+  clusterRole: true
+EOF
+```
+
+Allow Jaeger to install Jaeger into `jaeger-controlplane`:
+
+```bash
+kubectl create namespace jaeger-system
+# https://github.com/jaegertracing/jaeger-operator/blob/master/deploy/cluster_role_binding.yaml
+kubectl apply -f - << EOF
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: jaeger-operator-in-jaeger-system
+  namespace: jaeger-system
+subjects:
+  - kind: ServiceAccount
+    name: jaeger-operator
+    namespace: jaeger-operator
+roleRef:
+  kind: Role
+  name: jaeger-operator
+  apiGroup: rbac.authorization.k8s.io
+EOF
+```
+
+Create Jaeger using the operator:
+
+```bash
+kubectl apply -f - << EOF
+apiVersion: jaegertracing.io/v1
+kind: Jaeger
+metadata:
+  namespace: jaeger-system
+  name: jaeger-controlplane
+spec:
+  strategy: AllInOne
+  allInOne:
+    image: jaegertracing/all-in-one:1.21
+    options:
+      log-level: debug
+  storage:
+    type: memory
+    options:
+      memory:
+        max-traces: 100000
+  ingress:
+    enabled: true
+    annotations:
+      nginx.ingress.kubernetes.io/auth-url: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/auth
+      nginx.ingress.kubernetes.io/auth-signin: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/start?rd=\$scheme://\$host\$request_uri
+    hosts:
+      - jaeger.${CLUSTER_FQDN}
+    tls:
+      - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
+        hosts:
+          - jaeger.${CLUSTER_FQDN}
+EOF
+```
+
+Allow Jaeger to be monitored by Prometheus [https://github.com/jaegertracing/jaeger-operator/issues/538](https://github.com/jaegertracing/jaeger-operator/issues/538):
+
+```bash
+kubectl apply -f - << EOF
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: tracing
+  namespace: jaeger-system
+spec:
+  podMetricsEndpoints:
+  - interval: 5s
+    port: "admin-http"
+  selector:
+    matchLabels:
+      app: jaeger
+EOF
+```
+
+### Istio
 
 Download `istioctl`:
 
-```shell
-ISTIO_VERSION="1.8.2"
+```bash
+ISTIO_VERSION="1.9.0"
 
 if [[ ! -f /usr/local/bin/istioctl ]]; then
   if [[ $(uname) == "Darwin" ]]; then
@@ -17,10 +109,135 @@ if [[ ! -f /usr/local/bin/istioctl ]]; then
 fi
 ```
 
-Install Istio Operator:
+Clone the `istio` repository and install `istio-operator`
+[helm chart](https://github.com/istio/istio/tree/master/manifests/charts/istio-operator)
+and modify the
+[default values](https://github.com/istio/istio/blob/master/manifests/charts/istio-operator/values.yaml).
+
+```bash
+git clone --quiet https://github.com/istio/istio.git tmp/istio
+git -C tmp/istio checkout --quiet "${ISTIO_VERSION}"
+
+helm install istio-operator tmp/istio/manifests/charts/istio-operator
+```
+
+Create Istio using the operator:
+
+```bash
+kubectl create namespace istio-system
+kubectl apply -f - << EOF
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+metadata:
+  namespace: istio-system
+  name: istio-controlplane
+spec:
+  profile: default
+  meshConfig:
+    enableTracing: true
+    enableAutoMtls: true
+    defaultConfig:
+      tracing:
+        zipkin:
+          address: "jaeger-controlplane-collector-headless.jaeger-system.svc.cluster.local:9411"
+        sampling: 100
+      sds:
+        enabled: true
+  components:
+    pilot:
+      k8s:
+        # Reduce resource requirements for local testing. This is NOT
+        # recommended for the real use cases.
+        resources:
+          limits:
+            cpu: 200m
+            memory: 128Mi
+          requests:
+            cpu: 100m
+            memory: 64Mi
+EOF
+```
+
+Enable Prometheus monitoring:
+
+```bash
+kubectl apply -f "https://raw.githubusercontent.com/istio/istio/${ISTIO_VERSION}/samples/addons/extras/prometheus-operator.yaml"
+```
+
+Label the `default` namespace with `istio-injection=enabled`:
 
 ```shell
-istioctl operator init --revision ${ISTIO_VERSION//./-}
+kubectl label namespace default istio-injection=enabled --overwrite
+```
+
+### Kiali
+
+Install `kiali-operator`
+[helm chart](https://github.com/kiali/helm-charts/tree/master/kiali-operator)
+and modify the
+[default values](https://github.com/kiali/helm-charts/blob/master/kiali-operator/values.yaml).
+
+```bash
+helm repo add kiali https://kiali.org/helm-charts
+helm install --version 1.29.0 --namespace kiali-operator --create-namespace kiali-operator kiali/kiali-operator
+```
+
+Install Kiali CR:
+
+```bash
+# https://github.com/kiali/kiali-operator/blob/master/deploy/kiali/kiali_cr.yaml
+kubectl create namespace kiali
+kubectl create secret generic kiali --from-literal="oidc-secret=${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET}" -n kiali
+kubectl apply -f - << EOF
+apiVersion: kiali.io/v1alpha1
+kind: Kiali
+metadata:
+  namespace: kiali-operator
+  name: kiali
+spec:
+  istio_namespace: istio-system
+  auth:
+    strategy: openid
+    openid:
+      client_id: kiali.${CLUSTER_FQDN}
+      disable_rbac: true
+      insecure_skip_verify_tls: true
+      issuer_uri: "https://dex.${CLUSTER_FQDN}"
+      username_claim: email
+  deployment:
+    accessible_namespaces: ["**"]
+    image_version: operator_version
+    namespace: kiali
+    override_ingress_yaml:
+      spec:
+        rules:
+        - host: kiali.${CLUSTER_FQDN}
+          http:
+            paths:
+            - backend:
+                serviceName: kiali
+                servicePort: 20001
+              path: /
+          tls:
+            - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
+              hosts:
+                - kiali.${CLUSTER_FQDN}
+  external_services:
+    grafana:
+      is_core_component: true
+      url: "https://grafana.${CLUSTER_FQDN}"
+      in_cluster_url: "http://kube-prometheus-stack-grafana.kube-prometheus-stack.svc.cluster.local:80"
+    prometheus:
+      is_core_component: true
+      url: http://kube-prometheus-stack-prometheus.kube-prometheus-stack.svc.cluster.local:9090
+    tracing:
+      is_core_component: true
+      url: https://jaeger.${CLUSTER_FQDN}
+      in_cluster_url: http://jaeger-controlplane-query.jaeger-system.svc.cluster.local:16686
+  server:
+    web_fqdn: kiali.${CLUSTER_FQDN}
+    web_root: /
+EOF
 ```
 
 ## cluster-autoscaler

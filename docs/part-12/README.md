@@ -20,6 +20,12 @@ aws cloudformation delete-stack --stack-name "${CLUSTER_NAME}-rds"
 aws cloudformation delete-stack --stack-name "${CLUSTER_NAME}-efs"
 ```
 
+Delete IstioOperator to release AWS Load Balancer:
+
+```bash
+kubectl delete istiooperator -n istio-system istio-controlplane || true
+```
+
 Detach policy from IAM role:
 
 ```bash

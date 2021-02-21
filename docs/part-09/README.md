@@ -199,10 +199,17 @@ Waiting for stack create/update to complete
 Successfully created/updated stack - kube1-rds
 ```
 
-Install [phpMyAdmin](https://www.phpmyadmin.net/):
+Install [phpMyAdmin](https://www.phpmyadmin.net/) using Helm Chart
+
+Install `phpmyadmin`
+[helm chart](https://artifacthub.io/packages/helm/bitnami/phpmyadmin)
+and modify the
+[default values](https://github.com/bitnami/charts/blob/master/bitnami/phpmyadmin/values.yaml).
 
 ```bash
 helm install --version 6.5.4 --namespace phpmyadmin --create-namespace --values - phpmyadmin bitnami/phpmyadmin << EOF
+serviceMonitor:
+  enabled: true
 db:
   allowArbitraryServer: false
   host: ${RDS_DB_HOST}
@@ -549,8 +556,9 @@ Create `drupal2` database inside MariaDB:
 
 ```bash
 kubectl create namespace drupal2
-kubectl run -n drupal2 --env MYSQL_PWD=${RDS_DB_PASSWORD} --image=mysql:5.7 --restart=Never mysql-client-drupal2 -- \
-  mysql -h "${RDS_DB_HOST}" -u "${RDS_DB_USERNAME}" -e "CREATE DATABASE drupal2"
+kubectl label namespace drupal2 istio-injection=enabled kiali.io/member-of=kiali --overwrite
+kubectl run -n drupal2 --env MYSQL_PWD=${RDS_DB_PASSWORD} --image=mysql:5.7 --restart=Never mysql-client-drupal28 -- /bin/bash -c "
+  sleep 5 && mysql -h \"${RDS_DB_HOST}\" -u \"${RDS_DB_USERNAME}\" -e \"CREATE DATABASE drupal2\""
 ```
 
 Create `drupal2` namespace and PVC:
@@ -588,6 +596,9 @@ replicaCount: 2
 drupalUsername: ${DRUPAL2_USERNAME}
 drupalPassword: ${DRUPAL2_PASSWORD}
 drupalEmail: ${MY_EMAIL}
+commonLabels:
+  app: "{{ .Release.Name }}"
+  version: "{{ .Chart.AppVersion }}"
 externalDatabase:
   host: ${RDS_DB_HOST}
   user: ${RDS_DB_USERNAME}
@@ -597,16 +608,6 @@ mariadb:
   enabled: false
 service:
   type: ClusterIP
-ingress:
-  enabled: true
-  annotations:
-    nginx.ingress.kubernetes.io/auth-url: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/auth
-    nginx.ingress.kubernetes.io/auth-signin: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/start?rd=\$scheme://\$host\$request_uri
-  hostname: drupal2.${CLUSTER_FQDN}
-  tls:
-    - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
-      hosts:
-        - drupal2.${CLUSTER_FQDN}
 persistence:
   enabled: true
   storageClass: efs
@@ -621,4 +622,63 @@ EOF
 Output:
 
 ```text
+```
+
+Create Istio components to allow accessing Drupal:
+
+```bash
+kubectl apply -f - << EOF
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: drupal-destination-rule
+  namespace: drupal2
+spec:
+  host: drupal2.drupal2.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: drupal2-virtual-service
+  namespace: drupal2
+spec:
+  hosts:
+    - drupal2.${CLUSTER_FQDN}
+  gateways:
+    - drupal2-gateway
+  http:
+    - route:
+        - destination:
+            host: drupal2.drupal2.svc.cluster.local
+            port:
+              number: 80
+---
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: drupal2-gateway
+  namespace: drupal2
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 443
+        name: https-drupal2
+        protocol: HTTPS
+      tls:
+        mode: SIMPLE
+        credentialName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
+      hosts:
+        - drupal2.${CLUSTER_FQDN}
+EOF
+```
+
+Generate traffic going to Drupal2:
+
+```bash
+hey -n 2000 -c 1 -q 1 -h2 https://drupal2.${CLUSTER_FQDN} > /dev/null &
 ```
