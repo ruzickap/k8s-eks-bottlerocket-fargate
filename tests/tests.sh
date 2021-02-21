@@ -31,19 +31,25 @@ export VAULT_KMS_KEY_ID="test"
 test -d tests || ( echo -e "\n*** Run in top level of git repository\n"; exit 1 )
 
 if [[ ! -x /usr/local/bin/kind ]]; then
-  sudo curl -s -Lo /usr/local/bin/kind "https://kind.sigs.k8s.io/dl/v0.9.0/kind-$(uname | sed "s/./\L&/g" )-amd64"
+  sudo curl -s -Lo /usr/local/bin/kind "https://kind.sigs.k8s.io/dl/v0.10.0/kind-$(uname | sed "s/./\L&/g" )-amd64"
   sudo chmod a+x /usr/local/bin/kind
+else
+  command -v kind
+  kind version
 fi
 
 if [[ ! -x /usr/local/bin/helm ]]; then
-  curl -s https://raw.githubusercontent.com/helm/helm/master/scripts/get | bash -s -- --version v3.5.0
+  curl -s https://raw.githubusercontent.com/helm/helm/master/scripts/get | bash -s -- --version v3.5.2
+else
+  command -v helm
+  helm version
 fi
 
 echo "*** Remove cluster (if exists)"
 kind get clusters | grep "${CLUSTER_NAME}" && kind delete cluster --name "${CLUSTER_NAME}"
 
 echo -e "\n*** Create a new Kubernetes cluster using kind"
-kind create cluster --name "${CLUSTER_NAME}" --image kindest/node:v1.19.1 --kubeconfig "${KUBECONFIG}" --quiet --config - << EOF
+kind create cluster --name "${CLUSTER_NAME}" --image kindest/node:v1.18.15 --kubeconfig "${KUBECONFIG}" --quiet --config - << EOF
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 nodes:
@@ -64,7 +70,7 @@ EOF
 
 echo -e "\n*** Install MetalLB"
 helm repo add bitnami https://charts.bitnami.com/bitnami
-helm install --version 0.1.28 --namespace metallb --create-namespace --values - metallb bitnami/metallb << EOF
+helm install --version 2.3.1 --namespace metallb --create-namespace --values - metallb bitnami/metallb << EOF
 configInline:
   address-pools:
     - name: default
@@ -87,7 +93,7 @@ export DEMO_PROMPT="${GREEN}➜ ${CYAN}$ "
 # Changes to run test in kind like disable vault requests / change StorageClass / remove aws, eksctl commands ...
 # shellcheck disable=SC1004
 sed docs/part-{02..08}/README.md \
-  -e 's/ --wait / --wait --timeout 15m /' \
+  -e 's/ --wait / --wait --timeout 30m /' \
   -e 's/.*aws /# &/' \
   -e 's/.*eksctl /# &/' \
   -e '/kubectl delete CSIDriver efs.csi.aws.com/d' \

@@ -41,15 +41,15 @@ config:
         - https://gangway.${CLUSTER_FQDN}/callback
       name: Gangway
       secret: ${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET}
-    - id: grafana.${CLUSTER_FQDN}
-      redirectURIs:
-        - https://grafana.${CLUSTER_FQDN}/login/generic_oauth
-      name: Grafana
-      secret: ${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET}
     - id: harbor.${CLUSTER_FQDN}
       redirectURIs:
         - https://harbor.${CLUSTER_FQDN}/c/oidc/callback
       name: Harbor
+      secret: ${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET}
+    - id: kiali.${CLUSTER_FQDN}
+      redirectURIs:
+        - https://kiali.${CLUSTER_FQDN}/
+      name: Kiali
       secret: ${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET}
     - id: oauth2-proxy.${CLUSTER_FQDN}
       redirectURIs:
@@ -86,9 +86,14 @@ NOTES:
 Install [oauth2-proxy](https://github.com/oauth2-proxy/oauth2-proxy) to secure
 the endpoints like (`prometheus.`, `alertmanager.`).
 
+Install `oauth2-proxy`
+[helm chart](https://artifacthub.io/packages/helm/k8s-at-home/oauth2-proxy)
+and modify the
+[default values](https://github.com/k8s-at-home/charts/blob/master/charts/oauth2-proxy/values.yaml).
+
 ```bash
-kubectl create namespace oauth2-proxy
-helm install --version 3.2.5 --namespace oauth2-proxy --create-namespace --values - oauth2-proxy stable/oauth2-proxy << EOF
+helm repo add k8s-at-home https://k8s-at-home.com/charts/
+helm install --version 4.3.0 --namespace oauth2-proxy --create-namespace --values - oauth2-proxy k8s-at-home/oauth2-proxy << EOF
 # https://github.com/helm/charts/blob/master/stable/oauth2-proxy/values.yaml
 config:
   clientID: oauth2-proxy.${CLUSTER_FQDN}
@@ -98,14 +103,11 @@ config:
     email_domains = [ "*" ]
     upstreams = [ "file:///dev/null" ]
     whitelist_domains = ".${CLUSTER_FQDN}"
-    cookie_domain = ".${CLUSTER_FQDN}"
+    cookie_domains = ".${CLUSTER_FQDN}"
     provider = "oidc"
-    # Use http of non-valid certificates
     oidc_issuer_url = "https://dex.${CLUSTER_FQDN}"
     ssl_insecure_skip_verify = "true"
     insecure_oidc_skip_issuer_verification = "true"
-image:
-  pullPolicy: Always
 ingress:
   enabled: true
   hosts:
@@ -114,13 +116,6 @@ ingress:
     - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
       hosts:
         - oauth2-proxy.${CLUSTER_FQDN}
-resources:
-  limits:
-    cpu: 100m
-    memory: 300Mi
-  requests:
-    cpu: 100m
-    memory: 300Mi
 EOF
 ```
 
@@ -149,7 +144,7 @@ Install gangway:
 helm install --version 0.4.3 --namespace gangway --create-namespace --values - gangway stable/gangway << EOF
 # https://github.com/helm/charts/blob/master/stable/gangway/values.yaml
 trustedCACert: |
-$(curl -s https://letsencrypt.org/certs/fakelerootx1.pem | sed  "s/^/  /" )
+$(curl -s https://letsencrypt.org/certs/staging/letsencrypt-stg-root-x1.pem | sed  "s/^/  /" )
 gangway:
   clusterName: ${CLUSTER_FQDN}
   authorizeURL: https://dex.${CLUSTER_FQDN}/auth
@@ -205,7 +200,7 @@ oidc:
   issuerUrl: https://dex.${CLUSTER_FQDN}
   usernameClaim: email
   caPEM: |
-$(curl -s https://letsencrypt.org/certs/fakelerootx1.pem | sed  "s/^/    /" )
+$(curl -s https://letsencrypt.org/certs/staging/letsencrypt-stg-root-x1.pem | sed  "s/^/    /" )
 ingress:
   annotations:
     nginx.ingress.kubernetes.io/backend-protocol: HTTPS
