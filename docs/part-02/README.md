@@ -71,31 +71,29 @@ EOF
 
 ## aws-ebs-csi-driver
 
-```bash
-EKSCTL_IAM_SERVICE_ACCOUNTS=$(eksctl get iamserviceaccount --cluster=${CLUSTER_NAME} --namespace kube-system -o json)
-EBS_CONTROLLER_ROLE_ARN=$(echo "${EKSCTL_IAM_SERVICE_ACCOUNTS}" | jq -r ".[] | select(.metadata.name==\"ebs-csi-controller-sa\") .status.roleARN")
-EBS_SNAPSHOT_ROLE_ARN=$(echo "${EKSCTL_IAM_SERVICE_ACCOUNTS}" | jq -r ".[] | select(.metadata.name==\"ebs-snapshot-controller\") .status.roleARN")
-```
-
 Install Amazon EBS CSI Driver `aws-ebs-csi-driver`
 [helm chart](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/tree/master/charts/aws-ebs-csi-driver)
 and modify the
 [default values](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/blob/master/charts/aws-ebs-csi-driver/values.yaml):
+The ServiceAccount `ebs-csi-controller` was created by `eksctl`.
 
 ```bash
 helm repo add aws-ebs-csi-driver https://kubernetes-sigs.github.io/aws-ebs-csi-driver
-helm install --version 0.7.0 --namespace kube-system --values - aws-ebs-csi-driver aws-ebs-csi-driver/aws-ebs-csi-driver << EOF
+helm install --version 0.9.8 --namespace kube-system --values - aws-ebs-csi-driver aws-ebs-csi-driver/aws-ebs-csi-driver << EOF
 enableVolumeScheduling: true
 enableVolumeResizing: true
 enableVolumeSnapshot: true
 k8sTagClusterId: ${CLUSTER_FQDN}
 serviceAccount:
   controller:
-    annotations:
-      eks.amazonaws.com/role-arn: ${EBS_CONTROLLER_ROLE_ARN}
+    create: false
+    name: ebs-csi-controller
   snapshot:
-    annotations:
-      eks.amazonaws.com/role-arn: ${EBS_SNAPSHOT_ROLE_ARN}
+    create: false
+    name: ebs-csi-controller
+  node:
+    create: false
+    name: ebs-csi-controller
 EOF
 ```
 
