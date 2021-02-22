@@ -35,6 +35,14 @@ jobs:
             exit 1
           fi
 
+      - name: Clean disk space
+        run: |
+          df -h /
+          rm -rf /usr/share/dotnet/
+          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          df -h /
+
       - name: Run tests/tests.sh
         run: |
           sudo rm /usr/local/bin/helm

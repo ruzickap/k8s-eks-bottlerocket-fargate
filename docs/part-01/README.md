@@ -93,7 +93,7 @@ Install [eksctl](https://eksctl.io/):
 ```bash
 if [[ ! -x /usr/local/bin/eksctl ]]; then
   # https://github.com/weaveworks/eksctl/releases
-  curl -s -L "https://github.com/weaveworks/eksctl/releases/download/0.37.0/eksctl_$(uname)_amd64.tar.gz" | sudo tar xz -C /usr/local/bin/
+  curl -s -L "https://github.com/weaveworks/eksctl/releases/download/0.38.0/eksctl_$(uname)_amd64.tar.gz" | sudo tar xz -C /usr/local/bin/
 fi
 ```
 
@@ -539,12 +539,9 @@ kind: ClusterConfig
 metadata:
   name: ${CLUSTER_NAME}
   region: ${AWS_DEFAULT_REGION}
-  version: "1.18"
+  version: "1.19"
   tags: &tags
-    Owner: ${MY_EMAIL}
-    Environment: Dev
-    Tribe: Cloud_Native
-    Squad: Cloud_Container_Platform
+$(echo "${TAGS}" | sed "s/ /\\n    /g; s/^/    /g; s/=/: /g")
 availabilityZones:
   - ${AWS_DEFAULT_REGION}a
   - ${AWS_DEFAULT_REGION}b
@@ -556,21 +553,25 @@ iam:
         namespace: kube-system
       attachPolicyARNs:
         - ${EBS_POLICY_ARN}
+      roleOnly: true
     - metadata:
         name: ebs-snapshot-controller
         namespace: kube-system
       attachPolicyARNs:
         - ${EBS_POLICY_ARN}
+      roleOnly: true
     - metadata:
         name: cert-manager
         namespace: cert-manager
       attachPolicyARNs:
         - ${ROUTE53_POLICY_ARN}
+      roleOnly: true
     - metadata:
         name: external-dns
         namespace: external-dns
       attachPolicyARNs:
         - ${ROUTE53_POLICY_ARN}
+      roleOnly: true
     - metadata:
         name: harbor
         namespace: harbor
@@ -601,6 +602,7 @@ nodeGroups:
         cloudWatch: true
         ebs: true
         efs: true
+        albIngress: true
     # aws ssm get-parameters --names "/aws/service/bottlerocket/aws-k8s-1.18/x86_64/latest/image_id" --region eu-central-1
     # ami: ami-0a7bcaab486b70db6
     volumeEncrypted: true
@@ -705,15 +707,6 @@ Output:
 
 When the cluster is ready it immediately start pushing logs to CloudWatch under
 `/aws/eks/k1/cluster`.
-
-Remove namespaces with serviceaccounts created by `eksctl`:
-
-```bash
-kubectl delete serviceaccount -n cert-manager cert-manager
-kubectl delete serviceaccount -n external-dns external-dns
-kubectl delete serviceaccount -n kube-system ebs-csi-controller-sa
-kubectl delete serviceaccount -n kube-system ebs-snapshot-controller
-```
 
 Check the nodes:
 

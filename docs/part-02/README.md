@@ -73,8 +73,8 @@ EOF
 
 ```bash
 EKSCTL_IAM_SERVICE_ACCOUNTS=$(eksctl get iamserviceaccount --cluster=${CLUSTER_NAME} --namespace kube-system -o json)
-EBS_CONTROLLER_ROLE_ARN=$(echo "${EKSCTL_IAM_SERVICE_ACCOUNTS}" | jq -r ".iam.serviceAccounts[] | select(.metadata.name==\"ebs-csi-controller-sa\") .status.roleARN")
-EBS_SNAPSHOT_ROLE_ARN=$(echo "${EKSCTL_IAM_SERVICE_ACCOUNTS}" | jq -r ".iam.serviceAccounts[] | select(.metadata.name==\"ebs-snapshot-controller\") .status.roleARN")
+EBS_CONTROLLER_ROLE_ARN=$(echo "${EKSCTL_IAM_SERVICE_ACCOUNTS}" | jq -r ".[] | select(.metadata.name==\"ebs-csi-controller-sa\") .status.roleARN")
+EBS_SNAPSHOT_ROLE_ARN=$(echo "${EKSCTL_IAM_SERVICE_ACCOUNTS}" | jq -r ".[] | select(.metadata.name==\"ebs-snapshot-controller\") .status.roleARN")
 ```
 
 Install Amazon EBS CSI Driver `aws-ebs-csi-driver`
