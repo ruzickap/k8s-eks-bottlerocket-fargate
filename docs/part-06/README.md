@@ -144,6 +144,9 @@ spec:
       sds:
         enabled: true
   components:
+    egressGateways:
+      - name: istio-egressgateway
+        enabled: true
     pilot:
       k8s:
         # Reduce resource requirements for local testing. This is NOT

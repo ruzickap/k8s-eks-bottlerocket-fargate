@@ -25,7 +25,7 @@ export ROUTE53_ROLE_ARN_EXTERNAL_DNS="test_arn"
 export RDS_DB_HOST="testdomain123.com"
 export EFS_FS_ID="123"
 export EFS_AP_ID="123"
-export EKSCTL_IAM_SERVICE_ACCOUNTS='{"iam":{"serviceAccounts":[{"metadata":{"name":"ebs-snapshot-controller"},"status":{"roleARN":"arn2"}},{"metadata":{"name":"ebs-csi-controller-sa"},"status":{"roleARN":"arn1"}}]}}'
+export EKSCTL_IAM_SERVICE_ACCOUNTS='[{"metadata":{"name":"ebs-snapshot-controller"},"status":{"roleARN":"arn2"}},{"metadata":{"name":"ebs-csi-controller-sa"},"status":{"roleARN":"arn1"}}]'
 export VAULT_KMS_KEY_ID="test"
 
 test -d tests || ( echo -e "\n*** Run in top level of git repository\n"; exit 1 )

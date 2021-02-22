@@ -13,7 +13,7 @@ and modify the
 The the previously created Role ARN will be used to annotate service account.
 
 ```bash
-ROUTE53_ROLE_ARN_CERT_MANAGER=$(eksctl get iamserviceaccount --cluster=${CLUSTER_NAME} --namespace cert-manager -o json  | jq -r ".iam.serviceAccounts[] | select(.metadata.name==\"cert-manager\") .status.roleARN")
+ROUTE53_ROLE_ARN_CERT_MANAGER=$(eksctl get iamserviceaccount --cluster=${CLUSTER_NAME} --namespace cert-manager -o json  | jq -r ".[] | select(.metadata.name==\"cert-manager\") .status.roleARN")
 
 helm repo add jetstack https://charts.jetstack.io
 helm install --version v1.1.0 --namespace cert-manager --create-namespace --wait --wait-for-jobs --values - cert-manager jetstack/cert-manager << EOF
@@ -256,7 +256,7 @@ and modify the
 (`ROUTE53_ROLE_ARN` variable was defined before for `cert-manager`)
 
 ```bash
-ROUTE53_ROLE_ARN_EXTERNAL_DNS=$(eksctl get iamserviceaccount --cluster=${CLUSTER_NAME} --namespace external-dns -o json  | jq -r ".iam.serviceAccounts[] | select(.metadata.name==\"external-dns\") .status.roleARN")
+ROUTE53_ROLE_ARN_EXTERNAL_DNS=$(eksctl get iamserviceaccount --cluster=${CLUSTER_NAME} --namespace external-dns -o json  | jq -r ".[] | select(.metadata.name==\"external-dns\") .status.roleARN")
 ```
 
 ```bash
