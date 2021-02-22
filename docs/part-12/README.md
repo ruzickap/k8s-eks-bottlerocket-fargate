@@ -47,39 +47,48 @@ fi
 Output:
 
 ```text
-[ℹ]  eksctl version 0.35.0
-[ℹ]  using region eu-central-1
-[ℹ]  deleting EKS cluster "k1"
-[ℹ]  deleting Fargate profile "fp-fgtest"
-[ℹ]  deleted Fargate profile "fp-fgtest"
-[ℹ]  deleting Fargate profile "fp-fgworkload"
-[ℹ]  deleted Fargate profile "fp-fgworkload"
-[ℹ]  deleted 2 Fargate profile(s)
-[✔]  kubeconfig has been updated
-[ℹ]  cleaning up AWS load balancers created by Kubernetes objects of Kind Service or Ingress
-[ℹ]  3 sequential tasks: { delete nodegroup "ng01", 2 sequential sub-tasks: { 6 parallel sub-tasks: { 2 sequential sub-tasks: { delete IAM role for serviceaccount "kube-system/ebs-csi-controller-sa", delete serviceaccount "kube-system/ebs-csi-controller-sa" }, 2 sequential sub-tasks: { delete IAM role for serviceaccount "kube-system/aws-node", delete serviceaccount "kube-system/aws-node" }, 2 sequential sub-tasks: { delete IAM role for serviceaccount "kube-system/ebs-snapshot-controller", delete serviceaccount "kube-system/ebs-snapshot-controller" }, 2 sequential sub-tasks: { delete IAM role for serviceaccount "cert-manager/cert-manager", delete serviceaccount "cert-manager/cert-manager" }, 2 sequential sub-tasks: { delete IAM role for serviceaccount "harbor/harbor", delete serviceaccount "harbor/harbor" }, 2 sequential sub-tasks: { delete IAM role for serviceaccount "external-dns/external-dns", delete serviceaccount "external-dns/external-dns" } }, delete IAM OIDC provider }, delete cluster control plane "k1" [async] }
-[ℹ]  will delete stack "eksctl-k1-nodegroup-ng01"
-[ℹ]  waiting for stack "eksctl-k1-nodegroup-ng01" to get deleted
-[ℹ]  will delete stack "eksctl-k1-addon-iamserviceaccount-external-dns-external-dns"
-[ℹ]  waiting for stack "eksctl-k1-addon-iamserviceaccount-external-dns-external-dns" to get deleted
-[ℹ]  will delete stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-snapshot-controller"
-[ℹ]  waiting for stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-snapshot-controller" to get deleted
-[ℹ]  will delete stack "eksctl-k1-addon-iamserviceaccount-kube-system-aws-node"
-[ℹ]  waiting for stack "eksctl-k1-addon-iamserviceaccount-kube-system-aws-node" to get deleted
-[ℹ]  will delete stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-csi-controller-sa"
-[ℹ]  waiting for stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-csi-controller-sa" to get deleted
-[ℹ]  will delete stack "eksctl-k1-addon-iamserviceaccount-cert-manager-cert-manager"
-[ℹ]  waiting for stack "eksctl-k1-addon-iamserviceaccount-cert-manager-cert-manager" to get deleted
-[ℹ]  will delete stack "eksctl-k1-addon-iamserviceaccount-harbor-harbor"
-[ℹ]  waiting for stack "eksctl-k1-addon-iamserviceaccount-harbor-harbor" to get deleted
-[ℹ]  deleted serviceaccount "harbor/harbor"
-[ℹ]  deleted serviceaccount "external-dns/external-dns"
-[ℹ]  deleted serviceaccount "kube-system/aws-node"
-[ℹ]  deleted serviceaccount "cert-manager/cert-manager"
-[ℹ]  deleted serviceaccount "kube-system/ebs-snapshot-controller"
-[ℹ]  deleted serviceaccount "kube-system/ebs-csi-controller-sa"
-[ℹ]  will delete stack "eksctl-k1-cluster"
-[✔]  all cluster resources were deleted
+2021-02-22 15:50:49 [ℹ]  eksctl version 0.38.0
+2021-02-22 15:50:49 [ℹ]  using region eu-central-1
+2021-02-22 15:50:49 [ℹ]  deleting EKS cluster "k1"
+2021-02-22 15:50:49 [ℹ]  deleting Fargate profile "fp-fgtest"
+2021-02-22 15:55:05 [ℹ]  deleted Fargate profile "fp-fgtest"
+2021-02-22 15:55:05 [ℹ]  deleted 1 Fargate profile(s)
+2021-02-22 15:55:06 [✔]  kubeconfig has been updated
+2021-02-22 15:55:06 [ℹ]  cleaning up AWS load balancers created by Kubernetes objects of Kind Service or Ingress
+2021-02-22 15:55:39 [ℹ]  3 sequential tasks: { delete nodegroup "ng01", 2 sequential sub-tasks: { 5 parallel sub-tasks: { 2 sequential sub-tasks: { delete IAM role for serviceaccount "cert-manager/cert-manager", delete serviceaccount "cert-manager/cert-manager" }, 2 sequential sub-tasks: { delete IAM role for serviceaccount "harbor/harbor", delete serviceaccount "harbor/harbor" }, 2 sequential sub-tasks: { delete IAM role for serviceaccount "kube-system/ebs-csi-controller", delete serviceaccount "kube-system/ebs-csi-controller" }, 2 sequential sub-tasks: { delete IAM role for serviceaccount "kube-system/aws-node", delete serviceaccount "kube-system/aws-node" }, 2 sequential sub-tasks: { delete IAM role for serviceaccount "external-dns/external-dns", delete serviceaccount "external-dns/external-dns" } }, delete IAM OIDC provider }, delete cluster control plane "k1" [async] }
+2021-02-22 15:55:39 [ℹ]  will delete stack "eksctl-k1-nodegroup-ng01"
+2021-02-22 15:55:39 [ℹ]  waiting for stack "eksctl-k1-nodegroup-ng01" to get deleted
+2021-02-22 15:55:39 [ℹ]  waiting for CloudFormation stack "eksctl-k1-nodegroup-ng01"
+2021-02-22 15:55:39 [!]  retryable error (Throttling: Rate exceeded
+2021-02-22 15:55:59 [ℹ]  waiting for CloudFormation stack "eksctl-k1-nodegroup-ng01"
+2021-02-22 16:02:10 [ℹ]  waiting for CloudFormation stack "eksctl-k1-nodegroup-ng01"
+2021-02-22 16:02:10 [ℹ]  will delete stack "eksctl-k1-addon-iamserviceaccount-harbor-harbor"
+2021-02-22 16:02:10 [ℹ]  waiting for stack "eksctl-k1-addon-iamserviceaccount-harbor-harbor" to get deleted
+2021-02-22 16:02:10 [ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-harbor-harbor"
+2021-02-22 16:02:10 [ℹ]  will delete stack "eksctl-k1-addon-iamserviceaccount-kube-system-aws-node"
+2021-02-22 16:02:10 [ℹ]  waiting for stack "eksctl-k1-addon-iamserviceaccount-kube-system-aws-node" to get deleted
+2021-02-22 16:02:10 [ℹ]  will delete stack "eksctl-k1-addon-iamserviceaccount-cert-manager-cert-manager"
+2021-02-22 16:02:10 [ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-kube-system-aws-node"
+2021-02-22 16:02:10 [ℹ]  waiting for stack "eksctl-k1-addon-iamserviceaccount-cert-manager-cert-manager" to get deleted
+2021-02-22 16:02:10 [ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-cert-manager-cert-manager"
+2021-02-22 16:02:10 [ℹ]  will delete stack "eksctl-k1-addon-iamserviceaccount-external-dns-external-dns"
+2021-02-22 16:02:10 [ℹ]  waiting for stack "eksctl-k1-addon-iamserviceaccount-external-dns-external-dns" to get deleted
+2021-02-22 16:02:10 [ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-external-dns-external-dns"
+2021-02-22 16:02:10 [ℹ]  will delete stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-csi-controller"
+2021-02-22 16:02:10 [ℹ]  waiting for stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-csi-controller" to get deleted
+2021-02-22 16:02:10 [ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-csi-controller"
+2021-02-22 16:02:27 [ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-cert-manager-cert-manager"
+2021-02-22 16:02:28 [ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-external-dns-external-dns"
+2021-02-22 16:02:28 [ℹ]  deleted serviceaccount "cert-manager/cert-manager"
+2021-02-22 16:02:28 [ℹ]  deleted serviceaccount "external-dns/external-dns"
+2021-02-22 16:02:28 [ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-kube-system-aws-node"
+2021-02-22 16:02:28 [ℹ]  deleted serviceaccount "kube-system/aws-node"
+2021-02-22 16:02:28 [ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-csi-controller"
+2021-02-22 16:02:28 [ℹ]  deleted serviceaccount "kube-system/ebs-csi-controller"
+2021-02-22 16:02:30 [ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-harbor-harbor"
+2021-02-22 16:02:30 [ℹ]  deleted serviceaccount "harbor/harbor"
+2021-02-22 16:02:32 [ℹ]  will delete stack "eksctl-k1-cluster"
+2021-02-22 16:02:32 [✔]  all cluster resources were deleted
 ```
 
 Remove Route 53 DNS records from DNS Zone:

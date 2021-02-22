@@ -262,32 +262,6 @@ Resources:
           - logs:DescribeLogStreams
           - logs:PutLogEvents
           Resource: "*"
-  EBSPolicy:
-    Type: AWS::IAM::ManagedPolicy
-    Properties:
-      ManagedPolicyName: !Sub "${ClusterFQDN}-AmazonEBS"
-      Description: !Sub "Policy required by Amazon EBS Container Storage Interface (CSI) Driver (aws-ebs-csi-driver) to manage EBS volumes on ${ClusterFQDN}"
-      PolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-        - Effect: Allow
-          Action:
-          - ec2:AttachVolume
-          - ec2:CreateSnapshot
-          - ec2:CreateTags
-          - ec2:CreateVolume
-          - ec2:DeleteSnapshot
-          - ec2:DeleteTags
-          - ec2:DeleteVolume
-          - ec2:DescribeAvailabilityZones
-          - ec2:DescribeInstances
-          - ec2:DescribeSnapshots
-          - ec2:DescribeTags
-          - ec2:DescribeVolumes
-          - ec2:DescribeVolumesModifications
-          - ec2:DetachVolume
-          - ec2:ModifyVolume
-          Resource: "*"
   HostedZone:
     Type: AWS::Route53::HostedZone
     Properties:
@@ -427,12 +401,6 @@ Outputs:
     Export:
       Name:
         Fn::Sub: "${AWS::StackName}-CloudWatchPolicyArn"
-  EBSPolicyArn:
-    Description: The ARN of the created AmazonEBS policy
-    Value: !Ref EBSPolicy
-    Export:
-      Name:
-        Fn::Sub: "${AWS::StackName}-EBSPolicyArn"
   EKSKMSKeyArn:
     Description: The ARN of the created KMS Key to encrypt EKS related services
     Value: !GetAtt EKSKMSKey.Arn
@@ -476,7 +444,6 @@ eval aws cloudformation deploy --capabilities CAPABILITY_NAMED_IAM \
   --stack-name "${CLUSTER_NAME}-route53-iam-s3-ebs" --template-file tmp/aws_policies.yml --tags "${TAGS}"
 
 AWS_CLOUDFORMATION_DETAILS=$(aws cloudformation describe-stacks --stack-name "${CLUSTER_NAME}-route53-iam-s3-ebs")
-EBS_POLICY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"EBSPolicyArn\") .OutputValue")
 EKS_KMS_KEY_ID=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"EKSKMSKeyId\") .OutputValue")
 EKS_KMS_KEY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"EKSKMSKeyArn\") .OutputValue")
 ROUTE53_POLICY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"Route53PolicyArn\") .OutputValue")
@@ -549,17 +516,29 @@ iam:
   withOIDC: true
   serviceAccounts:
     - metadata:
-        name: ebs-csi-controller-sa
+        name: ebs-csi-controller
         namespace: kube-system
-      attachPolicyARNs:
-        - ${EBS_POLICY_ARN}
-      roleOnly: true
-    - metadata:
-        name: ebs-snapshot-controller
-        namespace: kube-system
-      attachPolicyARNs:
-        - ${EBS_POLICY_ARN}
-      roleOnly: true
+      attachPolicy:
+        Version: "2012-10-17"
+        Statement:
+        - Effect: Allow
+          Action:
+          - ec2:AttachVolume
+          - ec2:CreateSnapshot
+          - ec2:CreateTags
+          - ec2:CreateVolume
+          - ec2:DeleteSnapshot
+          - ec2:DeleteTags
+          - ec2:DeleteVolume
+          - ec2:DescribeAvailabilityZones
+          - ec2:DescribeInstances
+          - ec2:DescribeSnapshots
+          - ec2:DescribeTags
+          - ec2:DescribeVolumes
+          - ec2:DescribeVolumesModifications
+          - ec2:DetachVolume
+          - ec2:ModifyVolume
+          Resource: "*"
     - metadata:
         name: cert-manager
         namespace: cert-manager
@@ -625,84 +604,6 @@ EOF
 Output:
 
 ```text
-[ℹ]  eksctl version 0.37.0
-[ℹ]  using region eu-central-1
-[ℹ]  subnets for eu-central-1a - public:192.168.0.0/19 private:192.168.64.0/19
-[ℹ]  subnets for eu-central-1b - public:192.168.32.0/19 private:192.168.96.0/19
-[ℹ]  nodegroup "ng01" will use "ami-0a7bcaab486b70db6" [Bottlerocket/1.18]
-[ℹ]  using SSH public key "/Users/ruzickap/.ssh/id_rsa.pub" as "eksctl-k1-nodegroup-ng01-a3:84:e4:0d:af:5f:c8:40:da:71:68:8a:74:c7:ba:16"
-[ℹ]  using Kubernetes version 1.18
-[ℹ]  creating EKS cluster "k1" in "eu-central-1" region with Fargate profile and un-managed nodes
-[ℹ]  1 nodegroup (ng01) was included (based on the include/exclude rules)
-[ℹ]  will create a CloudFormation stack for cluster itself and 1 nodegroup stack(s)
-[ℹ]  will create a CloudFormation stack for cluster itself and 0 managed nodegroup stack(s)
-[ℹ]  if you encounter any issues, check CloudFormation console or try 'eksctl utils describe-stacks --region=eu-central-1 --cluster=k1'
-[ℹ]  Kubernetes API endpoint access will use default of {publicAccess=true, privateAccess=false} for cluster "k1" in "eu-central-1"
-[ℹ]  2 sequential tasks: { create cluster control plane "k1", 3 sequential sub-tasks: { 7 sequential sub-tasks: { wait for control plane to become ready, tag cluster, update CloudWatch logging configuration, create fargate profiles, associate IAM OIDC provider, 6 parallel sub-tasks: { 2 sequential sub-tasks: { create IAM role for serviceaccount "kube-system/ebs-csi-controller-sa", create serviceaccount "kube-system/ebs-csi-controller-sa" }, 2 sequential sub-tasks: { create IAM role for serviceaccount "kube-system/ebs-snapshot-controller", create serviceaccount "kube-system/ebs-snapshot-controller" }, 2 sequential sub-tasks: { create IAM role for serviceaccount "cert-manager/cert-manager", create serviceaccount "cert-manager/cert-manager" }, 2 sequential sub-tasks: { create IAM role for serviceaccount "external-dns/external-dns", create serviceaccount "external-dns/external-dns" }, 2 sequential sub-tasks: { create IAM role for serviceaccount "harbor/harbor", create serviceaccount "harbor/harbor" }, 2 sequential sub-tasks: { create IAM role for serviceaccount "kube-system/aws-node", create serviceaccount "kube-system/aws-node" } }, restart daemonset "kube-system/aws-node" }, create addons, create nodegroup "ng01" } }
-[ℹ]  building cluster stack "eksctl-k1-cluster"
-[ℹ]  deploying stack "eksctl-k1-cluster"
-[ℹ]  waiting for CloudFormation stack "eksctl-k1-cluster"
-[✔]  tagged EKS cluster (Squad=Cloud_Container_Platform, Tribe=Cloud_Native, Environment=Dev, Owner=petr.ruzicka@gmail.com)
-[ℹ]  waiting for requested "LoggingUpdate" in cluster "k1" to succeed
-[✔]  configured CloudWatch logging for cluster "k1" in "eu-central-1" (enabled types: audit, authenticator, controllerManager & disabled types: api, scheduler)
-[ℹ]  creating Fargate profile "fp-fgtest" on EKS cluster "k1"
-[ℹ]  created Fargate profile "fp-fgtest" on EKS cluster "k1"
-[ℹ]  building iamserviceaccount stack "eksctl-k1-addon-iamserviceaccount-harbor-harbor"
-[ℹ]  building iamserviceaccount stack "eksctl-k1-addon-iamserviceaccount-cert-manager-cert-manager"
-[ℹ]  building iamserviceaccount stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-snapshot-controller"
-[ℹ]  building iamserviceaccount stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-csi-controller-sa"
-[ℹ]  building iamserviceaccount stack "eksctl-k1-addon-iamserviceaccount-external-dns-external-dns"
-[ℹ]  building iamserviceaccount stack "eksctl-k1-addon-iamserviceaccount-kube-system-aws-node"
-[ℹ]  deploying stack "eksctl-k1-addon-iamserviceaccount-cert-manager-cert-manager"
-[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-cert-manager-cert-manager"
-[ℹ]  deploying stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-snapshot-controller"
-[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-snapshot-controller"
-[ℹ]  deploying stack "eksctl-k1-addon-iamserviceaccount-external-dns-external-dns"
-[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-external-dns-external-dns"
-[ℹ]  deploying stack "eksctl-k1-addon-iamserviceaccount-harbor-harbor"
-[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-harbor-harbor"
-[ℹ]  deploying stack "eksctl-k1-addon-iamserviceaccount-kube-system-aws-node"
-[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-kube-system-aws-node"
-[ℹ]  deploying stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-csi-controller-sa"
-[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-csi-controller-sa"
-[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-kube-system-aws-node"
-[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-snapshot-controller"
-[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-external-dns-external-dns"
-[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-csi-controller-sa"
-[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-harbor-harbor"
-[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-cert-manager-cert-manager"
-[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-external-dns-external-dns"
-[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-kube-system-aws-node"
-[ℹ]  created namespace "external-dns"
-[ℹ]  created serviceaccount "external-dns/external-dns"
-[ℹ]  serviceaccount "kube-system/aws-node" already exists
-[ℹ]  updated serviceaccount "kube-system/aws-node"
-[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-csi-controller-sa"
-[ℹ]  created serviceaccount "kube-system/ebs-csi-controller-sa"
-[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-snapshot-controller"
-[ℹ]  created serviceaccount "kube-system/ebs-snapshot-controller"
-[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-harbor-harbor"
-[ℹ]  created namespace "harbor"
-[ℹ]  created serviceaccount "harbor/harbor"
-[ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-cert-manager-cert-manager"
-[ℹ]  created namespace "cert-manager"
-[ℹ]  created serviceaccount "cert-manager/cert-manager"
-[ℹ]  daemonset "kube-system/aws-node" restarted
-[ℹ]  building nodegroup stack "eksctl-k1-nodegroup-ng01"
-[ℹ]  deploying stack "eksctl-k1-nodegroup-ng01"
-[ℹ]  waiting for CloudFormation stack "eksctl-k1-nodegroup-ng01"
-[ℹ]  waiting for the control plane availability...
-[✔]  saved kubeconfig as "/Users/ruzickap/git/k8s-eks-bottlerocket-fargate/kubeconfig-k1.conf"
-[ℹ]  no tasks
-[✔]  all EKS cluster resources for "k1" have been created
-[ℹ]  adding identity "arn:aws:iam::729560437327:role/eksctl-k1-nodegroup-ng01-NodeInstanceRole-W2R701K444V2" to auth ConfigMap
-[ℹ]  nodegroup "ng01" has 0 node(s)
-[ℹ]  waiting for at least 2 node(s) to become ready in "ng01"
-[ℹ]  nodegroup "ng01" has 2 node(s)
-[ℹ]  node "ip-192-168-3-46.eu-central-1.compute.internal" is ready
-[ℹ]  node "ip-192-168-37-96.eu-central-1.compute.internal" is ready
-[ℹ]  kubectl command should work with "/Users/ruzickap/git/k8s-eks-bottlerocket-fargate/kubeconfig-k1.conf", try 'kubectl --kubeconfig=/Users/ruzickap/git/k8s-eks-bottlerocket-fargate/kubeconfig-k1.conf get nodes'
-[✔]  EKS cluster "k1" in "eu-central-1" region is ready
 ```
 
 When the cluster is ready it immediately start pushing logs to CloudWatch under
