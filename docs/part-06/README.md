@@ -256,6 +256,10 @@ helm install --version 9.3.0 --namespace kube-system --values - cluster-autoscal
 autoDiscovery:
   clusterName: ${CLUSTER_NAME}
 awsRegion: ${AWS_DEFAULT_REGION}
+rbac:
+  serviceAccount:
+    create: false
+    name: cluster-autoscaler
 serviceMonitor:
   enabled: true
   namespace: kube-prometheus-stack

@@ -318,28 +318,6 @@ Resources:
       Type: NS
       TTL: 60
       ResourceRecords: !GetAtt HostedZone.NameServers
-  Route53Policy:
-    Type: AWS::IAM::ManagedPolicy
-    Properties:
-      ManagedPolicyName: !Sub "${ClusterFQDN}-AmazonRoute53Domains"
-      Description: !Sub "Policy required by cert-manager or external-dns to be able to modify Route 53 entries for ${ClusterFQDN}"
-      PolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-        - Effect: Allow
-          Action:
-          - route53:GetChange
-          Resource: "arn:aws:route53:::change/*"
-        - Effect: Allow
-          Action:
-          - route53:ChangeResourceRecordSets
-          - route53:ListResourceRecordSets
-          Resource: !Sub "arn:aws:route53:::hostedzone/${HostedZone.Id}"
-        - Effect: Allow
-          Action:
-          - route53:ListHostedZones
-          - route53:ListHostedZonesByName
-          Resource: "*"
   S3Policy:
     Type: AWS::IAM::ManagedPolicy
     Properties:
@@ -419,12 +397,6 @@ Outputs:
     Export:
       Name:
         Fn::Sub: "${AWS::StackName}-HostedZoneArn"
-  Route53PolicyArn:
-    Description: The ARN of the created AmazonRoute53Domains policy
-    Value: !Ref Route53Policy
-    Export:
-      Name:
-        Fn::Sub: "${AWS::StackName}-Route53PolicyArn"
   S3PolicyArn:
     Description: The ARN of the created AmazonS3 policy
     Value: !Ref S3Policy
@@ -446,7 +418,6 @@ eval aws cloudformation deploy --capabilities CAPABILITY_NAMED_IAM \
 AWS_CLOUDFORMATION_DETAILS=$(aws cloudformation describe-stacks --stack-name "${CLUSTER_NAME}-route53-iam-s3-ebs")
 EKS_KMS_KEY_ID=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"EKSKMSKeyId\") .OutputValue")
 EKS_KMS_KEY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"EKSKMSKeyArn\") .OutputValue")
-ROUTE53_POLICY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"Route53PolicyArn\") .OutputValue")
 S3_POLICY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"S3PolicyArn\") .OutputValue")
 VAULT_KMS_KEY_ID=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"VaultKMSKeyId\") .OutputValue")
 CLOUDWATCH_POLICY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"CloudWatchPolicyArn\") .OutputValue")
@@ -516,6 +487,26 @@ iam:
   withOIDC: true
   serviceAccounts:
     - metadata:
+        name: aws-load-balancer-controller
+        namespace: kube-system
+      wellKnownPolicies:
+        awsLoadBalancerController: true
+    - metadata:
+        name: cert-manager
+        namespace: cert-manager
+      wellKnownPolicies:
+        certManager: true
+    - metadata:
+        name: cluster-autoscaler
+        namespace: kube-system
+      wellKnownPolicies:
+        autoScaler: true
+    - metadata:
+        name: external-dns
+        namespace: external-dns
+      wellKnownPolicies:
+        externalDNS: true
+    - metadata:
         name: ebs-csi-controller
         namespace: kube-system
       attachPolicy:
@@ -539,18 +530,6 @@ iam:
           - ec2:DetachVolume
           - ec2:ModifyVolume
           Resource: "*"
-    - metadata:
-        name: cert-manager
-        namespace: cert-manager
-      attachPolicyARNs:
-        - ${ROUTE53_POLICY_ARN}
-      roleOnly: true
-    - metadata:
-        name: external-dns
-        namespace: external-dns
-      attachPolicyARNs:
-        - ${ROUTE53_POLICY_ARN}
-      roleOnly: true
     - metadata:
         name: harbor
         namespace: harbor
@@ -577,11 +556,9 @@ nodeGroups:
     tags: *tags
     iam:
       withAddonPolicies:
-        autoScaler: true
         cloudWatch: true
         ebs: true
         efs: true
-        albIngress: true
     # aws ssm get-parameters --names "/aws/service/bottlerocket/aws-k8s-1.18/x86_64/latest/image_id" --region eu-central-1
     # ami: ami-0a7bcaab486b70db6
     volumeEncrypted: true

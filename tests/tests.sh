@@ -20,8 +20,6 @@ export SYSDIG_AGENT_ACCESSKEY="test"
 export SPLUNK_HOST="test"
 export SPLUNK_TOKEN="test"
 export SPLUNK_INDEX_NAME="test"
-export ROUTE53_ROLE_ARN_CERT_MANAGER="test_arn"
-export ROUTE53_ROLE_ARN_EXTERNAL_DNS="test_arn"
 export RDS_DB_HOST="testdomain123.com"
 export EFS_FS_ID="123"
 export EFS_AP_ID="123"
@@ -78,6 +76,31 @@ configInline:
       addresses:
         - 172.17.255.1-172.17.255.250
 EOF
+
+# Create namespaces
+kubectl create namespace cert-manager
+kubectl create namespace external-dns
+
+# Create ServiceAccounts - they are originally created by eksctl
+for SA in aws-load-balancer-controller cluster-autoscaler ebs-csi-controller; do
+kubectl apply -f - << EOF
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+ name: ${SA}
+ namespace: kube-system
+EOF
+done
+
+for SA in cert-manager external-dns; do
+kubectl apply -f - << EOF
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+ name: ${SA}
+ namespace: ${SA}
+EOF
+done
 
 echo -e "\n\n******************************\n*** Main tests\n******************************\n"
 

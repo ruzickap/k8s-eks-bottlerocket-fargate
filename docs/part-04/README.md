@@ -10,17 +10,15 @@ Install `cert-manager`
 [helm chart](https://artifacthub.io/packages/helm/jetstack/cert-manager)
 and modify the
 [default values](https://github.com/jetstack/cert-manager/blob/master/deploy/charts/cert-manager/values.yaml).
-The the previously created Role ARN will be used to annotate service account.
+Service account `external-dns` was created by `eksctl`.
 
 ```bash
-ROUTE53_ROLE_ARN_CERT_MANAGER=$(eksctl get iamserviceaccount --cluster=${CLUSTER_NAME} --namespace cert-manager -o json  | jq -r ".[] | select(.metadata.name==\"cert-manager\") .status.roleARN")
-
 helm repo add jetstack https://charts.jetstack.io
-helm install --version v1.1.0 --namespace cert-manager --create-namespace --wait --wait-for-jobs --values - cert-manager jetstack/cert-manager << EOF
+helm install --version v1.1.0 --namespace cert-manager --wait --wait-for-jobs --values - cert-manager jetstack/cert-manager << EOF
 installCRDs: true
 serviceAccount:
-  annotations:
-    eks.amazonaws.com/role-arn: ${ROUTE53_ROLE_ARN_CERT_MANAGER}
+  create: false
+  name: cert-manager
 extraArgs:
   - --enable-certificate-owner-ref=true
 securityContext:
@@ -246,6 +244,33 @@ If TLS is enabled for the Ingress, a Secret containing the certificate and key m
   type: kubernetes.io/tls
 ```
 
+## aws-load-balancer-controller
+
+Install `aws-load-balancer-controller`
+[helm chart](https://artifacthub.io/packages/helm/aws/aws-load-balancer-controller)
+and modify the
+[default values](https://github.com/aws/eks-charts/blob/master/stable/aws-load-balancer-controller/values.yaml).
+
+```bash
+helm install --version 1.1.5 --namespace kube-system --values - aws-load-balancer-controller eks/aws-load-balancer-controller << EOF
+clusterName: ${CLUSTER_FQDN}
+serviceAccount:
+  create: false
+  name: aws-load-balancer-controller
+enableCertManager: true
+enableShield: false
+enableWaf: false
+enableWafv2: false
+defaultTags:
+$(echo "${TAGS}" | sed "s/ /\\n  /g; s/^/  /g; s/=/: /g")
+EOF
+```
+
+It seems like there are some issues with ALB and cert-manager:
+
+* [https://github.com/kubernetes-sigs/aws-load-balancer-controller/issues/1084](https://github.com/kubernetes-sigs/aws-load-balancer-controller/issues/1084)
+* [https://github.com/kubernetes-sigs/aws-load-balancer-controller/issues/1143](https://github.com/kubernetes-sigs/aws-load-balancer-controller/issues/1143)
+
 ## external-dns
 
 Install `external-dns`
@@ -253,15 +278,11 @@ Install `external-dns`
 and modify the
 [default values](https://github.com/bitnami/charts/blob/master/bitnami/external-dns/values.yaml).
 `external-dns` will take care about DNS records.
-(`ROUTE53_ROLE_ARN` variable was defined before for `cert-manager`)
-
-```bash
-ROUTE53_ROLE_ARN_EXTERNAL_DNS=$(eksctl get iamserviceaccount --cluster=${CLUSTER_NAME} --namespace external-dns -o json  | jq -r ".[] | select(.metadata.name==\"external-dns\") .status.roleARN")
-```
+Service account `external-dns` was created by `eksctl`.
 
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
-helm install --version 4.6.0 --namespace external-dns --create-namespace --values - external-dns bitnami/external-dns << EOF
+helm install --version 4.6.0 --namespace external-dns --values - external-dns bitnami/external-dns << EOF
 sources:
   - ingress
   - istio-gateway
@@ -275,8 +296,8 @@ interval: 10s
 policy: sync
 replicas: 1
 serviceAccount:
-  annotations:
-    eks.amazonaws.com/role-arn: ${ROUTE53_ROLE_ARN_EXTERNAL_DNS}
+  create: false
+  name: external-dns
 securityContext:
   allowPrivilegeEscalation: false
   readOnlyRootFilesystem: true
