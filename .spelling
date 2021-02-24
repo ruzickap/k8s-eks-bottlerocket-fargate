@@ -38,6 +38,7 @@ aws-cloudwatch-metrics
 aws-ebs-csi-driver
 aws-efs-csi-driver
 aws-for-fluent-bit
+aws-load-balancer-controller
 aws-node-termination-handler
 awscli
 backend
