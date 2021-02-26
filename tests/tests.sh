@@ -6,6 +6,7 @@ export BASE_DOMAIN="k8s.mylabs.dev"
 export CLUSTER_NAME="k1"
 export CLUSTER_FQDN="${CLUSTER_NAME}.${BASE_DOMAIN}"
 export LETSENCRYPT_ENVIRONMENT=${LETSENCRYPT_ENVIRONMENT:-staging}
+export LETSENCRYPT_CERTIFICATE="https://letsencrypt.org/certs/staging/letsencrypt-stg-root-x1.pem"
 export MY_EMAIL="petr.ruzicka@gmail.com"
 export AWS_DEFAULT_REGION="eu-central-1"
 export MY_GITHUB_ORG_OAUTH_CLIENT_ID="3xxxxxxxxxxxxxxxxxx3"

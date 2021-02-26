@@ -117,9 +117,10 @@ Resources:
       DBSubnetGroupName: !Ref RdsInstanceSubnetGroup
       CopyTagsToSnapshot: true
       EnableCloudwatchLogsExports:
+        - general
         - slowquery
       Engine: mariadb
-      EngineVersion: 10.4
+      EngineVersion: 10.5
       KmsKeyId: !Ref KmsKeyId
       MasterUsername: !Ref RdsMasterUsername
       MasterUserPassword: !Ref RdsMasterPassword
@@ -432,7 +433,7 @@ Create `drupal` database inside MariaDB:
 
 ```bash
 kubectl create namespace drupal
-kubectl run -n drupal --env MYSQL_PWD=${RDS_DB_PASSWORD} --image=mysql:5.7 --restart=Never mysql-client-drupal -- \
+kubectl run -n drupal --env MYSQL_PWD=${RDS_DB_PASSWORD} --image=mysql:8.0 --restart=Never mysql-client-drupal -- \
   mysql -h "${RDS_DB_HOST}" -u "${RDS_DB_USERNAME}" -e "CREATE DATABASE drupal"
 ```
 
@@ -557,7 +558,7 @@ Create `drupal2` database inside MariaDB:
 ```bash
 kubectl create namespace drupal2
 kubectl label namespace drupal2 istio-injection=enabled kiali.io/member-of=kiali --overwrite
-kubectl run -n drupal2 --env MYSQL_PWD=${RDS_DB_PASSWORD} --image=mysql:5.7 --restart=Never mysql-client-drupal28 -- /bin/bash -c "
+kubectl run -n drupal2 --env MYSQL_PWD=${RDS_DB_PASSWORD} --image=mysql:8--restart=Never mysql-client-drupal2 -- /bin/bash -c "
   sleep 5 && mysql -h \"${RDS_DB_HOST}\" -u \"${RDS_DB_USERNAME}\" -e \"CREATE DATABASE drupal2\""
 ```
 

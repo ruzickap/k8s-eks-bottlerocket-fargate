@@ -351,10 +351,10 @@ while [[ -z "$(dig +nocmd +noall +answer +ttlid a vault.${CLUSTER_FQDN})" ]]; do
   sleep 5
 done
 
-curl -s https://letsencrypt.org/certs/staging/letsencrypt-stg-root-x1.pem -o tmp/letsencrypt-stg-root-x1.pem
+curl -s "${LETSENCRYPT_CERTIFICATE}" -o tmp/letsencrypt.pem
 vault auth enable oidc
 vault write auth/oidc/config \
-  oidc_discovery_ca_pem=@tmp/letsencrypt-stg-root-x1.pem \
+  oidc_discovery_ca_pem=@tmp/letsencrypt.pem \
   oidc_discovery_url="https://dex.${CLUSTER_FQDN}" \
   oidc_client_id="vault.${CLUSTER_FQDN}" \
   oidc_client_secret="${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET}" \
