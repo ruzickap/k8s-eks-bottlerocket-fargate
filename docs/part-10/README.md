@@ -12,7 +12,7 @@ and modify the
 [default values](https://github.com/goharbor/harbor-helm/blob/master/values.yaml).
 
 ```bash
-HARBOR_ADMIN_PASSWORD="harbor_supersecret_admin_password"
+HARBOR_ADMIN_PASSWORD="Harbor_supersecret_admin_password123"
 
 helm repo add harbor https://helm.goharbor.io
 helm install --version 1.5.3 --namespace harbor --wait --wait-for-jobs --values - harbor harbor/harbor << EOF

@@ -167,7 +167,7 @@ Annotate the wildcard certificate secret. It will allow `kubed` to distribute
 it to all namespaces.
 
 ```bash
-kubectl wait --namespace cert-manager --for=condition=Ready --timeout=10m certificate "ingress-cert-${LETSENCRYPT_ENVIRONMENT}"
+kubectl wait --namespace cert-manager --for=condition=Ready --timeout=15m certificate "ingress-cert-${LETSENCRYPT_ENVIRONMENT}"
 kubectl annotate secret "ingress-cert-${LETSENCRYPT_ENVIRONMENT}" -n cert-manager kubed.appscode.com/sync=""
 ```
 

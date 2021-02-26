@@ -27,7 +27,10 @@ export CLUSTER_FQDN="${CLUSTER_NAME}.${BASE_DOMAIN}"
 export KUBECONFIG=${PWD}/kubeconfig-${CLUSTER_NAME}.conf
 # * "production" - valid certificates signed by Lets Encrypt ""
 # * "staging" - not trusted certs signed by Lets Encrypt "Fake LE Intermediate X1"
-export LETSENCRYPT_ENVIRONMENT=${LETSENCRYPT_ENVIRONMENT:-staging}
+# export LETSENCRYPT_ENVIRONMENT=${LETSENCRYPT_ENVIRONMENT:-staging}
+# export LETSENCRYPT_CERTIFICATE="https://letsencrypt.org/certs/staging/letsencrypt-stg-root-x1.pem"
+export LETSENCRYPT_ENVIRONMENT=${LETSENCRYPT_ENVIRONMENT:-production}
+export LETSENCRYPT_CERTIFICATE="https://letsencrypt.org/certs/lets-encrypt-r3.pem"
 export MY_EMAIL="petr.ruzicka@gmail.com"
 # GitHub Organization + Team where are the users who will have the admin access
 # to K8s resources (Grafana). Only users in GitHub organization

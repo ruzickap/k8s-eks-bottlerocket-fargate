@@ -144,7 +144,7 @@ Install gangway:
 helm install --version 0.4.3 --namespace gangway --create-namespace --values - gangway stable/gangway << EOF
 # https://github.com/helm/charts/blob/master/stable/gangway/values.yaml
 trustedCACert: |
-$(curl -s https://letsencrypt.org/certs/staging/letsencrypt-stg-root-x1.pem | sed  "s/^/  /" )
+$(curl -s "${LETSENCRYPT_CERTIFICATE}" | sed  "s/^/  /" )
 gangway:
   clusterName: ${CLUSTER_FQDN}
   authorizeURL: https://dex.${CLUSTER_FQDN}/auth
@@ -200,7 +200,7 @@ oidc:
   issuerUrl: https://dex.${CLUSTER_FQDN}
   usernameClaim: email
   caPEM: |
-$(curl -s https://letsencrypt.org/certs/staging/letsencrypt-stg-root-x1.pem | sed  "s/^/    /" )
+$(curl -s ${LETSENCRYPT_CERTIFICATE} | sed  "s/^/    /" )
 ingress:
   annotations:
     nginx.ingress.kubernetes.io/backend-protocol: HTTPS
