@@ -7,7 +7,7 @@ Set necessary variables:
 
 ```bash
 export BASE_DOMAIN="k8s.mylabs.dev"
-export CLUSTER_NAME="k1"
+export CLUSTER_NAME="k2"
 export CLUSTER_FQDN="${CLUSTER_NAME}.${BASE_DOMAIN}"
 export AWS_DEFAULT_REGION="eu-central-1"
 export KUBECONFIG=${PWD}/kubeconfig-${CLUSTER_NAME}.conf
@@ -159,10 +159,10 @@ if [[ -d ~/Library/Preferences/helm ]]; then rm -rf ~/Library/Preferences/helm; 
 if [[ -d ~/.helm ]]; then rm -rf ~/.helm; fi
 ```
 
-Remove `tmp` directory:
+Remove `tmp/${CLUSTER_FQDN}` directory:
 
 ```bash
-rm -rf tmp &> /dev/null
+rm -rf "tmp/${CLUSTER_FQDN}" &> /dev/null
 ```
 
 Remove other files:

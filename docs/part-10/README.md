@@ -12,7 +12,7 @@ and modify the
 [default values](https://github.com/goharbor/harbor-helm/blob/master/values.yaml).
 
 ```bash
-HARBOR_ADMIN_PASSWORD="Harbor_supersecret_admin_password123"
+HARBOR_ADMIN_PASSWORD="${MY_PASSWORD}"
 
 helm repo add harbor https://helm.goharbor.io
 helm install --version 1.5.3 --namespace harbor --wait --wait-for-jobs --values - harbor harbor/harbor << EOF
@@ -80,7 +80,7 @@ curl -sk -u "admin:${HARBOR_ADMIN_PASSWORD}" -X PUT "https://harbor.${CLUSTER_FQ
   \"oidc_name\": \"Dex\",
   \"oidc_endpoint\": \"https://dex.${CLUSTER_FQDN}\",
   \"oidc_client_id\": \"harbor.${CLUSTER_FQDN}\",
-  \"oidc_client_secret\": \"${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET}\",
+  \"oidc_client_secret\": \"${MY_PASSWORD}\",
   \"oidc_verify_cert\": \"false\",
   \"oidc_scope\": \"openid,profile,email\",
   \"oidc_auto_onboard\": \"true\"

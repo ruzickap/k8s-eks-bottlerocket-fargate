@@ -1,30 +1,36 @@
 #!/usr/bin/env bash
 
-set -eu
+set -euo pipefail
 
 export BASE_DOMAIN="k8s.mylabs.dev"
-export CLUSTER_NAME="k1"
+export CLUSTER_NAME="k1-test"
 export CLUSTER_FQDN="${CLUSTER_NAME}.${BASE_DOMAIN}"
 export LETSENCRYPT_ENVIRONMENT=${LETSENCRYPT_ENVIRONMENT:-staging}
 export LETSENCRYPT_CERTIFICATE="https://letsencrypt.org/certs/staging/letsencrypt-stg-root-x1.pem"
 export MY_EMAIL="petr.ruzicka@gmail.com"
 export AWS_DEFAULT_REGION="eu-central-1"
-export MY_GITHUB_ORG_OAUTH_CLIENT_ID="3xxxxxxxxxxxxxxxxxx3"
-export MY_GITHUB_ORG_OAUTH_CLIENT_SECRET="7xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx8"
+declare -A MY_GITHUB_ORG_OAUTH_CLIENT_ID MY_GITHUB_ORG_OAUTH_CLIENT_SECRET
+MY_GITHUB_ORG_OAUTH_CLIENT_ID[${CLUSTER_NAME}]="3xxxxxxxxxxxxxxxxxx3"
+MY_GITHUB_ORG_OAUTH_CLIENT_SECRET[${CLUSTER_NAME}]="7xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx8"
+export MY_GITHUB_ORG_OAUTH_CLIENT_ID MY_GITHUB_ORG_OAUTH_CLIENT_SECRET
 export MY_GITHUB_ORG_NAME="ruzickap-org"
 export KUBECONFIG="${PWD}/kubeconfig-test-${CLUSTER_NAME}.conf"
 
-# Variables which are taken from AWS - needs to be created for tests
+export MY_PASSWORD="passwd"
+export AQUA_ENFORCER_TOKEN="token"
+export AQUA_REGISTRY_PASSWORD="passwd"
+export AQUA_REGISTRY_USERNAME="user"
 export AWS_ACCESS_KEY_ID="test"
 export AWS_SECRET_ACCESS_KEY="test"
-export SYSDIG_AGENT_ACCESSKEY="test"
-export SPLUNK_HOST="test"
-export SPLUNK_TOKEN="test"
-export SPLUNK_INDEX_NAME="test"
-export RDS_DB_HOST="testdomain123.com"
-export EFS_FS_ID="123"
 export EFS_AP_ID="123"
+export EFS_FS_ID="123"
 export EKSCTL_IAM_SERVICE_ACCOUNTS='[{"metadata":{"name":"ebs-snapshot-controller"},"status":{"roleARN":"arn2"}},{"metadata":{"name":"ebs-csi-controller-sa"},"status":{"roleARN":"arn1"}}]'
+export RDS_DB_HOST="testdomain123.com"
+export SPLUNK_HOST="test"
+export SPLUNK_INDEX_NAME="test"
+export SPLUNK_TOKEN="test"
+export SYSDIG_AGENT_ACCESSKEY="test"
+export TAGS="aaa=bbb ccc=ddd"
 export VAULT_KMS_KEY_ID="test"
 
 test -d tests || ( echo -e "\n*** Run in top level of git repository\n"; exit 1 )
@@ -142,8 +148,8 @@ sed \
   -e 's/^```$/'"'"'/' \
 > README-test.sh
 
-test -d tmp && rm -rf tmp
-mkdir tmp
+test -d "tmp/${CLUSTER_FQDN}/" && rm -rf "tmp/${CLUSTER_FQDN}/"
+mkdir -vp "tmp/${CLUSTER_FQDN}"
 
 # shellcheck disable=SC1091
 source README-test.sh
@@ -153,4 +159,4 @@ kubectl get pods --all-namespaces
 kind delete cluster --name "${CLUSTER_NAME}"
 
 rm "${KUBECONFIG}" README-test.sh demo-magic.sh
-rm -rf tmp
+rm -rf "tmp/${CLUSTER_FQDN}/"

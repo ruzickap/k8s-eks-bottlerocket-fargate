@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -eu
+set -euo pipefail
 
 ################################################
 # include the magic
@@ -36,23 +36,6 @@ export DEMO_PROMPT="${GREEN}➜ ${CYAN}$ "
 # hide the evidence
 clear
 
-### Please run these commands before running the script
-
-# if [ -n "$SSH_AUTH_SOCK" ]; then
-#  docker run -it --rm -e MY_GITHUB_ORG_OAUTH_CLIENT_ID -e MY_GITHUB_ORG_OAUTH_CLIENT_SECRET -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e SSH_AUTH_SOCK -v $SSH_AUTH_SOCK:$SSH_AUTH_SOCK -v $PWD:/mnt -v $HOME/.ssh:/root/.ssh:ro ubuntu
-# else
-#  docker run -it --rm -e MY_GITHUB_ORG_OAUTH_CLIENT_ID -e MY_GITHUB_ORG_OAUTH_CLIENT_SECRET -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -v $PWD:/mnt -v $HOME/.ssh:/root/.ssh:ro -v $HOME/.aws:/root/.aws ubuntu
-# fi
-# echo $(hostname -I) $(hostname) >> /etc/hosts
-# apt-get update -qq && apt-get install -qq -y curl git pv > /dev/null
-# cd /mnt
-
-# export LETSENCRYPT_ENVIRONMENT="production"  # Use with care - Let's Encrypt will generate real certificates
-
-# ./run-k8s-eks-bottlerocket-fargate.sh
-
-[ ! -d .git ] && git clone --quiet https://github.com/ruzickap/k8s-eks-bottlerocket-fargate && cd k8s-eks-bottlerocket-fargate
-
 sed -n "/^\`\`\`bash.*/,/^\`\`\`$/p;/^-----$/p" docs/part-{01..11}/README.md \
 | \
 sed \
@@ -62,6 +45,8 @@ sed \
 > README.sh
 
 if [ "$#" -eq 0 ]; then
+  # shellcheck disable=SC1090
+  source "${HOME}/Documents/secrets/secret_variables"
   # shellcheck disable=SC1091
   source README.sh
 else

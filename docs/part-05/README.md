@@ -25,8 +25,8 @@ config:
       id: github
       name: GitHub
       config:
-        clientID: ${MY_GITHUB_ORG_OAUTH_CLIENT_ID}
-        clientSecret: ${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET}
+        clientID: ${MY_GITHUB_ORG_OAUTH_CLIENT_ID[${CLUSTER_NAME}]}
+        clientSecret: ${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET[${CLUSTER_NAME}]}
         redirectURI: https://dex.${CLUSTER_FQDN}/callback
         orgs:
           - name: ${MY_GITHUB_ORG_NAME}
@@ -35,33 +35,33 @@ config:
       redirectURIs:
         - https://argocd.${CLUSTER_FQDN}/auth/callback
       name: ArgoCD
-      secret: ${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET}
+      secret: ${MY_PASSWORD}
     - id: gangway.${CLUSTER_FQDN}
       redirectURIs:
         - https://gangway.${CLUSTER_FQDN}/callback
       name: Gangway
-      secret: ${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET}
+      secret: ${MY_PASSWORD}
     - id: harbor.${CLUSTER_FQDN}
       redirectURIs:
         - https://harbor.${CLUSTER_FQDN}/c/oidc/callback
       name: Harbor
-      secret: ${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET}
+      secret: ${MY_PASSWORD}
     - id: kiali.${CLUSTER_FQDN}
       redirectURIs:
         - https://kiali.${CLUSTER_FQDN}/
       name: Kiali
-      secret: ${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET}
+      secret: ${MY_PASSWORD}
     - id: oauth2-proxy.${CLUSTER_FQDN}
       redirectURIs:
         - https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/callback
       name: OAuth2 Proxy
-      secret: ${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET}
+      secret: ${MY_PASSWORD}
     - id: vault.${CLUSTER_FQDN}
       redirectURIs:
         - https://vault.${CLUSTER_FQDN}/ui/vault/auth/oidc/oidc/callback
         - http://localhost:8250/oidc/callback
       name: Vault
-      secret: ${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET}
+      secret: ${MY_PASSWORD}
   enablePasswordDB: false
 EOF
 ```
@@ -97,7 +97,7 @@ helm install --version 4.3.0 --namespace oauth2-proxy --create-namespace --value
 # https://github.com/helm/charts/blob/master/stable/oauth2-proxy/values.yaml
 config:
   clientID: oauth2-proxy.${CLUSTER_FQDN}
-  clientSecret: "${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET}"
+  clientSecret: "${MY_PASSWORD}"
   cookieSecret: "$(openssl rand -base64 32 | head -c 32 | base64 )"
   configFile: |-
     email_domains = [ "*" ]
@@ -152,7 +152,7 @@ gangway:
   audience: https://dex.${CLUSTER_FQDN}/userinfo
   redirectURL: https://gangway.${CLUSTER_FQDN}/callback
   clientID: gangway.${CLUSTER_FQDN}
-  clientSecret: ${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET}
+  clientSecret: ${MY_PASSWORD}
   apiServerURL: https://kube-oidc-proxy.${CLUSTER_FQDN}
 ingress:
   enabled: true
@@ -190,10 +190,10 @@ configure ingress to communicate with the backend over HTTPS.
 Install kube-oidc-proxy:
 
 ```bash
-git clone --quiet https://github.com/jetstack/kube-oidc-proxy.git tmp/kube-oidc-proxy
-git -C tmp/kube-oidc-proxy checkout --quiet v0.3.0
+git clone --quiet https://github.com/jetstack/kube-oidc-proxy.git "tmp/${CLUSTER_FQDN}/kube-oidc-proxy"
+git -C "tmp/${CLUSTER_FQDN}/kube-oidc-proxy" checkout --quiet v0.3.0
 
-helm install --namespace kube-oidc-proxy --create-namespace --values - kube-oidc-proxy tmp/kube-oidc-proxy/deploy/charts/kube-oidc-proxy << EOF
+helm install --namespace kube-oidc-proxy --create-namespace --values - kube-oidc-proxy "tmp/${CLUSTER_FQDN}/kube-oidc-proxy/deploy/charts/kube-oidc-proxy" << EOF
 # https://github.com/jetstack/kube-oidc-proxy/blob/master/deploy/charts/kube-oidc-proxy/values.yaml
 oidc:
   clientId: gangway.${CLUSTER_FQDN}

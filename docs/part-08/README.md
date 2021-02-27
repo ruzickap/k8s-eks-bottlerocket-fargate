@@ -23,7 +23,7 @@ variables and uses them to create a CloudFormation stack in your AWS account
 with the correct IAM resources:
 
 ```shell
-cat > tmp/eks.config << EOF
+cat > "tmp/${CLUSTER_FQDN}/eks.config" << EOF
 apiVersion: bootstrap.aws.infrastructure.cluster.x-k8s.io/v1alpha1
 kind: AWSIAMConfiguration
 spec:
@@ -36,7 +36,7 @@ spec:
         disable: false
 EOF
 
-clusterawsadm bootstrap iam create-cloudformation-stack --config tmp/eks.config
+clusterawsadm bootstrap iam create-cloudformation-stack --config "tmp/${CLUSTER_FQDN}/eks.config"
 ```
 
 Create the Base64 encoded credentials using `clusterawsadm`.
@@ -64,8 +64,8 @@ export KUBERNETES_VERSION=v1.18.0
 export WORKER_MACHINE_COUNT=1
 export AWS_NODE_MACHINE_TYPE=t2.medium
 
-clusterctl config cluster managed-test --flavor eks > tmp/capi-eks.yaml
-kubectl apply -f tmp/capi-eks.yaml
+clusterctl config cluster managed-test --flavor eks > "tmp/${CLUSTER_FQDN}/capi-eks.yaml"
+kubectl apply -f "tmp/${CLUSTER_FQDN}/capi-eks.yaml"
 ```
 
 Get cluster details:
@@ -79,8 +79,7 @@ kubectl get AWSManagedControlPlane,AWSMachine,AWSMachineTemplate,EKSConfig,EKSCo
 Set the `ARGOCD_ADMIN_PASSWORD` with password:
 
 ```bash
-# my_argocd_admin_password - https://github.com/argoproj/argo-helm/blob/master/charts/argo-cd/values.yaml#L747
-ARGOCD_ADMIN_PASSWORD="\$2a\$10\$mBtAG2R9BYgawypf2tOhE.jD/G3tScaHj6C3DG52X/xjEZf4ocCm."
+ARGOCD_ADMIN_PASSWORD=$(htpasswd -nbBC 10 "" ${MY_PASSWORD} | tr -d ":\n" | sed "s/\$2y/\$2a/")
 ```
 
 Install `argo-cd`
@@ -120,7 +119,7 @@ server:
       name: Dex
       issuer: https://dex.${CLUSTER_FQDN}
       clientID: argocd.${CLUSTER_FQDN}
-      clientSecret: ${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET}
+      clientSecret: ${MY_PASSWORD}
       requestedIDTokenClaims:
         groups:
           essential: true
@@ -282,7 +281,7 @@ HA Enabled               false
 Initialize the vault server:
 
 ```bash
-kubectl exec -n vault vault-0 -- vault operator init -format=json | tee tmp/vault_cluster-keys-${CLUSTER_FQDN}.json
+kubectl exec -n vault vault-0 -- vault operator init -format=json | tee "tmp/${CLUSTER_FQDN}/vault_cluster-keys.json"
 ```
 
 The vault server should be initialized + unsealed now:
@@ -310,7 +309,7 @@ HA Enabled               false
 Configure vault policy + authentication:
 
 ```bash
-VAULT_ROOT_TOKEN=$(jq -r ".root_token" tmp/vault_cluster-keys-${CLUSTER_FQDN}.json)
+VAULT_ROOT_TOKEN=$(jq -r ".root_token" "tmp/${CLUSTER_FQDN}/vault_cluster-keys.json")
 export VAULT_ROOT_TOKEN
 export VAULT_ADDR="https://vault.${CLUSTER_FQDN}"
 export VAULT_SKIP_VERIFY="true"
@@ -330,12 +329,12 @@ Output:
 Create admin policy:
 
 ```bash
-cat > tmp/my-admin-policy.hcl << EOF
+cat > "tmp/${CLUSTER_FQDN}/my-admin-policy.hcl" << EOF
 path "*" {
   capabilities = ["create", "read", "update", "delete", "list", "sudo"]
 }
 EOF
-vault policy write my-admin-policy tmp/my-admin-policy.hcl
+vault policy write my-admin-policy "tmp/${CLUSTER_FQDN}/my-admin-policy.hcl"
 ```
 
 Configure GitHub + Dex OIDC authentication:
@@ -351,13 +350,13 @@ while [[ -z "$(dig +nocmd +noall +answer +ttlid a vault.${CLUSTER_FQDN})" ]]; do
   sleep 5
 done
 
-curl -s "${LETSENCRYPT_CERTIFICATE}" -o tmp/letsencrypt.pem
+curl -s "${LETSENCRYPT_CERTIFICATE}" -o "tmp/${CLUSTER_FQDN}/letsencrypt.pem"
 vault auth enable oidc
 vault write auth/oidc/config \
-  oidc_discovery_ca_pem=@tmp/letsencrypt.pem \
+  oidc_discovery_ca_pem="@tmp/${CLUSTER_FQDN}/letsencrypt.pem" \
   oidc_discovery_url="https://dex.${CLUSTER_FQDN}" \
   oidc_client_id="vault.${CLUSTER_FQDN}" \
-  oidc_client_secret="${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET}" \
+  oidc_client_secret="${MY_PASSWORD}" \
   default_role="my-oidc-role"
 vault write auth/oidc/role/my-oidc-role \
   bound_audiences="vault.${CLUSTER_FQDN}" \

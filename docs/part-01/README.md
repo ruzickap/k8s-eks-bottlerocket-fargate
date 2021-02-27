@@ -22,15 +22,15 @@ names will look like `CLUSTER_NAME`.`BASE_DOMAIN` (`k1.k8s.mylabs.dev`).
 ```bash
 # Hostname / FQDN definitions
 export BASE_DOMAIN="k8s.mylabs.dev"
-export CLUSTER_NAME="k1"
+export CLUSTER_NAME="k2"
 export CLUSTER_FQDN="${CLUSTER_NAME}.${BASE_DOMAIN}"
 export KUBECONFIG=${PWD}/kubeconfig-${CLUSTER_NAME}.conf
 # * "production" - valid certificates signed by Lets Encrypt ""
 # * "staging" - not trusted certs signed by Lets Encrypt "Fake LE Intermediate X1"
-# export LETSENCRYPT_ENVIRONMENT=${LETSENCRYPT_ENVIRONMENT:-staging}
-# export LETSENCRYPT_CERTIFICATE="https://letsencrypt.org/certs/staging/letsencrypt-stg-root-x1.pem"
-export LETSENCRYPT_ENVIRONMENT=${LETSENCRYPT_ENVIRONMENT:-production}
-export LETSENCRYPT_CERTIFICATE="https://letsencrypt.org/certs/lets-encrypt-r3.pem"
+export LETSENCRYPT_ENVIRONMENT=${LETSENCRYPT_ENVIRONMENT:-staging}
+export LETSENCRYPT_CERTIFICATE="https://letsencrypt.org/certs/staging/letsencrypt-stg-root-x1.pem"
+# export LETSENCRYPT_ENVIRONMENT=${LETSENCRYPT_ENVIRONMENT:-production}
+# export LETSENCRYPT_CERTIFICATE="https://letsencrypt.org/certs/lets-encrypt-r3.pem"
 export MY_EMAIL="petr.ruzicka@gmail.com"
 # GitHub Organization + Team where are the users who will have the admin access
 # to K8s resources (Grafana). Only users in GitHub organization
@@ -48,12 +48,26 @@ Prepare GitHub OAuth "access" credentials ans AWS "access" variables.
 You will need to configure AWS CLI: [https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html)
 
 ```shell
+# Common password
+export MY_PASSWORD="xxxx"
 # AWS Credentials
 export AWS_ACCESS_KEY_ID="AxxxxxxxxxxxxxxxxxxY"
 export AWS_SECRET_ACCESS_KEY="txxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxh"
 # GitHub Organization OAuth Apps credentials
-export MY_GITHUB_ORG_OAUTH_CLIENT_ID="3xxxxxxxxxxxxxxxxxx3"
-export MY_GITHUB_ORG_OAUTH_CLIENT_SECRET="7xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx8"
+declare -A MY_GITHUB_ORG_OAUTH_CLIENT_ID MY_GITHUB_ORG_OAUTH_CLIENT_SECRET
+MY_GITHUB_ORG_OAUTH_CLIENT_ID[${CLUSTER_NAME}]="3xxxxxxxxxxxxxxxxxx3"
+MY_GITHUB_ORG_OAUTH_CLIENT_SECRET[${CLUSTER_NAME}]="7xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx8"
+export MY_GITHUB_ORG_OAUTH_CLIENT_ID MY_GITHUB_ORG_OAUTH_CLIENT_SECRET
+# Sysdig credentials
+export SYSDIG_AGENT_ACCESSKEY="xxx"
+# Aqua credentials
+export AQUA_REGISTRY_USERNAME="xxx"
+export AQUA_REGISTRY_PASSWORD="xxx"
+export AQUA_ENFORCER_TOKEN="xxx"
+# Splunk credentials
+export SPLUNK_HOST="xxx"
+export SPLUNK_TOKEN="xxx"
+export SPLUNK_INDEX_NAME="xxx"
 ```
 
 ## Prepare the local working environment
@@ -68,7 +82,7 @@ Install necessary software:
 ```bash
 if [[ -x /usr/bin/apt-get ]]; then
   apt update -qq
-  DEBIAN_FRONTEND=noninteractive apt-get install -y -qq ansible awscli git jq sudo unzip
+  DEBIAN_FRONTEND=noninteractive apt-get install -y -qq apache2-utils ansible awscli dnsutils git jq sudo unzip > /dev/null
 fi
 ```
 
@@ -235,9 +249,9 @@ Put new domain `CLUSTER_FQDN` to the Route 53 and configure the
 DNS delegation from the `BASE_DOMAIN`.
 
 ```bash
-test -d tmp || mkdir -v tmp
+test -d "tmp/${CLUSTER_FQDN}" || mkdir -vp "tmp/${CLUSTER_FQDN}"
 
-cat > tmp/aws_policies.yml << \EOF
+cat > "tmp/${CLUSTER_FQDN}/aws_policies.yml" << \EOF
 Description: "Template to generate the necessary IAM Policies for access to Route53 and S3"
 Parameters:
   ClusterFQDN:
@@ -416,7 +430,7 @@ EOF
 
 eval aws cloudformation deploy --capabilities CAPABILITY_NAMED_IAM \
   --parameter-overrides "ClusterFQDN=${CLUSTER_FQDN} ClusterName=${CLUSTER_NAME} BaseDomain=${BASE_DOMAIN}" \
-  --stack-name "${CLUSTER_NAME}-route53-iam-s3-ebs" --template-file tmp/aws_policies.yml --tags "${TAGS}"
+  --stack-name "${CLUSTER_NAME}-route53-iam-s3-ebs" --template-file "tmp/${CLUSTER_FQDN}/aws_policies.yml" --tags "${TAGS}"
 
 AWS_CLOUDFORMATION_DETAILS=$(aws cloudformation describe-stacks --stack-name "${CLUSTER_NAME}-route53-iam-s3-ebs")
 EKS_KMS_KEY_ID=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"EKSKMSKeyId\") .OutputValue")
@@ -480,7 +494,8 @@ kind: ClusterConfig
 metadata:
   name: ${CLUSTER_NAME}
   region: ${AWS_DEFAULT_REGION}
-  version: "1.19"
+  # https://docs.aws.amazon.com/eks/latest/userguide/platform-versions.html
+  version: "1.18"
   tags: &tags
 $(echo "${TAGS}" | sed "s/ /\\n    /g; s/^/    /g; s/=/: /g")
 availabilityZones:
@@ -546,7 +561,7 @@ nodeGroups:
     # amiFamily: Bottlerocket
     instanceType: t3.xlarge
     instancePrefix: ruzickap
-    desiredCapacity: 2
+    desiredCapacity: 3
     minSize: 2
     maxSize: 4
     volumeSize: 20
@@ -558,12 +573,17 @@ nodeGroups:
       role: worker
     tags: *tags
     iam:
+      # Required for sysdig-agent
+      attachPolicyARNs:
+        - arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess
       withAddonPolicies:
+        autoScaler: true
         cloudWatch: true
         ebs: true
         efs: true
-    # aws ssm get-parameters --names "/aws/service/bottlerocket/aws-k8s-1.18/x86_64/latest/image_id" --region eu-central-1
-    # ami: ami-0a7bcaab486b70db6
+    # aws ec2 describe-images --owners amazon --filters "Name=name,Values=bottlerocket-aws-k8s-1.18*x86_64*" --region eu-central-1 --query "sort_by(Images, &CreationDate)"
+    # aws ec2 describe-images --owners amazon --filters "Name=name,Values=amazon-eks-node-1.18*" --region eu-central-1 --query "sort_by(Images, &CreationDate)"
+    ami: ami-028e864a893e18733
     volumeEncrypted: true
     volumeKmsKeyID: ${EKS_KMS_KEY_ID}
     # bottlerocket:
