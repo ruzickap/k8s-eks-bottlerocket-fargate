@@ -11,7 +11,7 @@ variables:
 EKS_VPC_ID=$(aws eks describe-cluster --name "${CLUSTER_NAME}" --query "cluster.resourcesVpcConfig.vpcId" --output text)
 EKS_VPC_CIDR=$(aws ec2 describe-vpcs --vpc-ids "${EKS_VPC_ID}" --query "Vpcs[].CidrBlock" --output text)
 RDS_DB_USERNAME="root"
-RDS_DB_PASSWORD="123-My_Secret_Password-456"
+RDS_DB_PASSWORD="${MY_PASSWORD}"
 ```
 
 ### RDS
@@ -20,7 +20,7 @@ Apply CloudFormation template to create Amazon RDS MariaDB database.
 The template below is inspired by: [https://github.com/aquasecurity/marketplaces/blob/master/aws/cloudformation/AquaRDS.yaml](https://github.com/aquasecurity/marketplaces/blob/master/aws/cloudformation/AquaRDS.yaml)
 
 ```bash
-cat > tmp/cf_rds.yml << \EOF
+cat > "tmp/${CLUSTER_FQDN}/cf_rds.yml" << \EOF
 AWSTemplateFormatVersion: 2010-09-09
 Description: This AWS CloudFormation template installs the AWS RDS MariaDB database.
 Parameters:
@@ -187,7 +187,7 @@ Outputs:
         Fn::Sub: "${AWS::StackName}-RdsMasterPassword"
 EOF
 
-eval aws cloudformation deploy --stack-name "${CLUSTER_NAME}-rds" --parameter-overrides "ClusterName=${CLUSTER_NAME} KmsKeyId=${EKS_KMS_KEY_ID} RdsMasterPassword=${RDS_DB_PASSWORD} RdsMasterUsername=${RDS_DB_USERNAME} VpcIPCidr=${EKS_VPC_CIDR}" --template-file tmp/cf_rds.yml --tags "${TAGS}"
+eval aws cloudformation deploy --stack-name "${CLUSTER_NAME}-rds" --parameter-overrides "ClusterName=${CLUSTER_NAME} KmsKeyId=${EKS_KMS_KEY_ID} RdsMasterPassword=${RDS_DB_PASSWORD} RdsMasterUsername=${RDS_DB_USERNAME} VpcIPCidr=${EKS_VPC_CIDR}" --template-file "tmp/${CLUSTER_FQDN}/cf_rds.yml" --tags "${TAGS}"
 
 RDS_DB_HOST=$(aws rds describe-db-instances --query "DBInstances[?DBInstanceIdentifier==\`${CLUSTER_NAME}db\`].[Endpoint.Address]" --output text)
 ```
@@ -267,7 +267,7 @@ Apply CloudFormation template to create Amazon EFS.
 The template below is inspired by: [https://github.com/so008mo/inkubator-play/blob/64a150dbdc35b9ade48ff21b9ae6ba2710d18b5d/roles/eks/files/amazon-eks-efs.yaml](https://github.com/so008mo/inkubator-play/blob/64a150dbdc35b9ade48ff21b9ae6ba2710d18b5d/roles/eks/files/amazon-eks-efs.yaml)
 
 ```bash
-cat > tmp/cf_efs.yml << \EOF
+cat > "tmp/${CLUSTER_FQDN}/cf_efs.yml" << \EOF
 AWSTemplateFormatVersion: 2010-09-09
 Description: Create EFS, mount points, security groups for EKS
 Parameters:
@@ -390,7 +390,7 @@ Outputs:
         Fn::Sub: "${AWS::StackName}-AccessPointDrupal2"
 EOF
 
-eval aws cloudformation deploy --stack-name "${CLUSTER_NAME}-efs" --parameter-overrides "ClusterName=${CLUSTER_NAME} KmsKeyId=${EKS_KMS_KEY_ID} VpcIPCidr=${EKS_VPC_CIDR}" --template-file tmp/cf_efs.yml --tags "${TAGS}"
+eval aws cloudformation deploy --stack-name "${CLUSTER_NAME}-efs" --parameter-overrides "ClusterName=${CLUSTER_NAME} KmsKeyId=${EKS_KMS_KEY_ID} VpcIPCidr=${EKS_VPC_CIDR}" --template-file "tmp/${CLUSTER_FQDN}/cf_efs.yml" --tags "${TAGS}"
 
 EFS_FS_ID=$(aws efs describe-file-systems --query "FileSystems[?Name==\`${CLUSTER_NAME}-efs\`].[FileSystemId]" --output text)
 EFS_AP_DRUPAL_ID=$(aws efs describe-access-points --query "AccessPoints[?(FileSystemId==\`${EFS_FS_ID}\` && RootDirectory.Path==\`/drupal\`)].[AccessPointId]" --output text)
@@ -464,7 +464,7 @@ and modify the
 
 ```bash
 DRUPAL_USERNAME="mydrupaluser"
-DRUPAL_PASSWORD="mypassword12345"
+DRUPAL_PASSWORD="${MY_PASSWORD}"
 
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm install --version 10.1.1 --namespace drupal --values - drupal bitnami/drupal << EOF
@@ -558,7 +558,7 @@ Create `drupal2` database inside MariaDB:
 ```bash
 kubectl create namespace drupal2
 kubectl label namespace drupal2 istio-injection=enabled kiali.io/member-of=kiali --overwrite
-kubectl run -n drupal2 --env MYSQL_PWD=${RDS_DB_PASSWORD} --image=mysql:8--restart=Never mysql-client-drupal2 -- /bin/bash -c "
+kubectl run -n drupal2 --env MYSQL_PWD=${RDS_DB_PASSWORD} --image=mysql:8 --restart=Never mysql-client-drupal2 -- /bin/bash -c "
   sleep 5 && mysql -h \"${RDS_DB_HOST}\" -u \"${RDS_DB_USERNAME}\" -e \"CREATE DATABASE drupal2\""
 ```
 
@@ -589,7 +589,7 @@ and modify the
 
 ```bash
 DRUPAL2_USERNAME="mydrupal2user"
-DRUPAL2_PASSWORD="mypassword12345"
+DRUPAL2_PASSWORD="${MY_PASSWORD}"
 
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm install --version 10.1.1 --namespace drupal2 --values - drupal2 bitnami/drupal << EOF

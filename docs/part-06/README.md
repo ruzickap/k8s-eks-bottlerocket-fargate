@@ -115,10 +115,10 @@ and modify the
 [default values](https://github.com/istio/istio/blob/master/manifests/charts/istio-operator/values.yaml).
 
 ```bash
-git clone --quiet https://github.com/istio/istio.git tmp/istio
-git -C tmp/istio checkout --quiet "${ISTIO_VERSION}"
+git clone --quiet https://github.com/istio/istio.git "tmp/${CLUSTER_FQDN}/istio"
+git -C "tmp/${CLUSTER_FQDN}/istio" checkout --quiet "${ISTIO_VERSION}"
 
-helm install istio-operator tmp/istio/manifests/charts/istio-operator
+helm install istio-operator "tmp/${CLUSTER_FQDN}/istio/manifests/charts/istio-operator"
 ```
 
 Create Istio using the operator:
@@ -190,7 +190,7 @@ Install Kiali CR:
 ```bash
 # https://github.com/kiali/kiali-operator/blob/master/deploy/kiali/kiali_cr.yaml
 kubectl create namespace kiali
-kubectl create secret generic kiali --from-literal="oidc-secret=${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET}" -n kiali
+kubectl create secret generic kiali --from-literal="oidc-secret=${MY_PASSWORD}" -n kiali
 kubectl apply -f - << EOF
 apiVersion: kiali.io/v1alpha1
 kind: Kiali
