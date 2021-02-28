@@ -61,12 +61,14 @@ kubed
 kubei
 kubernetes-dashboard
 kubeview
+loki
 mylabs.dev
 nameservers
 nri-bundle
 oauth2-proxy
 phpMyAdmin
 podinfo
+promtail
 serviceaccounts
 splunk-connect
 sysdig-agent

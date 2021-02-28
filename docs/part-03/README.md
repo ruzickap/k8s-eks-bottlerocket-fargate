@@ -65,6 +65,14 @@ grafana:
           - grafana.${CLUSTER_FQDN}
   plugins:
     - grafana-piechart-panel
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+      - name: Loki
+        type: loki
+        access: proxy
+        url: http://loki.loki:3100
   dashboardProviders:
     dashboardproviders.yaml:
       apiVersion: 1
@@ -149,6 +157,11 @@ grafana:
         gnetId: 10001
         revision: 2
         datasource: Prometheus
+      # https://grafana.com/grafana/dashboards/10880
+      loki-promtail:
+        gnetId: 10880
+        revision: 1
+        datasource: Prometheus
   grafana.ini:
     server:
       root_url: https://grafana.${CLUSTER_FQDN}
@@ -211,6 +224,37 @@ kube-prometheus-stack has been installed. Check its status by running:
   kubectl --namespace kube-prometheus-stack get pods -l "release=kube-prometheus-stack"
 
 Visit https://github.com/prometheus-operator/kube-prometheus for instructions on how to create & configure Alertmanager and Prometheus instances using the Operator.
+```
+
+## loki
+
+Install `loki`
+[helm chart](https://artifacthub.io/packages/helm/grafana/loki)
+and modify the
+[default values](https://github.com/grafana/helm-charts/blob/main/charts/loki/values.yaml).
+
+```bash
+helm repo add grafana https://grafana.github.io/helm-charts
+helm install --version 2.3.0 --namespace loki --create-namespace --values - loki grafana/loki << EOF
+serviceMonitor:
+  enabled: true
+EOF
+```
+
+Install promtail to ingest logs to loki:
+
+Install `loki`
+[helm chart](https://artifacthub.io/packages/helm/grafana/promtail)
+and modify the
+[default values](https://github.com/grafana/helm-charts/blob/main/charts/promtail/values.yaml).
+
+```bash
+helm install --version 3.1.0 --namespace promtail --create-namespace --values - promtail grafana/promtail << EOF
+serviceMonitor:
+  enabled: true
+config:
+  lokiAddress: http://loki-headless.loki:3100/loki/api/v1/push
+EOF
 ```
 
 ## aws-node-termination-handler
@@ -282,6 +326,24 @@ global:
 EOF
 ```
 
+## Aqua Security Enforcer
+
+Install `aqua-enforcer`
+[helm chart](https://github.com/aquasecurity/aqua-helm/tree/5.3/enforcer)
+and modify the
+[default values](https://github.com/aquasecurity/aqua-helm/blob/5.3/enforcer/values.yaml).
+
+```bash
+helm repo add aqua-helm https://helm.aquasec.com
+helm install --version 6.0.0 --namespace aqua --create-namespace --values - aqua aqua-helm/enforcer << EOF
+imageCredentials:
+  create: true
+  username: "${AQUA_REGISTRY_USERNAME}"
+  password: "${AQUA_REGISTRY_PASSWORD}"
+enforcerToken: "${AQUA_ENFORCER_TOKEN}"
+EOF
+```
+
 ## sysdig-agent
 
 Install `splunk-connect`
@@ -291,7 +353,7 @@ and modify the
 
 ```bash
 helm repo add sysdig https://charts.sysdig.com
-helm install --version 1.11.3 --namespace sysdig-agent --create-namespace --values - sysdig-agent sysdig/sysdig << EOF
+helm install --version 1.11.5 --namespace sysdig-agent --create-namespace --values - sysdig-agent sysdig/sysdig << EOF
 sysdig:
   accessKey: ${SYSDIG_AGENT_ACCESSKEY}
   settings:
