@@ -171,6 +171,33 @@ kubectl wait --namespace cert-manager --for=condition=Ready --timeout=15m certif
 kubectl annotate secret "ingress-cert-${LETSENCRYPT_ENVIRONMENT}" -n cert-manager kubed.appscode.com/sync=""
 ```
 
+## aws-load-balancer-controller
+
+Install `aws-load-balancer-controller`
+[helm chart](https://artifacthub.io/packages/helm/aws/aws-load-balancer-controller)
+and modify the
+[default values](https://github.com/aws/eks-charts/blob/master/stable/aws-load-balancer-controller/values.yaml).
+
+```bash
+helm install --version 1.1.5 --namespace kube-system --values - aws-load-balancer-controller eks/aws-load-balancer-controller << EOF
+clusterName: ${CLUSTER_FQDN}
+serviceAccount:
+  create: false
+  name: aws-load-balancer-controller
+enableCertManager: true
+enableShield: false
+enableWaf: false
+enableWafv2: false
+defaultTags:
+$(echo "${TAGS}" | sed "s/ /\\n  /g; s/^/  /g; s/=/: /g")
+EOF
+```
+
+It seems like there are some issues with ALB and cert-manager:
+
+* [https://github.com/kubernetes-sigs/aws-load-balancer-controller/issues/1084](https://github.com/kubernetes-sigs/aws-load-balancer-controller/issues/1084)
+* [https://github.com/kubernetes-sigs/aws-load-balancer-controller/issues/1143](https://github.com/kubernetes-sigs/aws-load-balancer-controller/issues/1143)
+
 ## ingress-nginx
 
 Install `ingress-nginx`
@@ -185,6 +212,11 @@ controller:
   extraArgs:
     default-ssl-certificate: cert-manager/ingress-cert-${LETSENCRYPT_ENVIRONMENT}
   replicaCount: 1
+  service:
+    annotations:
+      service.beta.kubernetes.io/aws-load-balancer-backend-protocol: tcp
+      service.beta.kubernetes.io/aws-load-balancer-type: nlb
+      service.beta.kubernetes.io/aws-load-balancer-additional-resource-tags: "$(echo "${TAGS}" | tr " " ,)"
   metrics:
     enabled: true
     serviceMonitor:
@@ -243,33 +275,6 @@ If TLS is enabled for the Ingress, a Secret containing the certificate and key m
     tls.key: <base64 encoded key>
   type: kubernetes.io/tls
 ```
-
-## aws-load-balancer-controller
-
-Install `aws-load-balancer-controller`
-[helm chart](https://artifacthub.io/packages/helm/aws/aws-load-balancer-controller)
-and modify the
-[default values](https://github.com/aws/eks-charts/blob/master/stable/aws-load-balancer-controller/values.yaml).
-
-```bash
-helm install --version 1.1.5 --namespace kube-system --values - aws-load-balancer-controller eks/aws-load-balancer-controller << EOF
-clusterName: ${CLUSTER_FQDN}
-serviceAccount:
-  create: false
-  name: aws-load-balancer-controller
-enableCertManager: true
-enableShield: false
-enableWaf: false
-enableWafv2: false
-defaultTags:
-$(echo "${TAGS}" | sed "s/ /\\n  /g; s/^/  /g; s/=/: /g")
-EOF
-```
-
-It seems like there are some issues with ALB and cert-manager:
-
-* [https://github.com/kubernetes-sigs/aws-load-balancer-controller/issues/1084](https://github.com/kubernetes-sigs/aws-load-balancer-controller/issues/1084)
-* [https://github.com/kubernetes-sigs/aws-load-balancer-controller/issues/1143](https://github.com/kubernetes-sigs/aws-load-balancer-controller/issues/1143)
 
 ## external-dns
 

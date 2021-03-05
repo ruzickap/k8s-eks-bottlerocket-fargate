@@ -333,14 +333,18 @@ Install `aqua-enforcer`
 and modify the
 [default values](https://github.com/aquasecurity/aqua-helm/blob/5.3/enforcer/values.yaml).
 
-```bash
+```shell
 helm repo add aqua-helm https://helm.aquasec.com
-helm install --version 6.0.0 --namespace aqua --create-namespace --values - aqua aqua-helm/enforcer << EOF
+helm install --version 5.3.0 --namespace aqua --create-namespace --values - aqua aqua-helm/enforcer << EOF
+multi_cluster: true
 imageCredentials:
   create: true
   username: "${AQUA_REGISTRY_USERNAME}"
   password: "${AQUA_REGISTRY_PASSWORD}"
 enforcerToken: "${AQUA_ENFORCER_TOKEN}"
+gate:
+  host: "${AQUA_GATE_HOST}"
+  port: 443
 EOF
 ```
 

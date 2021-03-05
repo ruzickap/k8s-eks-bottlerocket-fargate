@@ -495,7 +495,7 @@ metadata:
   name: ${CLUSTER_NAME}
   region: ${AWS_DEFAULT_REGION}
   # https://docs.aws.amazon.com/eks/latest/userguide/platform-versions.html
-  version: "1.18"
+  version: "1.19"
   tags: &tags
 $(echo "${TAGS}" | sed "s/ /\\n    /g; s/^/    /g; s/=/: /g")
 availabilityZones:
