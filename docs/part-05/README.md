@@ -2,24 +2,34 @@
 
 ## Dex
 
+Install `dex`
+[helm chart](https://artifacthub.io/packages/helm/dex/dex)
+and modify the
+[default values](https://github.com/dexidp/helm-charts/blob/master/charts/dex/values.yaml).
+
 ```bash
-helm repo add stable https://charts.helm.sh/stable
-helm install --version 2.15.1 --namespace dex --create-namespace --wait --values - dex stable/dex << EOF
-# https://github.com/helm/charts/blob/master/stable/dex/values.yaml
-grpc: false
-telemetry: true
+helm repo add dex https://charts.dexidp.io
+helm install --version 0.0.5 --namespace dex --create-namespace --values - dex dex/dex << EOF
 ingress:
   enabled: true
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
   hosts:
-    - dex.${CLUSTER_FQDN}
+    - host: dex.${CLUSTER_FQDN}
+      paths:
+        - path: /
   tls:
     - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
       hosts:
         - dex.${CLUSTER_FQDN}
 config:
   issuer: https://dex.${CLUSTER_FQDN}
+  storage:
+    type: kubernetes
+    config:
+      inCluster: true
+  oauth2:
+    skipApprovalScreen: true
   connectors:
     - type: github
       id: github
@@ -30,6 +40,19 @@ config:
         redirectURI: https://dex.${CLUSTER_FQDN}/callback
         orgs:
           - name: ${MY_GITHUB_ORG_NAME}
+    - type: oidc
+      id: okta
+      name: Okta
+      config:
+        issuer: ${OKTA_ISSUER}
+        clientID: ${OKTA_CLIENT_ID}
+        clientSecret: ${OKTA_CLIENT_SECRET}
+        redirectURI: https://dex.${CLUSTER_FQDN}/callback
+        scopes:
+          - openid
+          - profile
+          - email
+        getUserInfo: true
   staticClients:
     - id: argocd.${CLUSTER_FQDN}
       redirectURIs:
@@ -141,6 +164,7 @@ To verify that oauth2-proxy has started, run:
 Install gangway:
 
 ```bash
+helm repo add stable https://charts.helm.sh/stable
 helm install --version 0.4.3 --namespace gangway --create-namespace --values - gangway stable/gangway << EOF
 # https://github.com/helm/charts/blob/master/stable/gangway/values.yaml
 trustedCACert: |

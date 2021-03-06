@@ -32,6 +32,9 @@ export SPLUNK_TOKEN="test"
 export SYSDIG_AGENT_ACCESSKEY="test"
 export TAGS="aaa=bbb ccc=ddd"
 export VAULT_KMS_KEY_ID="test"
+export OKTA_ISSUER="https://something.okta.com"
+export OKTA_CLIENT_ID="0xxxxxxxxx7"
+export OKTA_CLIENT_SECRET="1xxxxxH"
 
 test -d tests || ( echo -e "\n*** Run in top level of git repository\n"; exit 1 )
 
