@@ -14,7 +14,7 @@ Service account `external-dns` was created by `eksctl`.
 
 ```bash
 helm repo add jetstack https://charts.jetstack.io
-helm install --version v1.1.0 --namespace cert-manager --wait --wait-for-jobs --values - cert-manager jetstack/cert-manager << EOF
+helm install --version v1.2.0 --namespace cert-manager --wait --wait-for-jobs --values - cert-manager jetstack/cert-manager << EOF
 installCRDs: true
 serviceAccount:
   create: false
@@ -178,7 +178,7 @@ Install `aws-load-balancer-controller`
 and modify the
 [default values](https://github.com/aws/eks-charts/blob/master/stable/aws-load-balancer-controller/values.yaml).
 
-```bash
+```shell
 helm install --version 1.1.5 --namespace kube-system --values - aws-load-balancer-controller eks/aws-load-balancer-controller << EOF
 clusterName: ${CLUSTER_FQDN}
 serviceAccount:
@@ -193,10 +193,12 @@ $(echo "${TAGS}" | sed "s/ /\\n  /g; s/^/  /g; s/=/: /g")
 EOF
 ```
 
-It seems like there are some issues with ALB and cert-manager:
+It seems like there are some issues with ALB and cert-manager / Istio:
 
 * [https://github.com/kubernetes-sigs/aws-load-balancer-controller/issues/1084](https://github.com/kubernetes-sigs/aws-load-balancer-controller/issues/1084)
 * [https://github.com/kubernetes-sigs/aws-load-balancer-controller/issues/1143](https://github.com/kubernetes-sigs/aws-load-balancer-controller/issues/1143)
+
+I'll use NLB as main "Load Balancer type" in AWS.
 
 ## ingress-nginx
 
