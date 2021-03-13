@@ -22,7 +22,7 @@ names will look like `CLUSTER_NAME`.`BASE_DOMAIN` (`k1.k8s.mylabs.dev`).
 ```bash
 # Hostname / FQDN definitions
 export BASE_DOMAIN="k8s.mylabs.dev"
-export CLUSTER_NAME="k2"
+export CLUSTER_NAME="k1"
 export CLUSTER_FQDN="${CLUSTER_NAME}.${BASE_DOMAIN}"
 export KUBECONFIG=${PWD}/kubeconfig-${CLUSTER_NAME}.conf
 # * "production" - valid certificates signed by Lets Encrypt ""

@@ -9,7 +9,7 @@ and modify the
 
 ```bash
 helm repo add dex https://charts.dexidp.io
-helm install --version 0.0.5 --namespace dex --create-namespace --values - dex dex/dex << EOF
+helm install --version 0.0.6 --namespace dex --create-namespace --values - dex dex/dex << EOF
 ingress:
   enabled: true
   annotations:
