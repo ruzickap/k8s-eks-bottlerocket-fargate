@@ -1,5 +1,5 @@
-
 Ansible
+AppRole
 ArgoCD
 Autoscaler
 Base64
@@ -34,6 +34,7 @@ StorageClass
 Sysdig
 Velero
 Weaveworks
+auth
 aws-cloudwatch-metrics
 aws-ebs-csi-driver
 aws-efs-csi-driver

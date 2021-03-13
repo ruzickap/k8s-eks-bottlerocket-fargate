@@ -310,7 +310,7 @@ Install `splunk-connect`
 and modify the
 [default values](https://github.com/splunk/splunk-connect-for-kubernetes/blob/develop/helm-chart/splunk-connect-for-kubernetes/values.yaml).
 
-```bash
+```shell
 helm repo add splunk https://splunk.github.io/splunk-connect-for-kubernetes/
 helm install --version 1.4.3 --namespace splunk-connect --create-namespace --values - splunk-connect splunk/splunk-connect-for-kubernetes << EOF
 global:
@@ -350,12 +350,12 @@ EOF
 
 ## sysdig-agent
 
-Install `splunk-connect`
+Install `sysdig-agent`
 [helm chart](https://github.com/sysdiglabs/charts/tree/master/charts/sysdig)
 and modify the
 [default values](https://github.com/sysdiglabs/charts/blob/master/charts/sysdig/values.yaml).
 
-```bash
+```shell
 helm repo add sysdig https://charts.sysdig.com
 helm install --version 1.11.5 --namespace sysdig-agent --create-namespace --values - sysdig-agent sysdig/sysdig << EOF
 sysdig:
@@ -379,7 +379,7 @@ As a "quick and dirty" to make `sysdig-eks-cloudwatch` running you need to add
 role. This should be done better using [IRSA](https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/setting-up-enable-IAM.html)
 but this is enough for non-prod tests...
 
-```bash
+```shell
 kubectl --namespace sysdig-agent apply -f https://raw.githubusercontent.com/sysdiglabs/ekscloudwatch/master/ekscloudwatch-config.yaml
 kubectl --namespace sysdig-agent apply -f https://raw.githubusercontent.com/sysdiglabs/ekscloudwatch/master/deployment.yaml
 ```

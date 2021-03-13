@@ -35,6 +35,8 @@ export VAULT_KMS_KEY_ID="test"
 export OKTA_ISSUER="https://something.okta.com"
 export OKTA_CLIENT_ID="0xxxxxxxxx7"
 export OKTA_CLIENT_SECRET="1xxxxxH"
+export VAULT_CERT_MANAGER_ROLE_ID="test"
+export VAULT_CERT_MANAGER_SECRET_ID="test"
 
 test -d tests || ( echo -e "\n*** Run in top level of git repository\n"; exit 1 )
 
@@ -126,12 +128,12 @@ export DEMO_PROMPT="${GREEN}➜ ${CYAN}$ "
 # Changes to run test in kind like disable vault requests / change StorageClass / remove aws, eksctl commands ...
 # shellcheck disable=SC1004
 sed docs/part-{02..08}/README.md \
-  -e 's/ --wait / --wait --timeout 30m /' \
-  -e 's/.*aws /# &/' \
-  -e 's/.*eksctl /# &/' \
-  -e '/kubectl delete CSIDriver efs.csi.aws.com/d' \
-  -e 's/^kubectl patch storageclass gp3/# &/' \
-  -e 's/^vault /# &/ ; s/^kubectl exec -n vault vault-0/# &/ ; s/.*VAULT_ROOT_TOKEN/# &/' \
+  -e "s/ --wait / --wait --timeout 30m /" \
+  -e "s/.*aws /# &/" \
+  -e "s/.*eksctl /# &/" \
+  -e "/kubectl delete CSIDriver efs.csi.aws.com/d" \
+  -e "s/^kubectl patch storageclass gp3/# &/" \
+  -e "s/^vault /# &/ ; s/.*\$(vault /# &/ ; s/^kubectl exec -n vault vault-0/# &/ ; s/.*VAULT_ROOT_TOKEN/# &/" \
   -e "s/+ttlid a vault.\${CLUSTER_FQDN}/+ttlid a google.com/" \
   -e '/^# Create ClusterIssuer for production/i \
 apiVersion: cert-manager.io/v1 \
