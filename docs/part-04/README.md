@@ -29,34 +29,6 @@ prometheus:
 EOF
 ```
 
-Output:
-
-```text
-"jetstack" has been added to your repositories
-NAME: cert-manager
-LAST DEPLOYED: Thu Dec 10 15:56:33 2020
-NAMESPACE: cert-manager
-STATUS: deployed
-REVISION: 1
-TEST SUITE: None
-NOTES:
-cert-manager has been deployed successfully!
-
-In order to begin issuing certificates, you will need to set up a ClusterIssuer
-or Issuer resource (for example, by creating a 'letsencrypt-staging' issuer).
-
-More information on the different types of issuers and how to configure them
-can be found in our documentation:
-
-https://cert-manager.io/docs/configuration/
-
-For information on how to configure cert-manager to automatically provision
-Certificates for Ingress resources, take a look at the `ingress-shim`
-documentation:
-
-https://cert-manager.io/docs/usage/ingress/
-```
-
 Add ClusterIssuers for Let's Encrypt staging and production:
 
 ```bash
@@ -147,22 +119,6 @@ config:
 EOF
 ```
 
-Output:
-
-```text
-"appscode" has been added to your repositories
-NAME: kubed
-LAST DEPLOYED: Thu Dec 10 15:57:21 2020
-NAMESPACE: kubed
-STATUS: deployed
-REVISION: 1
-TEST SUITE: None
-NOTES:
-To verify that Kubed has started, run:
-
-  kubectl get deployment --namespace kubed -l "app.kubernetes.io/name=kubed,app.kubernetes.io/instance=kubed"
-```
-
 Annotate the wildcard certificate secret. It will allow `kubed` to distribute
 it to all namespaces.
 
@@ -226,58 +182,6 @@ controller:
 EOF
 ```
 
-Output:
-
-```text
-"ingress-nginx" has been added to your repositories
-NAME: ingress-nginx
-LAST DEPLOYED: Thu Dec 10 16:00:57 2020
-NAMESPACE: ingress-nginx
-STATUS: deployed
-REVISION: 1
-TEST SUITE: None
-NOTES:
-The ingress-nginx controller has been installed.
-It may take a few minutes for the LoadBalancer IP to be available.
-You can watch the status by running 'kubectl --namespace ingress-nginx get services -o wide -w ingress-nginx-controller'
-
-An example Ingress that makes use of the controller:
-
-  apiVersion: networking.k8s.io/v1beta1
-  kind: Ingress
-  metadata:
-    annotations:
-      kubernetes.io/ingress.class: nginx
-    name: example
-    namespace: foo
-  spec:
-    rules:
-      - host: www.example.com
-        http:
-          paths:
-            - backend:
-                serviceName: exampleService
-                servicePort: 80
-              path: /
-    # This section is only required if TLS is to be enabled for the Ingress
-    tls:
-        - hosts:
-            - www.example.com
-          secretName: example-tls
-
-If TLS is enabled for the Ingress, a Secret containing the certificate and key must also be provided:
-
-  apiVersion: v1
-  kind: Secret
-  metadata:
-    name: example-tls
-    namespace: foo
-  data:
-    tls.crt: <base64 encoded cert>
-    tls.key: <base64 encoded key>
-  type: kubernetes.io/tls
-```
-
 ## external-dns
 
 Install `external-dns`
@@ -316,22 +220,4 @@ metrics:
   serviceMonitor:
     enabled: true
 EOF
-```
-
-Output:
-
-```text
-"bitnami" has been added to your repositories
-NAME: external-dns
-LAST DEPLOYED: Thu Dec 10 15:57:16 2020
-NAMESPACE: external-dns
-STATUS: deployed
-REVISION: 1
-TEST SUITE: None
-NOTES:
-** Please be patient while the chart is being deployed **
-
-To verify that external-dns has started, run:
-
-  kubectl --namespace=external-dns get pods -l "app.kubernetes.io/name=external-dns,app.kubernetes.io/instance=external-dns"
 ```

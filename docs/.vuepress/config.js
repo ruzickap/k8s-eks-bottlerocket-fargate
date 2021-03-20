@@ -35,7 +35,8 @@ module.exports = {
       '/part-09/',
       '/part-10/',
       '/part-11/',
-      '/part-12/'
+      '/part-12/',
+      '/part-13/'
     ]
   },
   plugins: [

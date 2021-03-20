@@ -50,36 +50,13 @@ credentials:
       [default]
       aws_access_key_id=${AWS_ACCESS_KEY_ID}
       aws_secret_access_key=${AWS_SECRET_ACCESS_KEY}
+deployRestic: true
 EOF
 ```
 
-Output:
+## Backup Vault using CSI Volume Snapshotting
 
-```text
-"vmware-tanzu" has been added to your repositories
-NAME: velero
-LAST DEPLOYED: Wed Dec 23 17:34:57 2020
-NAMESPACE: velero
-STATUS: deployed
-REVISION: 1
-TEST SUITE: None
-NOTES:
-Check that the velero is up and running:
-
-    kubectl get deployment/velero -n velero
-
-Check that the secret has been created:
-
-    kubectl get secret/velero -n velero
-
-Once velero server is up and running you need the client before you can use it
-1. wget https://github.com/vmware-tanzu/velero/releases/download/v1.5.2/velero-v1.5.2-darwin-amd64.tar.gz
-2. tar -xvf velero-v1.5.2-darwin-amd64.tar.gz -C velero-client
-
-More info on the official site: https://velero.io/docs
-```
-
-## Backup
+This example showing Velero backup using snapshots `features: EnableCSI`:
 
 Run backup of `vault` namespace:
 
@@ -92,7 +69,7 @@ Output:
 ```text
 Backup request "backup-vault" submitted successfully.
 Waiting for backup to complete. You may safely press ctrl-c to stop waiting - your backup will continue in the background.
-.........................................
+...........................................
 Backup completed with status: Completed. You may check for more information using the commands `velero backup describe backup-vault` and `velero backup logs backup-vault`.
 ```
 
@@ -106,7 +83,7 @@ Output:
 
 ```text
 NAME           STATUS      ERRORS   WARNINGS   CREATED                         EXPIRES   STORAGE LOCATION   SELECTOR
-backup-vault   Completed   0        0          2020-12-27 17:38:03 +0100 CET   23h       default            <none>
+backup-vault   Completed   0        0          2021-03-20 10:33:09 +0100 CET   23h       default            <none>
 ```
 
 See the details of the `backup-vault`:
@@ -121,9 +98,9 @@ Output:
 Name:         backup-vault
 Namespace:    velero
 Labels:       velero.io/storage-location=default
-Annotations:  velero.io/source-cluster-k8s-gitversion=v1.18.9-eks-d1db3c
+Annotations:  velero.io/source-cluster-k8s-gitversion=v1.19.6-eks-49a6c0
               velero.io/source-cluster-k8s-major-version=1
-              velero.io/source-cluster-k8s-minor-version=18+
+              velero.io/source-cluster-k8s-minor-version=19+
 
 Phase:  Completed
 
@@ -151,30 +128,30 @@ Hooks:  <none>
 
 Backup Format Version:  1.1.0
 
-Started:    2020-12-27 17:38:03 +0100 CET
-Completed:  2020-12-27 17:38:13 +0100 CET
+Started:    2021-03-20 10:33:09 +0100 CET
+Completed:  2021-03-20 10:33:23 +0100 CET
 
-Expiration:  2020-12-28 17:38:01 +0100 CET
+Expiration:  2021-03-21 10:33:06 +0100 CET
 
 Total items to be backed up:  59
 Items backed up:              59
 
 Resource List:
   apps/v1/ControllerRevision:
-    - vault/vault-7b9d5599f4
+    - vault/vault-6d54d99b56
   apps/v1/Deployment:
     - vault/vault-agent-injector
   apps/v1/ReplicaSet:
-    - vault/vault-agent-injector-6fcf464c66
+    - vault/vault-agent-injector-784ccfc788
   apps/v1/StatefulSet:
     - vault/vault
   discovery.k8s.io/v1beta1/EndpointSlice:
-    - vault/vault-agent-injector-svc-7s6ns
-    - vault/vault-internal-5hjdx
-    - vault/vault-wppbm
+    - vault/vault-agent-injector-svc-2b5kl
+    - vault/vault-gh7ts
+    - vault/vault-internal-45mz5
   extensions/v1beta1/Ingress:
     - vault/vault
-  networking.k8s.io/v1beta1/Ingress:
+  networking.k8s.io/v1/Ingress:
     - vault/vault
   rbac.authorization.k8s.io/v1/ClusterRole:
     - system:auth-delegator
@@ -183,56 +160,56 @@ Resource List:
     - vault-agent-injector-binding
     - vault-server-binding
   snapshot.storage.k8s.io/v1/VolumeSnapshot:
-    - vault/velero-data-vault-0-tm9k5
+    - vault/velero-data-vault-0-x6zwp
   snapshot.storage.k8s.io/v1/VolumeSnapshotClass:
     - csi-ebs-snapclass
   snapshot.storage.k8s.io/v1/VolumeSnapshotContent:
-    - snapcontent-f2151e39-5489-4f10-994d-d8dbaf7ecb68
+    - snapcontent-99d118b4-ff11-4a3b-b1cf-c641ce4c034c
   v1/ConfigMap:
+    - vault/istio-ca-root-cert
     - vault/vault-config
   v1/Endpoints:
     - vault/vault
     - vault/vault-agent-injector-svc
     - vault/vault-internal
   v1/Event:
-    - vault/data-vault-0.16549f78ea5a2152
-    - vault/data-vault-0.16549f78ee61f5bb
-    - vault/data-vault-0.16549f7b246cadc9
-    - vault/vault-0.16549f78ec5d8eeb
-    - vault/vault-0.16549f7c2fcc5b75
-    - vault/vault-0.16549f7ca05b4bd5
-    - vault/vault-0.16549f7e57548d80
-    - vault/vault-0.16549f7f6dee94d4
-    - vault/vault-0.16549f7f7eb687b0
-    - vault/vault-0.16549f7f888743b8
-    - vault/vault-0.16549f819311bf4d
-    - vault/vault-0.16549f90b3cc940e
-    - vault/vault-agent-injector-6fcf464c66-2khdj.16549f78e767c00f
-    - vault/vault-agent-injector-6fcf464c66-2khdj.16549f79f461a234
-    - vault/vault-agent-injector-6fcf464c66-2khdj.16549f7b3619f356
-    - vault/vault-agent-injector-6fcf464c66-2khdj.16549f7b3d5d24c8
-    - vault/vault-agent-injector-6fcf464c66-2khdj.16549f7b46073340
-    - vault/vault-agent-injector-6fcf464c66.16549f78e5c7c766
-    - vault/vault-agent-injector.16549f78e3955aa0
-    - vault/vault.16549f78e939ec93
-    - vault/vault.16549f78eb56713a
-    - vault/vault.16549f78f2964d4b
+    - vault/data-vault-0.166e0274861902cc
+    - vault/data-vault-0.166e0274869fa7a7
+    - vault/data-vault-0.166e027603aacce4
+    - vault/vault-0.166e027487a29c45
+    - vault/vault-0.166e0276ff65125c
+    - vault/vault-0.166e02776887a965
+    - vault/vault-0.166e02792445aa40
+    - vault/vault-0.166e027a6720e046
+    - vault/vault-0.166e027a87c7a42d
+    - vault/vault-0.166e027a9173a604
+    - vault/vault-0.166e027bf4483027
+    - vault/vault-agent-injector-784ccfc788-k85xz.166e02747bd75a11
+    - vault/vault-agent-injector-784ccfc788-k85xz.166e0274e58bf95b
+    - vault/vault-agent-injector-784ccfc788-k85xz.166e02756e166de8
+    - vault/vault-agent-injector-784ccfc788-k85xz.166e027575408047
+    - vault/vault-agent-injector-784ccfc788-k85xz.166e02757ae9dbce
+    - vault/vault-agent-injector-784ccfc788.166e027478ea56cd
+    - vault/vault-agent-injector.166e027475d90563
+    - vault/vault.166e027482720f09
+    - vault/vault.166e02748431e981
+    - vault/vault.166e02748760c6a9
   v1/Namespace:
     - vault
   v1/PersistentVolume:
-    - pvc-46b6efdb-bc49-4301-b5df-bfddaabfb72d
+    - pvc-2b5d124b-2021-465a-89a7-7666e7e43c86
   v1/PersistentVolumeClaim:
     - vault/data-vault-0
   v1/Pod:
     - vault/vault-0
-    - vault/vault-agent-injector-6fcf464c66-2khdj
+    - vault/vault-agent-injector-784ccfc788-k85xz
   v1/Secret:
-    - vault/default-token-pbj86
+    - vault/default-token-69vcg
     - vault/eks-creds
     - vault/ingress-cert-staging
     - vault/sh.helm.release.v1.vault.v1
-    - vault/vault-agent-injector-token-9zhj2
-    - vault/vault-token-f2qgf
+    - vault/vault-agent-injector-token-xzl69
+    - vault/vault-token-xqgmt
   v1/Service:
     - vault/vault
     - vault/vault-agent-injector-svc
@@ -245,8 +222,8 @@ Resource List:
 Velero-Native Snapshots: <none included>
 
 CSI Volume Snapshots:
-Snapshot Content Name: snapcontent-f2151e39-5489-4f10-994d-d8dbaf7ecb68
-  Storage Snapshot ID: snap-09e58a693894f86ed
+Snapshot Content Name: snapcontent-99d118b4-ff11-4a3b-b1cf-c641ce4c034c
+  Storage Snapshot ID: snap-0203474147721b8f6
   Snapshot Size (bytes): 1073741824
   Ready to use: false
 ```
@@ -261,7 +238,7 @@ Output:
 
 ```text
 NAMESPACE   NAME                        READYTOUSE   SOURCEPVC      SOURCESNAPSHOTCONTENT   RESTORESIZE   SNAPSHOTCLASS       SNAPSHOTCONTENT                                    CREATIONTIME   AGE
-vault       velero-data-vault-0-tm9k5   false        data-vault-0                           1Gi           csi-ebs-snapclass   snapcontent-f2151e39-5489-4f10-994d-d8dbaf7ecb68   5s             7s
+vault       velero-data-vault-0-x6zwp   false        data-vault-0                           1Gi           csi-ebs-snapclass   snapcontent-99d118b4-ff11-4a3b-b1cf-c641ce4c034c   36s            37s
 ```
 
 Check the `VolumeSnapshot` details:
@@ -273,14 +250,14 @@ kubectl describe volumesnapshots -n vault
 Output:
 
 ```text
-Name:         velero-data-vault-0-tm9k5
+Name:         velero-data-vault-0-x6zwp
 Namespace:    vault
 Labels:       velero.io/backup-name=backup-vault
 Annotations:  <none>
 API Version:  snapshot.storage.k8s.io/v1
 Kind:         VolumeSnapshot
 Metadata:
-  Creation Timestamp:  2020-12-27T16:38:08Z
+  Creation Timestamp:  2021-03-20T09:33:17Z
   Finalizers:
     snapshot.storage.kubernetes.io/volumesnapshot-as-source-protection
   Generate Name:  velero-data-vault-0-
@@ -302,7 +279,7 @@ Metadata:
         f:volumeSnapshotClassName:
     Manager:      velero-plugin-for-csi
     Operation:    Update
-    Time:         2020-12-27T16:38:08Z
+    Time:         2021-03-20T09:33:17Z
     API Version:  snapshot.storage.k8s.io/v1beta1
     Fields Type:  FieldsV1
     fieldsV1:
@@ -316,20 +293,23 @@ Metadata:
         f:restoreSize:
     Manager:         snapshot-controller
     Operation:       Update
-    Time:            2020-12-27T16:38:10Z
-  Resource Version:  12577
-  Self Link:         /apis/snapshot.storage.k8s.io/v1/namespaces/vault/volumesnapshots/velero-data-vault-0-tm9k5
-  UID:               f2151e39-5489-4f10-994d-d8dbaf7ecb68
+    Time:            2021-03-20T09:33:18Z
+  Resource Version:  27052
+  Self Link:         /apis/snapshot.storage.k8s.io/v1/namespaces/vault/volumesnapshots/velero-data-vault-0-x6zwp
+  UID:               99d118b4-ff11-4a3b-b1cf-c641ce4c034c
 Spec:
   Source:
     Persistent Volume Claim Name:  data-vault-0
   Volume Snapshot Class Name:      csi-ebs-snapclass
 Status:
-  Bound Volume Snapshot Content Name:  snapcontent-f2151e39-5489-4f10-994d-d8dbaf7ecb68
-  Creation Time:                       2020-12-27T16:38:10Z
+  Bound Volume Snapshot Content Name:  snapcontent-99d118b4-ff11-4a3b-b1cf-c641ce4c034c
+  Creation Time:                       2021-03-20T09:33:18Z
   Ready To Use:                        false
   Restore Size:                        1Gi
-Events:                                <none>
+Events:
+  Type    Reason            Age   From                 Message
+  ----    ------            ----  ----                 -------
+  Normal  CreatingSnapshot  38s   snapshot-controller  Waiting for a snapshot vault/velero-data-vault-0-x6zwp to be created by the CSI driver.
 ```
 
 Get the `VolumeSnapshotContent`:
@@ -341,8 +321,9 @@ kubectl get volumesnapshotcontent
 Output:
 
 ```text
+
 NAME                                               READYTOUSE   RESTORESIZE   DELETIONPOLICY   DRIVER            VOLUMESNAPSHOTCLASS   VOLUMESNAPSHOT              AGE
-snapcontent-f2151e39-5489-4f10-994d-d8dbaf7ecb68   false        1073741824    Retain           ebs.csi.aws.com   csi-ebs-snapclass     velero-data-vault-0-tm9k5   8s
+snapcontent-99d118b4-ff11-4a3b-b1cf-c641ce4c034c   false        1073741824    Retain           ebs.csi.aws.com   csi-ebs-snapclass     velero-data-vault-0-x6zwp   38s
 ```
 
 ```bash
@@ -352,14 +333,14 @@ kubectl describe volumesnapshotcontent "$(kubectl get volumesnapshotcontent -o j
 Output:
 
 ```text
-Name:         snapcontent-f2151e39-5489-4f10-994d-d8dbaf7ecb68
+Name:         snapcontent-99d118b4-ff11-4a3b-b1cf-c641ce4c034c
 Namespace:
 Labels:       velero.io/backup-name=backup-vault
 Annotations:  <none>
 API Version:  snapshot.storage.k8s.io/v1
 Kind:         VolumeSnapshotContent
 Metadata:
-  Creation Timestamp:  2020-12-27T16:38:08Z
+  Creation Timestamp:  2021-03-20T09:33:17Z
   Finalizers:
     snapshot.storage.kubernetes.io/volumesnapshotcontent-bound-protection
   Generation:  1
@@ -389,7 +370,17 @@ Metadata:
           f:uid:
     Manager:      snapshot-controller
     Operation:    Update
-    Time:         2020-12-27T16:38:08Z
+    Time:         2021-03-20T09:33:17Z
+    API Version:  snapshot.storage.k8s.io/v1beta1
+    Fields Type:  FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:labels:
+          .:
+          f:velero.io/backup-name:
+    Manager:      velero-plugin-for-csi
+    Operation:    Update
+    Time:         2021-03-20T09:33:22Z
     API Version:  snapshot.storage.k8s.io/v1beta1
     Fields Type:  FieldsV1
     fieldsV1:
@@ -399,40 +390,30 @@ Metadata:
         f:readyToUse:
         f:restoreSize:
         f:snapshotHandle:
-    Manager:      csi-snapshotter
-    Operation:    Update
-    Time:         2020-12-27T16:38:13Z
-    API Version:  snapshot.storage.k8s.io/v1beta1
-    Fields Type:  FieldsV1
-    fieldsV1:
-      f:metadata:
-        f:labels:
-          .:
-          f:velero.io/backup-name:
-    Manager:         velero-plugin-for-csi
+    Manager:         csi-snapshotter
     Operation:       Update
-    Time:            2020-12-27T16:38:13Z
-  Resource Version:  12596
-  Self Link:         /apis/snapshot.storage.k8s.io/v1/volumesnapshotcontents/snapcontent-f2151e39-5489-4f10-994d-d8dbaf7ecb68
-  UID:               af8659b9-5600-43b0-948b-691ed12a8b19
+    Time:            2021-03-20T09:33:55Z
+  Resource Version:  28138
+  Self Link:         /apis/snapshot.storage.k8s.io/v1/volumesnapshotcontents/snapcontent-99d118b4-ff11-4a3b-b1cf-c641ce4c034c
+  UID:               d67982e5-2f02-47cc-9375-98d80cadb0c2
 Spec:
   Deletion Policy:  Retain
   Driver:           ebs.csi.aws.com
   Source:
-    Volume Handle:             vol-0cf0418c9165d8ada
+    Volume Handle:             vol-011280587cf55688f
   Volume Snapshot Class Name:  csi-ebs-snapclass
   Volume Snapshot Ref:
     API Version:       snapshot.storage.k8s.io/v1beta1
     Kind:              VolumeSnapshot
-    Name:              velero-data-vault-0-tm9k5
+    Name:              velero-data-vault-0-x6zwp
     Namespace:         vault
-    Resource Version:  12556
-    UID:               f2151e39-5489-4f10-994d-d8dbaf7ecb68
+    Resource Version:  27025
+    UID:               99d118b4-ff11-4a3b-b1cf-c641ce4c034c
 Status:
-  Creation Time:    1609087090000000000
+  Creation Time:    1616232798000000000
   Ready To Use:     false
   Restore Size:     1073741824
-  Snapshot Handle:  snap-09e58a693894f86ed
+  Snapshot Handle:  snap-0203474147721b8f6
 Events:             <none>
 ```
 
@@ -448,28 +429,28 @@ Output:
 {
   "Snapshots": [
     {
-      "Description": "Created by AWS EBS CSI driver for volume vol-0cf0418c9165d8ada",
+      "Description": "Created by AWS EBS CSI driver for volume vol-011280587cf55688f",
       "Encrypted": true,
       "KmsKeyId": "arn:aws:kms:eu-central-1:729560437327:key/a753d4d9-5006-4bea-8351-34092cd7b34e",
       "OwnerId": "729560437327",
-      "Progress": "100%",
-      "SnapshotId": "snap-09e58a693894f86ed",
-      "StartTime": "2020-12-27T16:38:10.172000+00:00",
-      "State": "completed",
-      "VolumeId": "vol-0cf0418c9165d8ada",
+      "Progress": "99%",
+      "SnapshotId": "snap-0203474147721b8f6",
+      "StartTime": "2021-03-20T09:33:18.023000+00:00",
+      "State": "pending",
+      "VolumeId": "vol-011280587cf55688f",
       "VolumeSize": 1,
       "Tags": [
         {
-          "Key": "kubernetes.io/cluster/k1.k8s.mylabs.dev",
+          "Key": "CSIVolumeSnapshotName",
+          "Value": "snapshot-99d118b4-ff11-4a3b-b1cf-c641ce4c034c"
+        },
+        {
+          "Key": "kubernetes.io/cluster/kube1.k8s.mylabs.dev",
           "Value": "owned"
         },
         {
-          "Key": "CSIVolumeSnapshotName",
-          "Value": "snapshot-f2151e39-5489-4f10-994d-d8dbaf7ecb68"
-        },
-        {
           "Key": "Name",
-          "Value": "k1.k8s.mylabs.dev-dynamic-snapshot-f2151e39-5489-4f10-994d-d8dbaf7ecb68"
+          "Value": "kube1.k8s.mylabs.dev-dynamic-snapshot-99d118b4-ff11-4a3b-b1cf-c641ce4c034c"
         }
       ]
     }
@@ -486,17 +467,17 @@ aws s3 ls --recursive s3://${CLUSTER_FQDN}/velero/
 Output:
 
 ```text
-2020-12-27 17:38:15        734 velero/backups/backup-vault/backup-vault-csi-volumesnapshotcontents.json.gz
-2020-12-27 17:38:15        557 velero/backups/backup-vault/backup-vault-csi-volumesnapshots.json.gz
-2020-12-27 17:38:14       5376 velero/backups/backup-vault/backup-vault-logs.gz
-2020-12-27 17:38:15         29 velero/backups/backup-vault/backup-vault-podvolumebackups.json.gz
-2020-12-27 17:38:15        799 velero/backups/backup-vault/backup-vault-resource-list.json.gz
-2020-12-27 17:38:15         29 velero/backups/backup-vault/backup-vault-volumesnapshots.json.gz
-2020-12-27 17:38:14     141673 velero/backups/backup-vault/backup-vault.tar.gz
-2020-12-27 17:38:14       2165 velero/backups/backup-vault/velero-backup.json
+2021-03-20 10:33:24        768 velero/backups/backup-vault/backup-vault-csi-volumesnapshotcontents.json.gz
+2021-03-20 10:33:24        556 velero/backups/backup-vault/backup-vault-csi-volumesnapshots.json.gz
+2021-03-20 10:33:24       5801 velero/backups/backup-vault/backup-vault-logs.gz
+2021-03-20 10:33:24         29 velero/backups/backup-vault/backup-vault-podvolumebackups.json.gz
+2021-03-20 10:33:24        800 velero/backups/backup-vault/backup-vault-resource-list.json.gz
+2021-03-20 10:33:24         29 velero/backups/backup-vault/backup-vault-volumesnapshots.json.gz
+2021-03-20 10:33:24     149445 velero/backups/backup-vault/backup-vault.tar.gz
+2021-03-20 10:33:24       2165 velero/backups/backup-vault/velero-backup.json
 ```
 
-## Delete + Restore
+## Delete + Restore Vault using CSI Volume Snapshotting
 
 Check the `vault` namespace and it's objects:
 
@@ -507,37 +488,40 @@ kubectl get pods,deployments,services,ingress,secrets,pvc,statefulset,service,co
 Output:
 
 ```text
+
+Warning: extensions/v1beta1 Ingress is deprecated in v1.14+, unavailable in v1.22+; use networking.k8s.io/v1 Ingress
 NAME                                        READY   STATUS    RESTARTS   AGE
 pod/vault-0                                 1/1     Running   0          13m
-pod/vault-agent-injector-6fcf464c66-2khdj   1/1     Running   0          13m
+pod/vault-agent-injector-784ccfc788-k85xz   1/1     Running   0          13m
 
 NAME                                   READY   UP-TO-DATE   AVAILABLE   AGE
 deployment.apps/vault-agent-injector   1/1     1            1           13m
 
-NAME                               TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)             AGE
-service/vault                      ClusterIP   10.100.111.134   <none>        8200/TCP,8201/TCP   13m
-service/vault-agent-injector-svc   ClusterIP   10.100.101.131   <none>        443/TCP             13m
-service/vault-internal             ClusterIP   None             <none>        8200/TCP,8201/TCP   13m
+NAME                               TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)             AGE
+service/vault                      ClusterIP   10.100.140.68   <none>        8200/TCP,8201/TCP   13m
+service/vault-agent-injector-svc   ClusterIP   10.100.30.161   <none>        443/TCP             13m
+service/vault-internal             ClusterIP   None            <none>        8200/TCP,8201/TCP   13m
 
-NAME                       CLASS    HOSTS                     ADDRESS                                                                     PORTS     AGE
-ingress.extensions/vault   <none>   vault.k1.k8s.mylabs.dev   a611d90b2228e45daaf92b7e6e6de94d-104394448.eu-central-1.elb.amazonaws.com   80, 443   13m
+NAME                       CLASS    HOSTS                        ADDRESS                                                                            PORTS     AGE
+ingress.extensions/vault   <none>   vault.kube1.k8s.mylabs.dev   ab0c678cc1ffd4c509d56b4ea3a81445-4dbb62ea4eb63a29.elb.eu-central-1.amazonaws.com   80, 443   13m
 
 NAME                                      TYPE                                  DATA   AGE
-secret/default-token-pbj86                kubernetes.io/service-account-token   3      13m
+secret/default-token-69vcg                kubernetes.io/service-account-token   3      13m
 secret/eks-creds                          Opaque                                2      13m
 secret/ingress-cert-staging               kubernetes.io/tls                     2      13m
 secret/sh.helm.release.v1.vault.v1        helm.sh/release.v1                    1      13m
-secret/vault-agent-injector-token-9zhj2   kubernetes.io/service-account-token   3      13m
-secret/vault-token-f2qgf                  kubernetes.io/service-account-token   3      13m
+secret/vault-agent-injector-token-xzl69   kubernetes.io/service-account-token   3      13m
+secret/vault-token-xqgmt                  kubernetes.io/service-account-token   3      13m
 
 NAME                                 STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
-persistentvolumeclaim/data-vault-0   Bound    pvc-46b6efdb-bc49-4301-b5df-bfddaabfb72d   1Gi        RWO            gp3            13m
+persistentvolumeclaim/data-vault-0   Bound    pvc-2b5d124b-2021-465a-89a7-7666e7e43c86   1Gi        RWO            gp3            13m
 
 NAME                     READY   AGE
 statefulset.apps/vault   1/1     13m
 
-NAME                     DATA   AGE
-configmap/vault-config   1      13m
+NAME                           DATA   AGE
+configmap/istio-ca-root-cert   1      13m
+configmap/vault-config         1      13m
 ```
 
 Remove `vault` namespace - simulate unfortunate deletion of namespace:
@@ -549,16 +533,16 @@ kubectl delete namespace vault
 Restore namespace `vault:
 
 ```bash
-velero restore create restore1 --from-backup backup-vault --include-namespaces vault --wait
+velero restore create restore-vault --from-backup backup-vault --include-namespaces vault --wait
 ```
 
 Output:
 
 ```text
-Restore request "restore1" submitted successfully.
+Restore request "restore-vault" submitted successfully.
 Waiting for restore to complete. You may safely press ctrl-c to stop waiting - your restore will continue in the background.
 ..
-Restore completed with status: Completed. You may check for more information using the commands `velero restore describe restore1` and `velero restore logs restore1`.
+Restore completed with status: Completed. You may check for more information using the commands `velero restore describe restore-vault` and `velero restore logs restore-vault`.
 ```
 
 Get recovery list:
@@ -570,29 +554,29 @@ velero restore get
 Output:
 
 ```text
-NAME       BACKUP         STATUS      STARTED                         COMPLETED                       ERRORS   WARNINGS   CREATED                         SELECTOR
-restore1   backup-vault   Completed   2020-12-27 17:38:46 +0100 CET   2020-12-27 17:38:48 +0100 CET   0        0          2020-12-27 17:38:46 +0100 CET   <none>
+NAME            BACKUP         STATUS      STARTED                         COMPLETED                       ERRORS   WARNINGS   CREATED                         SELECTOR
+restore-vault   backup-vault   Completed   2021-03-20 10:34:16 +0100 CET   2021-03-20 10:34:19 +0100 CET   0        0          2021-03-20 10:34:16 +0100 CET   <none>
 ```
 
 Get the details about recovery:
 
 ```bash
-velero restore describe restore1
-sleep 60
+velero restore describe restore-vault
+sleep 80
 ```
 
 Output:
 
 ```text
-Name:         restore1
+Name:         restore-vault
 Namespace:    velero
 Labels:       <none>
 Annotations:  <none>
 
 Phase:  Completed
 
-Started:    2020-12-27 17:38:46 +0100 CET
-Completed:  2020-12-27 17:38:48 +0100 CET
+Started:    2021-03-20 10:34:16 +0100 CET
+Completed:  2021-03-20 10:34:19 +0100 CET
 
 Backup:  backup-vault
 
@@ -629,9 +613,10 @@ Initialized              true
 Sealed                   false
 Total Recovery Shares    5
 Threshold                3
-Version                  1.5.4
-Cluster Name             vault-cluster-108b6091
-Cluster ID               4968dab5-e687-fd3d-6ee7-c03ce448e7f6
+Version                  1.6.2
+Storage Type             file
+Cluster Name             vault-cluster-d47612b2
+Cluster ID               31361e70-950f-39e0-532d-c3686b4550fb
 HA Enabled               false
 ```
 

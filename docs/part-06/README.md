@@ -274,22 +274,6 @@ serviceMonitor:
 EOF
 ```
 
-Output:
-
-```text
-"autoscaler" has been added to your repositories
-NAME: cluster-autoscaler
-LAST DEPLOYED: Thu Dec 10 16:02:21 2020
-NAMESPACE: kube-system
-STATUS: deployed
-REVISION: 1
-TEST SUITE: None
-NOTES:
-To verify that cluster-autoscaler has started, run:
-
-  kubectl --namespace=kube-system get pods -l "app.kubernetes.io/name=aws-cluster-autoscaler,app.kubernetes.io/instance=cluster-autoscaler"
-```
-
 You can test it by running:
 
 ```shell

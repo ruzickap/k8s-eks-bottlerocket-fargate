@@ -22,7 +22,7 @@ elasticsearch:
 EOF
 ```
 
-The `aws-for-fluent-bit` will create Log group `/aws/eks/k1.k8s.mylabs.dev/logs`
+The `aws-for-fluent-bit` will create Log group `/aws/eks/kube1.k8s.mylabs.dev/logs`
 and stream the logs from all pods there.
 
 ## aws-cloudwatch-metrics

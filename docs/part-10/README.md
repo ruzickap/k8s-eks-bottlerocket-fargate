@@ -54,22 +54,6 @@ harborAdminPassword: ${HARBOR_ADMIN_PASSWORD}
 EOF
 ```
 
-Output:
-
-```text
-"harbor" has been added to your repositories
-NAME: harbor
-LAST DEPLOYED: Thu Dec 10 16:12:10 2020
-NAMESPACE: harbor
-STATUS: deployed
-REVISION: 1
-TEST SUITE: None
-NOTES:
-Please wait for several minutes for Harbor deployment to complete.
-Then you should be able to visit the Harbor portal at https://harbor.k1.k8s.mylabs.dev
-For more details, please visit https://github.com/goharbor/harbor
-```
-
 Configure OIDC for Harbor:
 
 ```bash

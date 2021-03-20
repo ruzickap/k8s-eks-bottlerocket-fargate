@@ -2,4 +2,4 @@
 
 set -euo pipefail
 
-sed -n "/^\`\`\`bash.*/,/^\`\`\`$/p" docs/part-12/README.md | sed "/^\`\`\`*/d" | bash -eux
+sed -n "/^\`\`\`bash.*/,/^\`\`\`$/p" docs/part-13/README.md | sed "/^\`\`\`*/d" | bash -eux
