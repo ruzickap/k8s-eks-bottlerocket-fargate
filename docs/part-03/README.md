@@ -210,22 +210,6 @@ prometheus:
 EOF
 ```
 
-Output:
-
-```text
-"prometheus-community" has been added to your repositories
-NAME: kube-prometheus-stack
-LAST DEPLOYED: Thu Dec 10 15:56:10 2020
-NAMESPACE: kube-prometheus-stack
-STATUS: deployed
-REVISION: 1
-NOTES:
-kube-prometheus-stack has been installed. Check its status by running:
-  kubectl --namespace kube-prometheus-stack get pods -l "release=kube-prometheus-stack"
-
-Visit https://github.com/prometheus-operator/kube-prometheus for instructions on how to create & configure Alertmanager and Prometheus instances using the Operator.
-```
-
 ## loki
 
 Install `loki`
@@ -312,7 +296,7 @@ and modify the
 
 ```shell
 helm repo add splunk https://splunk.github.io/splunk-connect-for-kubernetes/
-helm install --version 1.4.3 --namespace splunk-connect --create-namespace --values - splunk-connect splunk/splunk-connect-for-kubernetes << EOF
+helm install --version 1.4.6 --namespace splunk-connect --create-namespace --values - splunk-connect splunk/splunk-connect-for-kubernetes << EOF
 global:
   splunk:
     hec:
@@ -375,7 +359,7 @@ Integrate the Kubernetes Audit facility with Sysdig Secure by enabling
 CloudWatch audit logs for Sysdig [https://github.com/sysdiglabs/ekscloudwatch](https://github.com/sysdiglabs/ekscloudwatch):
 
 As a "quick and dirty" to make `sysdig-eks-cloudwatch` running you need to add
-`CloudWatchReadOnlyAccess` policy to `eksctl-k1-nodegroup-ng01-NodeInstanceRole`
+`CloudWatchReadOnlyAccess` policy to `eksctl-kube1-nodegroup-ng01-NodeInstanceRole`
 role. This should be done better using [IRSA](https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/setting-up-enable-IAM.html)
 but this is enough for non-prod tests...
 

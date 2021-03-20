@@ -28,4 +28,5 @@
 * [Part 09 - Drupal](part-09/README.md)
 * [Part 10 - Harbor](part-10/README.md)
 * [Part 11 - Velero](part-11/README.md)
-* [Part 12 - Cleanup](part-12/README.md)
+* [Part 12 - GitOps tools](part-12/README.md)
+* [Part 13 - Cleanup](part-13/README.md)

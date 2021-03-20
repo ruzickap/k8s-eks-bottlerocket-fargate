@@ -3,7 +3,7 @@
 set -euo pipefail
 
 export BASE_DOMAIN="k8s.mylabs.dev"
-export CLUSTER_NAME="k1-test"
+export CLUSTER_NAME="kube1-test"
 export CLUSTER_FQDN="${CLUSTER_NAME}.${BASE_DOMAIN}"
 export LETSENCRYPT_ENVIRONMENT=${LETSENCRYPT_ENVIRONMENT:-staging}
 export LETSENCRYPT_CERTIFICATE="https://letsencrypt.org/certs/staging/letsencrypt-stg-root-x1.pem"

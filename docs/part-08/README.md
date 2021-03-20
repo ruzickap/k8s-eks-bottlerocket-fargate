@@ -74,102 +74,6 @@ Get cluster details:
 kubectl get AWSManagedControlPlane,AWSMachine,AWSMachineTemplate,EKSConfig,EKSConfigTemplate
 ```
 
-## ArgoCD
-
-Set the `ARGOCD_ADMIN_PASSWORD` with password:
-
-```bash
-ARGOCD_ADMIN_PASSWORD=$(htpasswd -nbBC 10 "" ${MY_PASSWORD} | tr -d ":\n" | sed "s/\$2y/\$2a/")
-```
-
-Install `argo-cd`
-[helm chart](https://artifacthub.io/packages/helm/argo/argo-cd)
-and modify the
-[default values](https://github.com/argoproj/argo-helm/blob/master/charts/argo-cd/values.yaml).
-
-```bash
-helm repo add argo https://argoproj.github.io/argo-helm
-helm install --version 2.11.3 --namespace argocd --create-namespace --values - argocd argo/argo-cd << EOF
-controller:
-  metrics:
-    enabled: true
-    serviceMonitor:
-      enabled: true
-dex:
-  enabled: false
-server:
-  extraArgs:
-    - --insecure
-  metrics:
-    enabled: true
-    serviceMonitor:
-      enabled: false
-  ingress:
-    enabled: true
-    hosts:
-      - argocd.${CLUSTER_FQDN}
-    tls:
-      - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
-        hosts:
-          - argocd.${CLUSTER_FQDN}
-  config:
-    url: https://argocd.${CLUSTER_FQDN}
-    # OIDC does not work for self signed certs: https://github.com/argoproj/argo-cd/issues/4344
-    oidc.config: |
-      name: Dex
-      issuer: https://dex.${CLUSTER_FQDN}
-      clientID: argocd.${CLUSTER_FQDN}
-      clientSecret: ${MY_PASSWORD}
-      requestedIDTokenClaims:
-        groups:
-          essential: true
-      requestedScopes:
-        - openid
-        - profile
-        - email
-  rbacConfig:
-    policy.default: role:admin
-repoServer:
-  metrics:
-    enabled: true
-    serviceMonitor:
-      enabled: true
-configs:
-  secret:
-    argocdServerAdminPassword: ${ARGOCD_ADMIN_PASSWORD}
-EOF
-```
-
-Output:
-
-```text
-"argo" has been added to your repositories
-manifest_sorter.go:192: info: skipping unknown hook: "crd-install"
-manifest_sorter.go:192: info: skipping unknown hook: "crd-install"
-NAME: argocd
-LAST DEPLOYED: Thu Dec 10 16:02:58 2020
-NAMESPACE: argocd
-STATUS: deployed
-REVISION: 1
-TEST SUITE: None
-NOTES:
-In order to access the server UI you have the following options:
-
-1. kubectl port-forward service/argocd-server -n argocd 8080:443
-
-    and then open the browser on http://localhost:8080 and accept the certificate
-
-2. enable ingress in the values file `service.ingress.enabled` and either
-      - Add the annotation for ssl passthrough: https://github.com/argoproj/argo-cd/blob/master/docs/operator-manual/ingress.md#option-1-ssl-passthrough
-      - Add the `--insecure` flag to `server.extraArgs` in the values file and terminate SSL at your ingress: https://github.com/argoproj/argo-cd/blob/master/docs/operator-manual/ingress.md#option-2-multiple-ingress-objects-and-hosts
-
-
-After reaching the UI the first time you can login with username: admin and the password will be the
-name of the server pod. You can get the pod name by running:
-
-kubectl get pods -n argocd -l app.kubernetes.io/name=argocd-server -o name | cut -d'/' -f 2
-```
-
 ## HashiCorp Vault
 
 Create a secret with your EKS access key/secret:
@@ -228,32 +132,7 @@ server:
         path = "/vault/data"
       }
 EOF
-sleep 50
-```
-
-Output:
-
-```text
-"hashicorp" has been added to your repositories
-NAME: vault
-LAST DEPLOYED: Thu Dec 10 16:02:50 2020
-NAMESPACE: vault
-STATUS: deployed
-REVISION: 1
-TEST SUITE: None
-NOTES:
-Thank you for installing HashiCorp Vault!
-
-Now that you have deployed Vault, you should look over the docs on using
-Vault with Kubernetes available here:
-
-https://www.vaultproject.io/docs/
-
-
-Your release is named vault. To learn more about the release, try:
-
-  $ helm status vault
-  $ helm get manifest vault
+sleep 60
 ```
 
 Check the status of the vault server - it should be sealed and uninitialized:
@@ -274,7 +153,8 @@ Total Recovery Shares    0
 Threshold                0
 Unseal Progress          0/0
 Unseal Nonce             n/a
-Version                  n/a
+Version                  1.6.2
+Storage Type             file
 HA Enabled               false
 ```
 
@@ -282,6 +162,34 @@ Initialize the vault server:
 
 ```bash
 kubectl exec -n vault vault-0 -- vault operator init -format=json | tee "tmp/${CLUSTER_FQDN}/vault_cluster-keys.json"
+```
+
+Output:
+
+```json
+{
+  "unseal_keys_b64": [],
+  "unseal_keys_hex": [],
+  "unseal_shares": 1,
+  "unseal_threshold": 1,
+  "recovery_keys_b64": [
+    "NWWBsGaWctRlsMu0fSM73yUU4JcWKhNE94xcmcH8cylo",
+    "TvB5MPu4MUdYBd8/jqETclCX3bGKoan6060oHnANurUt",
+    "p0DFz3mpwYizLk4GYZogq5W8D43k3EHUBk3mRJmkTAND",
+    "xF66v2U6Cx+lulxqPcE5ePBFBHSLOdFys9X1fYfncZbn",
+    "rfLZuSGJJjbhHFIDgo6/MzXbfHotwwLC51UZ9++2LLHy"
+  ],
+  "recovery_keys_hex": [
+    "356581b0669672d465b0cbb47d233bdf2514e097162a1344f78c5c99c1fc732968",
+    "4ef07930fbb831475805df3f8ea113725097ddb18aa1a9fad3ad281e700dbab52d",
+    "a740c5cf79a9c188b32e4e06619a20ab95bc0f8de4dc41d4064de64499a44c0343",
+    "c45ebabf653a0b1fa5ba5c6a3dc13978f04504748b39d172b3d5f57d87e77196e7",
+    "adf2d9b921892636e11c5203828ebf3335db7c7a2dc302c2e75519f7efb62cb1f2"
+  ],
+  "recovery_keys_shares": 5,
+  "recovery_keys_threshold": 3,
+  "root_token": "s.xxGVe7EDNAacwKOGB8DhU7xW"
+}
 ```
 
 The vault server should be initialized + unsealed now:
@@ -300,9 +208,10 @@ Initialized              true
 Sealed                   false
 Total Recovery Shares    5
 Threshold                3
-Version                  1.5.4
-Cluster Name             vault-cluster-678ea3b1
-Cluster ID               b61bcecc-1730-14fc-e07c-dc479de0adde
+Version                  1.6.2
+Storage Type             file
+Cluster Name             vault-cluster-683b9d1d
+Cluster ID               eacda9cf-7dab-f8e0-e432-0fbd49a5da7c
 HA Enabled               false
 ```
 
@@ -324,6 +233,19 @@ vault login "${VAULT_ROOT_TOKEN}"
 Output:
 
 ```text
+Success! You are now authenticated. The token information displayed below
+is already stored in the token helper. You do NOT need to run "vault login"
+again. Future Vault requests will automatically use this token.
+
+Key                  Value
+---                  -----
+token                s.xxGVe7EDNAacwKOGB8DhU7xW
+token_accessor       W9jB3jeqG5VMIinagrN81OjG
+token_duration       ∞
+token_renewable      false
+token_policies       ["root"]
+identity_policies    []
+policies             ["root"]
 ```
 
 Create admin policy:

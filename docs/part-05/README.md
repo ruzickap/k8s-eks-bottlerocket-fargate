@@ -89,21 +89,6 @@ config:
 EOF
 ```
 
-Output:
-
-```text
-"stable" has been added to your repositories
-NAME: dex
-LAST DEPLOYED: Thu Dec 10 16:01:52 2020
-NAMESPACE: dex
-STATUS: deployed
-REVISION: 1
-TEST SUITE: None
-NOTES:
-1. Get the application URL by running these commands:
-  https://dex.k1.k8s.mylabs.dev/
-```
-
 ## oauth2-proxy
 
 Install [oauth2-proxy](https://github.com/oauth2-proxy/oauth2-proxy) to secure
@@ -112,7 +97,7 @@ the endpoints like (`prometheus.`, `alertmanager.`).
 Install `oauth2-proxy`
 [helm chart](https://artifacthub.io/packages/helm/k8s-at-home/oauth2-proxy)
 and modify the
-[default values](https://github.com/k8s-at-home/charts/blob/master/charts/oauth2-proxy/values.yaml).
+[default values](https://github.com/k8s-at-home/charts/blob/master/charts/stable/oauth2-proxy/values.yaml).
 
 ```bash
 helm repo add k8s-at-home https://k8s-at-home.com/charts/
@@ -140,23 +125,6 @@ ingress:
       hosts:
         - oauth2-proxy.${CLUSTER_FQDN}
 EOF
-```
-
-Output:
-
-```text
-namespace/oauth2-proxy created
-WARNING: This chart is deprecated
-NAME: oauth2-proxy
-LAST DEPLOYED: Thu Dec 10 16:02:08 2020
-NAMESPACE: oauth2-proxy
-STATUS: deployed
-REVISION: 1
-TEST SUITE: None
-NOTES:
-To verify that oauth2-proxy has started, run:
-
-  kubectl --namespace=oauth2-proxy get pods -l "app=oauth2-proxy"
 ```
 
 ## Gangway
@@ -190,20 +158,6 @@ ingress:
       hosts:
         - gangway.${CLUSTER_FQDN}
 EOF
-```
-
-Output:
-
-```text
-NAME: gangway
-LAST DEPLOYED: Fri Nov 13 16:51:53 2020
-NAMESPACE: gangway
-STATUS: deployed
-REVISION: 1
-TEST SUITE: None
-NOTES:
-1. Get the application URL by running these commands:
-  https://gangway.k1.k8s.mylabs.dev/
 ```
 
 ## kube-oidc-proxy
@@ -240,7 +194,7 @@ ingress:
 EOF
 ```
 
-If you get the credentials form the [https://gangway.k1.k8s.mylabs.dev](https://gangway.k1.k8s.mylabs.dev)
+If you get the credentials form the [https://gangway.kube1.k8s.mylabs.dev](https://gangway.kube1.k8s.mylabs.dev)
 you will have the access to the cluster, but no rights there.
 
 Add access rights to the user:
@@ -307,12 +261,12 @@ Output:
 ```text
 Name:         ingress-cert-staging
 Namespace:    kube-prometheus-stack
-Labels:       kubed.appscode.com/origin.cluster=k1.k8s.mylabs.dev
+Labels:       kubed.appscode.com/origin.cluster=kube1.k8s.mylabs.dev
               kubed.appscode.com/origin.name=ingress-cert-staging
               kubed.appscode.com/origin.namespace=cert-manager
-Annotations:  cert-manager.io/alt-names: *.k1.k8s.mylabs.dev,k1.k8s.mylabs.dev
+Annotations:  cert-manager.io/alt-names: *.kube1.k8s.mylabs.dev,kube1.k8s.mylabs.dev
               cert-manager.io/certificate-name: ingress-cert-staging
-              cert-manager.io/common-name: *.k1.k8s.mylabs.dev
+              cert-manager.io/common-name: *.kube1.k8s.mylabs.dev
               cert-manager.io/ip-sans:
               cert-manager.io/issuer-group:
               cert-manager.io/issuer-kind: ClusterIssuer

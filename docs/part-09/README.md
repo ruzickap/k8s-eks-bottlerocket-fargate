@@ -25,7 +25,7 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: This AWS CloudFormation template installs the AWS RDS MariaDB database.
 Parameters:
   ClusterName:
-    Default: "k1"
+    Default: "kube1"
     Description: K8s Cluster name
     Type: String
   KmsKeyId:
@@ -192,14 +192,6 @@ eval aws cloudformation deploy --stack-name "${CLUSTER_NAME}-rds" --parameter-ov
 RDS_DB_HOST=$(aws rds describe-db-instances --query "DBInstances[?DBInstanceIdentifier==\`${CLUSTER_NAME}db\`].[Endpoint.Address]" --output text)
 ```
 
-Output:
-
-```text
-Waiting for changeset to be created..
-Waiting for stack create/update to complete
-Successfully created/updated stack - kube1-rds
-```
-
 Install [phpMyAdmin](https://www.phpmyadmin.net/) using Helm Chart
 
 Install `phpmyadmin`
@@ -230,34 +222,6 @@ metrics:
 EOF
 ```
 
-Output:
-
-```text
-NAME: phpmyadmin
-LAST DEPLOYED: Thu Dec 10 16:09:35 2020
-NAMESPACE: phpmyadmin
-STATUS: deployed
-REVISION: 1
-TEST SUITE: None
-NOTES:
-1. Get the application URL by running these commands:
-  You should be able to access your new phpMyAdmin installation through
-  https://your-cluster-ip
-
-
-  Find out your cluster ip address by running:
-  $ kubectl cluster-info
-
-
-
-2. How to log in
-
-phpMyAdmin has been configured to connect to a database in k1db.crssduk1yxyx.eu-central-1.rds.amazonaws.comwith port 3306
-Please login using a database username and password.
-
-** Please be patient while the chart is being deployed **
-```
-
 ### EFS
 
 The [Amazon EFS CSI Driver](https://github.com/kubernetes-sigs/aws-efs-csi-driver)
@@ -272,7 +236,7 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: Create EFS, mount points, security groups for EKS
 Parameters:
   ClusterName:
-    Description: "K8s Cluster name. Ex: k1"
+    Description: "K8s Cluster name. Ex: kube1"
     Type: String
   KmsKeyId:
     Description: The ID of the AWS KMS customer master key (CMK) to be used to protect the encrypted file system
@@ -397,14 +361,6 @@ EFS_AP_DRUPAL_ID=$(aws efs describe-access-points --query "AccessPoints[?(FileSy
 EFS_AP_DRUPAL2_ID=$(aws efs describe-access-points --query "AccessPoints[?(FileSystemId==\`${EFS_FS_ID}\` && RootDirectory.Path==\`/drupal2\`)].[AccessPointId]" --output text)
 ```
 
-Output:
-
-```text
-Waiting for changeset to be created..
-Waiting for stack create/update to complete
-Successfully created/updated stack - kube1-efs
-```
-
 ### Install Drupal
 
 Create ReadWriteMany persistent volume like described [here](https://github.com/kubernetes-sigs/aws-efs-csi-driver/blob/master/examples/kubernetes/multiple_pods/README.md):
@@ -502,33 +458,6 @@ metrics:
 EOF
 ```
 
-Output:
-
-```text
-"bitnami" has been added to your repositories
-NAME: drupal
-LAST DEPLOYED: Thu Dec 10 16:12:00 2020
-NAMESPACE: drupal
-STATUS: deployed
-REVISION: 1
-TEST SUITE: None
-NOTES:
-*******************************************************************
-*** PLEASE BE PATIENT: Drupal may take a few minutes to install ***
-*******************************************************************
-
-1. Get the Drupal URL:
-
-  You should be able to access your new Drupal installation through
-
-  http://drupal.k1.k8s.mylabs.dev/
-
-2. Get your Drupal login credentials by running:
-
-  echo Username: myuser
-  echo Password: $(kubectl get secret --namespace drupal drupal -o jsonpath="{.data.drupal-password}" | base64 --decode)
-```
-
 ### Install Drupal2
 
 Create ReadWriteMany persistent volume like described [here](https://github.com/kubernetes-sigs/aws-efs-csi-driver/blob/master/examples/kubernetes/multiple_pods/README.md):
@@ -618,11 +547,6 @@ persistence:
 metrics:
   enabled: true
 EOF
-```
-
-Output:
-
-```text
 ```
 
 Create Istio components to allow accessing Drupal:

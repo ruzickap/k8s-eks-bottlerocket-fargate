@@ -17,12 +17,12 @@ The `LETSENCRYPT_ENVIRONMENT` variable should be one of:
 * `production` - Let’s Encrypt will create valid certificate (use with care)
 
 `BASE_DOMAIN` contains DNS records for all your Kubernetes clusters. The cluster
-names will look like `CLUSTER_NAME`.`BASE_DOMAIN` (`k1.k8s.mylabs.dev`).
+names will look like `CLUSTER_NAME`.`BASE_DOMAIN` (`kube1.k8s.mylabs.dev`).
 
 ```bash
 # Hostname / FQDN definitions
 export BASE_DOMAIN="k8s.mylabs.dev"
-export CLUSTER_NAME="k1"
+export CLUSTER_NAME="kube1"
 export CLUSTER_FQDN="${CLUSTER_NAME}.${BASE_DOMAIN}"
 export KUBECONFIG=${PWD}/kubeconfig-${CLUSTER_NAME}.conf
 # * "production" - valid certificates signed by Lets Encrypt ""
@@ -142,6 +142,14 @@ if [[ ! -x /usr/local/bin/velero ]]; then
 fi
 ```
 
+Install [flux](https://toolkit.fluxcd.io/):
+
+```bash
+if [[ ! -x /usr/local/bin/flux ]]; then
+  curl -s https://toolkit.fluxcd.io/install.sh | sudo bash
+fi
+```
+
 ## Configure AWS Route 53 Domain delegation
 
 Create DNS zone (`BASE_DOMAIN`):
@@ -255,10 +263,10 @@ cat > "tmp/${CLUSTER_FQDN}/aws_policies.yml" << \EOF
 Description: "Template to generate the necessary IAM Policies for access to Route53 and S3"
 Parameters:
   ClusterFQDN:
-    Description: "Cluster domain where all necessary app subdomains will live (subdomain of BaseDomain). Ex: k1.k8s.mylabs.dev"
+    Description: "Cluster domain where all necessary app subdomains will live (subdomain of BaseDomain). Ex: kube1.k8s.mylabs.dev"
     Type: String
   ClusterName:
-    Description: "Cluster Name Ex: k1"
+    Description: "Cluster Name Ex: kube1"
     Type: String
   BaseDomain:
     Description: "Base domain where cluster domains + their subdomains will live. Ex: k8s.mylabs.dev"
@@ -556,8 +564,8 @@ iam:
 vpc:
   nat:
     gateway: Disable
-nodeGroups:
-  - name: ng01
+managedNodeGroups:
+  - name: managed-ng-1
     # amiFamily: Bottlerocket
     instanceType: t3.xlarge
     instancePrefix: ruzickap
@@ -573,17 +581,14 @@ nodeGroups:
       role: worker
     tags: *tags
     iam:
-      # Required for sysdig-agent
-      attachPolicyARNs:
-        - arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess
       withAddonPolicies:
         autoScaler: true
         cloudWatch: true
         ebs: true
         efs: true
-    # aws ec2 describe-images --owners amazon --filters "Name=name,Values=bottlerocket-aws-k8s-1.18*x86_64*" --region eu-central-1 --query "sort_by(Images, &CreationDate)"
-    # aws ec2 describe-images --owners amazon --filters "Name=name,Values=amazon-eks-node-1.18*" --region eu-central-1 --query "sort_by(Images, &CreationDate)"
-    ami: ami-028e864a893e18733
+    # aws ec2 describe-images --owners amazon --filters "Name=name,Values=bottlerocket-aws-k8s-1.19*x86_64*" --region eu-central-1 --query "sort_by(Images, &CreationDate)"
+    # aws ec2 describe-images --owners amazon --filters "Name=name,Values=amazon-eks-node-1.19*" --region eu-central-1 --query "sort_by(Images, &CreationDate)"
+    # ami: ami-079b6e99f49a1cd7b
     volumeEncrypted: true
     volumeKmsKeyID: ${EKS_KMS_KEY_ID}
     # bottlerocket:
@@ -604,10 +609,131 @@ EOF
 Output:
 
 ```text
+
+2021-03-20 07:59:03 [ℹ]  eksctl version 0.41.0
+2021-03-20 07:59:03 [ℹ]  using region eu-central-1
+2021-03-20 07:59:03 [ℹ]  subnets for eu-central-1a - public:192.168.0.0/19 private:192.168.64.0/19
+2021-03-20 07:59:03 [ℹ]  subnets for eu-central-1b - public:192.168.32.0/19 private:192.168.96.0/19
+2021-03-20 07:59:03 [ℹ]  using SSH public key "/Users/ruzickap/.ssh/id_rsa.pub" as "eksctl-kube1-nodegroup-managed-ng-1-a3:84:e4:0d:af:5f:c8:40:da:71:68:8a:74:c7:ba:16"
+2021-03-20 07:59:04 [ℹ]  using Kubernetes version 1.19
+2021-03-20 07:59:04 [ℹ]  creating EKS cluster "kube1" in "eu-central-1" region with Fargate profile and managed nodes
+2021-03-20 07:59:04 [ℹ]  1 nodegroup (managed-ng-1) was included (based on the include/exclude rules)
+2021-03-20 07:59:04 [ℹ]  will create a CloudFormation stack for cluster itself and 0 nodegroup stack(s)
+2021-03-20 07:59:04 [ℹ]  will create a CloudFormation stack for cluster itself and 1 managed nodegroup stack(s)
+2021-03-20 07:59:04 [ℹ]  if you encounter any issues, check CloudFormation console or try 'eksctl utils describe-stacks --region=eu-central-1 --cluster=kube1'
+2021-03-20 07:59:04 [ℹ]  Kubernetes API endpoint access will use default of {publicAccess=true, privateAccess=false} for cluster "kube1" in "eu-central-1"
+2021-03-20 07:59:04 [ℹ]  2 sequential tasks: { create cluster control plane "kube1", 3 sequential sub-tasks: { 7 sequential sub-tasks: { wait for control plane to become ready, tag cluster, update CloudWatch logging configuration, create fargate profiles, associate IAM OIDC provider, 7 parallel sub-tasks: { 2 sequential sub-tasks: { create IAM role for serviceaccount "kube-system/aws-load-balancer-controller", create serviceaccount "kube-system/aws-load-balancer-controller" }, 2 sequential sub-tasks: { create IAM role for serviceaccount "cert-manager/cert-manager", create serviceaccount "cert-manager/cert-manager" }, 2 sequential sub-tasks: { create IAM role for serviceaccount "kube-system/cluster-autoscaler", create serviceaccount "kube-system/cluster-autoscaler" }, 2 sequential sub-tasks: { create IAM role for serviceaccount "external-dns/external-dns", create serviceaccount "external-dns/external-dns" }, 2 sequential sub-tasks: { create IAM role for serviceaccount "kube-system/ebs-csi-controller", create serviceaccount "kube-system/ebs-csi-controller" }, 2 sequential sub-tasks: { create IAM role for serviceaccount "harbor/harbor", create serviceaccount "harbor/harbor" }, 2 sequential sub-tasks: { create IAM role for serviceaccount "kube-system/aws-node", create serviceaccount "kube-system/aws-node" } }, restart daemonset "kube-system/aws-node" }, create addons, create managed nodegroup "managed-ng-1" } }
+2021-03-20 07:59:04 [ℹ]  building cluster stack "eksctl-kube1-cluster"
+2021-03-20 07:59:05 [ℹ]  deploying stack "eksctl-kube1-cluster"
+2021-03-20 07:59:35 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-cluster"
+2021-03-20 08:00:05 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-cluster"
+2021-03-20 08:01:05 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-cluster"
+2021-03-20 08:02:05 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-cluster"
+2021-03-20 08:03:05 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-cluster"
+2021-03-20 08:04:05 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-cluster"
+2021-03-20 08:05:06 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-cluster"
+2021-03-20 08:06:06 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-cluster"
+2021-03-20 08:07:06 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-cluster"
+2021-03-20 08:08:06 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-cluster"
+2021-03-20 08:09:07 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-cluster"
+2021-03-20 08:10:07 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-cluster"
+2021-03-20 08:11:07 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-cluster"
+2021-03-20 08:11:08 [✔]  tagged EKS cluster (Environment=Dev, Owner=petr.ruzicka@gmail.com, Squad=Cloud_Container_Platform, Tribe=Cloud_Native)
+2021-03-20 08:11:10 [ℹ]  waiting for requested "LoggingUpdate" in cluster "kube1" to succeed
+2021-03-20 08:11:27 [ℹ]  waiting for requested "LoggingUpdate" in cluster "kube1" to succeed
+2021-03-20 08:11:44 [ℹ]  waiting for requested "LoggingUpdate" in cluster "kube1" to succeed
+2021-03-20 08:12:03 [ℹ]  waiting for requested "LoggingUpdate" in cluster "kube1" to succeed
+2021-03-20 08:12:03 [✔]  configured CloudWatch logging for cluster "kube1" in "eu-central-1" (enabled types: audit, authenticator, controllerManager & disabled types: api, scheduler)
+2021-03-20 08:12:03 [ℹ]  creating Fargate profile "fp-fgtest" on EKS cluster "kube1"
+2021-03-20 08:14:13 [ℹ]  created Fargate profile "fp-fgtest" on EKS cluster "kube1"
+2021-03-20 08:14:15 [ℹ]  building iamserviceaccount stack "eksctl-kube1-addon-iamserviceaccount-kube-system-aws-node"
+2021-03-20 08:14:15 [ℹ]  building iamserviceaccount stack "eksctl-kube1-addon-iamserviceaccount-kube-system-cluster-autoscaler"
+2021-03-20 08:14:15 [ℹ]  building iamserviceaccount stack "eksctl-kube1-addon-iamserviceaccount-cert-manager-cert-manager"
+2021-03-20 08:14:15 [ℹ]  building iamserviceaccount stack "eksctl-kube1-addon-iamserviceaccount-kube-system-ebs-csi-controller"
+2021-03-20 08:14:15 [ℹ]  building iamserviceaccount stack "eksctl-kube1-addon-iamserviceaccount-kube-system-aws-load-balancer-controller"
+2021-03-20 08:14:15 [ℹ]  building iamserviceaccount stack "eksctl-kube1-addon-iamserviceaccount-external-dns-external-dns"
+2021-03-20 08:14:15 [ℹ]  building iamserviceaccount stack "eksctl-kube1-addon-iamserviceaccount-harbor-harbor"
+2021-03-20 08:14:15 [ℹ]  deploying stack "eksctl-kube1-addon-iamserviceaccount-kube-system-aws-load-balancer-controller"
+2021-03-20 08:14:15 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-addon-iamserviceaccount-kube-system-aws-load-balancer-controller"
+2021-03-20 08:14:15 [ℹ]  deploying stack "eksctl-kube1-addon-iamserviceaccount-harbor-harbor"
+2021-03-20 08:14:15 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-addon-iamserviceaccount-harbor-harbor"
+2021-03-20 08:14:15 [ℹ]  deploying stack "eksctl-kube1-addon-iamserviceaccount-kube-system-aws-node"
+2021-03-20 08:14:15 [ℹ]  deploying stack "eksctl-kube1-addon-iamserviceaccount-external-dns-external-dns"
+2021-03-20 08:14:15 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-addon-iamserviceaccount-kube-system-aws-node"
+2021-03-20 08:14:15 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-addon-iamserviceaccount-external-dns-external-dns"
+2021-03-20 08:14:15 [ℹ]  deploying stack "eksctl-kube1-addon-iamserviceaccount-kube-system-cluster-autoscaler"
+2021-03-20 08:14:15 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-addon-iamserviceaccount-kube-system-cluster-autoscaler"
+2021-03-20 08:14:15 [ℹ]  deploying stack "eksctl-kube1-addon-iamserviceaccount-kube-system-ebs-csi-controller"
+2021-03-20 08:14:15 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-addon-iamserviceaccount-kube-system-ebs-csi-controller"
+2021-03-20 08:14:15 [ℹ]  deploying stack "eksctl-kube1-addon-iamserviceaccount-cert-manager-cert-manager"
+2021-03-20 08:14:15 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-addon-iamserviceaccount-cert-manager-cert-manager"
+2021-03-20 08:14:31 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-addon-iamserviceaccount-external-dns-external-dns"
+2021-03-20 08:14:31 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-addon-iamserviceaccount-kube-system-ebs-csi-controller"
+2021-03-20 08:14:32 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-addon-iamserviceaccount-kube-system-cluster-autoscaler"
+2021-03-20 08:14:32 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-addon-iamserviceaccount-harbor-harbor"
+2021-03-20 08:14:32 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-addon-iamserviceaccount-cert-manager-cert-manager"
+2021-03-20 08:14:32 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-addon-iamserviceaccount-kube-system-aws-node"
+2021-03-20 08:14:34 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-addon-iamserviceaccount-kube-system-aws-load-balancer-controller"
+2021-03-20 08:14:47 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-addon-iamserviceaccount-external-dns-external-dns"
+2021-03-20 08:14:49 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-addon-iamserviceaccount-kube-system-ebs-csi-controller"
+2021-03-20 08:14:49 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-addon-iamserviceaccount-kube-system-aws-node"
+2021-03-20 08:14:49 [ℹ]  serviceaccount "kube-system/aws-node" already exists
+2021-03-20 08:14:49 [ℹ]  updated serviceaccount "kube-system/aws-node"
+2021-03-20 08:14:50 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-addon-iamserviceaccount-cert-manager-cert-manager"
+2021-03-20 08:14:50 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-addon-iamserviceaccount-harbor-harbor"
+2021-03-20 08:14:50 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-addon-iamserviceaccount-kube-system-aws-load-balancer-controller"
+2021-03-20 08:14:51 [ℹ]  created namespace "harbor"
+2021-03-20 08:14:51 [ℹ]  created serviceaccount "harbor/harbor"
+2021-03-20 08:14:52 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-addon-iamserviceaccount-kube-system-cluster-autoscaler"
+2021-03-20 08:14:52 [ℹ]  created serviceaccount "kube-system/cluster-autoscaler"
+2021-03-20 08:15:03 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-addon-iamserviceaccount-external-dns-external-dns"
+2021-03-20 08:15:03 [ℹ]  created namespace "external-dns"
+2021-03-20 08:15:03 [ℹ]  created serviceaccount "external-dns/external-dns"
+2021-03-20 08:15:06 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-addon-iamserviceaccount-cert-manager-cert-manager"
+2021-03-20 08:15:06 [ℹ]  created namespace "cert-manager"
+2021-03-20 08:15:06 [ℹ]  created serviceaccount "cert-manager/cert-manager"
+2021-03-20 08:15:08 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-addon-iamserviceaccount-kube-system-ebs-csi-controller"
+2021-03-20 08:15:08 [ℹ]  created serviceaccount "kube-system/ebs-csi-controller"
+2021-03-20 08:15:10 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-addon-iamserviceaccount-kube-system-aws-load-balancer-controller"
+2021-03-20 08:15:11 [ℹ]  created serviceaccount "kube-system/aws-load-balancer-controller"
+2021-03-20 08:15:11 [ℹ]  daemonset "kube-system/aws-node" restarted
+2021-03-20 08:15:11 [ℹ]  building managed nodegroup stack "eksctl-kube1-nodegroup-managed-ng-1"
+2021-03-20 08:15:11 [ℹ]  deploying stack "eksctl-kube1-nodegroup-managed-ng-1"
+2021-03-20 08:15:11 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-nodegroup-managed-ng-1"
+2021-03-20 08:15:30 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-nodegroup-managed-ng-1"
+2021-03-20 08:15:47 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-nodegroup-managed-ng-1"
+2021-03-20 08:16:03 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-nodegroup-managed-ng-1"
+2021-03-20 08:16:23 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-nodegroup-managed-ng-1"
+2021-03-20 08:16:40 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-nodegroup-managed-ng-1"
+2021-03-20 08:16:57 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-nodegroup-managed-ng-1"
+2021-03-20 08:17:16 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-nodegroup-managed-ng-1"
+2021-03-20 08:17:32 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-nodegroup-managed-ng-1"
+2021-03-20 08:17:50 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-nodegroup-managed-ng-1"
+2021-03-20 08:18:06 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-nodegroup-managed-ng-1"
+2021-03-20 08:18:26 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-nodegroup-managed-ng-1"
+2021-03-20 08:18:45 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-nodegroup-managed-ng-1"
+2021-03-20 08:18:46 [ℹ]  waiting for the control plane availability...
+W0320 08:18:46.189658   50479 loader.go:223] Config not found: /Users/ruzickap/git/k8s-eks-bottlerocket-fargate/kubeconfig-kube1.conf
+W0320 08:18:46.190058   50479 loader.go:223] Config not found: /Users/ruzickap/git/k8s-eks-bottlerocket-fargate/kubeconfig-kube1.conf
+W0320 08:18:46.190145   50479 loader.go:223] Config not found: /Users/ruzickap/git/k8s-eks-bottlerocket-fargate/kubeconfig-kube1.conf
+2021-03-20 08:18:46 [✔]  saved kubeconfig as "/Users/ruzickap/git/k8s-eks-bottlerocket-fargate/kubeconfig-kube1.conf"
+2021-03-20 08:18:46 [ℹ]  no tasks
+2021-03-20 08:18:46 [✔]  all EKS cluster resources for "kube1" have been created
+2021-03-20 08:18:46 [ℹ]  nodegroup "managed-ng-1" has 3 node(s)
+2021-03-20 08:18:46 [ℹ]  node "ip-192-168-28-185.eu-central-1.compute.internal" is ready
+2021-03-20 08:18:46 [ℹ]  node "ip-192-168-34-133.eu-central-1.compute.internal" is ready
+2021-03-20 08:18:46 [ℹ]  node "ip-192-168-53-31.eu-central-1.compute.internal" is ready
+2021-03-20 08:18:46 [ℹ]  waiting for at least 2 node(s) to become ready in "managed-ng-1"
+2021-03-20 08:18:46 [ℹ]  nodegroup "managed-ng-1" has 3 node(s)
+2021-03-20 08:18:46 [ℹ]  node "ip-192-168-28-185.eu-central-1.compute.internal" is ready
+2021-03-20 08:18:46 [ℹ]  node "ip-192-168-34-133.eu-central-1.compute.internal" is ready
+2021-03-20 08:18:46 [ℹ]  node "ip-192-168-53-31.eu-central-1.compute.internal" is ready
+2021-03-20 08:18:47 [ℹ]  kubectl command should work with "/Users/ruzickap/git/k8s-eks-bottlerocket-fargate/kubeconfig-kube1.conf", try 'kubectl --kubeconfig=/Users/ruzickap/git/k8s-eks-bottlerocket-fargate/kubeconfig-kube1.conf get nodes'
+2021-03-20 08:18:47 [✔]  EKS cluster "kube1" in "eu-central-1" region is ready
 ```
 
 When the cluster is ready it immediately start pushing logs to CloudWatch under
-`/aws/eks/k1/cluster`.
+`/aws/eks/kube1/cluster`.
 
 Check the nodes:
 
@@ -618,9 +744,10 @@ kubectl get nodes -o wide
 Output:
 
 ```text
-NAME                                             STATUS   ROLES    AGE   VERSION    INTERNAL-IP     EXTERNAL-IP     OS-IMAGE                KERNEL-VERSION   CONTAINER-RUNTIME
-ip-192-168-3-46.eu-central-1.compute.internal    Ready    <none>   64s   v1.18.14   192.168.3.46    18.184.208.47   Bottlerocket OS 1.0.5   5.4.80           containerd://1.3.7+bottlerocket
-ip-192-168-37-96.eu-central-1.compute.internal   Ready    <none>   65s   v1.18.14   192.168.37.96   3.127.247.51    Bottlerocket OS 1.0.5   5.4.80           containerd://1.3.7+bottlerocket
+NAME                                              STATUS   ROLES    AGE   VERSION              INTERNAL-IP      EXTERNAL-IP    OS-IMAGE         KERNEL-VERSION               CONTAINER-RUNTIME
+ip-192-168-28-185.eu-central-1.compute.internal   Ready    <none>   84s   v1.19.6-eks-49a6c0   192.168.28.185   3.120.36.178   Amazon Linux 2   5.4.95-42.163.amzn2.x86_64   docker://19.3.13
+ip-192-168-34-133.eu-central-1.compute.internal   Ready    <none>   77s   v1.19.6-eks-49a6c0   192.168.34.133   3.122.231.47   Amazon Linux 2   5.4.95-42.163.amzn2.x86_64   docker://19.3.13
+ip-192-168-53-31.eu-central-1.compute.internal    Ready    <none>   83s   v1.19.6-eks-49a6c0   192.168.53.31    18.196.8.9     Amazon Linux 2   5.4.95-42.163.amzn2.x86_64   docker://19.3.13
 ```
 
 Attach the policy to the [pod execution role](https://docs.aws.amazon.com/eks/latest/userguide/pod-execution-role.html)

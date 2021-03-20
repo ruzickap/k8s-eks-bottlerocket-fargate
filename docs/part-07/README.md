@@ -26,20 +26,6 @@ ingress:
 EOF
 ```
 
-Output:
-
-```text
-"sp" has been added to your repositories
-NAME: podinfo
-LAST DEPLOYED: Thu Dec 10 16:02:34 2020
-NAMESPACE: default
-STATUS: deployed
-REVISION: 1
-NOTES:
-1. Get the application URL by running these commands:
-  https://podinfo.k1.k8s.mylabs.dev/
-```
-
 Install `podinfo` secured by `oauth2`:
 
 ```bash
@@ -118,27 +104,6 @@ dashboard:
         hosts:
           - polaris.${CLUSTER_FQDN}
 EOF
-```
-
-Output:
-
-```text
-"fairwinds-stable" has been added to your repositories
-NAME: polaris
-LAST DEPLOYED: Thu Dec 10 16:02:41 2020
-NAMESPACE: polaris
-STATUS: deployed
-REVISION: 1
-TEST SUITE: None
-NOTES:
-** Please be patient while the chart is being deployed **
-
-Enjoy Polaris and smooth sailing!
-To view the dashboard execute this command:
-
-kubectl port-forward --namespace polaris svc/polaris-dashboard 8080:80
-
-Then open http://localhost:8080 in your browser.
 ```
 
 ## kubei
@@ -220,24 +185,6 @@ serviceAccount:
 EOF
 ```
 
-Output:
-
-```text
-"kubernetes-dashboard" has been added to your repositories
-NAME: kubernetes-dashboard
-LAST DEPLOYED: Thu Dec 10 16:03:04 2020
-NAMESPACE: kubernetes-dashboard
-STATUS: deployed
-REVISION: 1
-TEST SUITE: None
-NOTES:
-*********************************************************************************
-*** PLEASE BE PATIENT: kubernetes-dashboard may take a few minutes to install ***
-*********************************************************************************
-From outside the cluster, the server URL(s) are:
-     http://kubernetes-dashboard.k1.k8s.mylabs.dev
-```
-
 Create `clusterrolebinding` to allow the kubernetes-dashboard to access
 the K8s API:
 
@@ -267,20 +214,6 @@ ingress:
       hosts:
         - octant.${CLUSTER_FQDN}
 EOF
-```
-
-Output:
-
-```text
-"octant-dashboard" has been added to your repositories
-NAME: octant
-LAST DEPLOYED: Thu Dec 10 16:03:09 2020
-NAMESPACE: octant
-STATUS: deployed
-REVISION: 1
-NOTES:
-1. Get the application URL by running these commands:
-  https://octant.k1.k8s.mylabs.dev/
 ```
 
 ## kubeview

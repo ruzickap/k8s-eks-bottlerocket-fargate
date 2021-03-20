@@ -1,185 +1,160 @@
-# Clean-up
+# GitOps tools
 
-![Clean-up](https://raw.githubusercontent.com/aws-samples/eks-workshop/65b766c494a5b4f5420b2912d8373c4957163541/static/images/cleanup.svg?sanitize=true
-"Clean-up")
+## ArgoCD
 
-Set necessary variables:
+Set the `ARGOCD_ADMIN_PASSWORD` with password:
 
 ```bash
-export BASE_DOMAIN="k8s.mylabs.dev"
-export CLUSTER_NAME="k1"
-export CLUSTER_FQDN="${CLUSTER_NAME}.${BASE_DOMAIN}"
-export AWS_DEFAULT_REGION="eu-central-1"
-export KUBECONFIG=${PWD}/kubeconfig-${CLUSTER_NAME}.conf
+ARGOCD_ADMIN_PASSWORD=$(htpasswd -nbBC 10 "" ${MY_PASSWORD} | tr -d ":\n" | sed "s/\$2y/\$2a/")
 ```
 
-Remove CloudFormation stacks [RDS, EFS]:
+Install `argo-cd`
+[helm chart](https://artifacthub.io/packages/helm/argo/argo-cd)
+and modify the
+[default values](https://github.com/argoproj/argo-helm/blob/master/charts/argo-cd/values.yaml).
 
 ```bash
-aws cloudformation delete-stack --stack-name "${CLUSTER_NAME}-rds"
-aws cloudformation delete-stack --stack-name "${CLUSTER_NAME}-efs"
-```
-
-Delete IstioOperator to release AWS Load Balancer:
-
-```bash
-kubectl delete istiooperator -n istio-system istio-controlplane || true
-```
-
-Detach policy from IAM role:
-
-```bash
-if AWS_CLOUDFORMATION_DETAILS=$(aws cloudformation describe-stacks --stack-name "${CLUSTER_NAME}-route53-iam-s3-ebs"); then
-  CLOUDWATCH_POLICY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"CloudWatchPolicyArn\") .OutputValue")
-  FARGATE_POD_EXECUTION_ROLE_ARN=$(eksctl get iamidentitymapping --cluster=${CLUSTER_NAME} -o json | jq -r ".[] | select (.rolearn | contains(\"FargatePodExecutionRole\")) .rolearn")
-  aws iam detach-role-policy --policy-arn "${CLOUDWATCH_POLICY_ARN}" --role-name "${FARGATE_POD_EXECUTION_ROLE_ARN#*/}" || true
-fi
-```
-
-Remove EKS cluster:
-
-```bash
-if eksctl get cluster --name=${CLUSTER_NAME} 2>/dev/null ; then
-  eksctl delete cluster --name=${CLUSTER_NAME}
-fi
+helm repo add argo https://argoproj.github.io/argo-helm
+helm install --version 2.11.3 --namespace argocd --create-namespace --values - argocd argo/argo-cd << EOF
+controller:
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+dex:
+  enabled: false
+server:
+  extraArgs:
+    - --insecure
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: false
+  ingress:
+    enabled: true
+    hosts:
+      - argocd.${CLUSTER_FQDN}
+    tls:
+      - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
+        hosts:
+          - argocd.${CLUSTER_FQDN}
+  config:
+    url: https://argocd.${CLUSTER_FQDN}
+    # OIDC does not work for self signed certs: https://github.com/argoproj/argo-cd/issues/4344
+    oidc.config: |
+      name: Dex
+      issuer: https://dex.${CLUSTER_FQDN}
+      clientID: argocd.${CLUSTER_FQDN}
+      clientSecret: ${MY_PASSWORD}
+      requestedIDTokenClaims:
+        groups:
+          essential: true
+      requestedScopes:
+        - openid
+        - profile
+        - email
+  rbacConfig:
+    policy.default: role:admin
+repoServer:
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+configs:
+  secret:
+    argocdServerAdminPassword: ${ARGOCD_ADMIN_PASSWORD}
+EOF
 ```
 
 Output:
 
 ```text
-2021-02-22 15:50:49 [ℹ]  eksctl version 0.38.0
-2021-02-22 15:50:49 [ℹ]  using region eu-central-1
-2021-02-22 15:50:49 [ℹ]  deleting EKS cluster "k1"
-2021-02-22 15:50:49 [ℹ]  deleting Fargate profile "fp-fgtest"
-2021-02-22 15:55:05 [ℹ]  deleted Fargate profile "fp-fgtest"
-2021-02-22 15:55:05 [ℹ]  deleted 1 Fargate profile(s)
-2021-02-22 15:55:06 [✔]  kubeconfig has been updated
-2021-02-22 15:55:06 [ℹ]  cleaning up AWS load balancers created by Kubernetes objects of Kind Service or Ingress
-2021-02-22 15:55:39 [ℹ]  3 sequential tasks: { delete nodegroup "ng01", 2 sequential sub-tasks: { 5 parallel sub-tasks: { 2 sequential sub-tasks: { delete IAM role for serviceaccount "cert-manager/cert-manager", delete serviceaccount "cert-manager/cert-manager" }, 2 sequential sub-tasks: { delete IAM role for serviceaccount "harbor/harbor", delete serviceaccount "harbor/harbor" }, 2 sequential sub-tasks: { delete IAM role for serviceaccount "kube-system/ebs-csi-controller", delete serviceaccount "kube-system/ebs-csi-controller" }, 2 sequential sub-tasks: { delete IAM role for serviceaccount "kube-system/aws-node", delete serviceaccount "kube-system/aws-node" }, 2 sequential sub-tasks: { delete IAM role for serviceaccount "external-dns/external-dns", delete serviceaccount "external-dns/external-dns" } }, delete IAM OIDC provider }, delete cluster control plane "k1" [async] }
-2021-02-22 15:55:39 [ℹ]  will delete stack "eksctl-k1-nodegroup-ng01"
-2021-02-22 15:55:39 [ℹ]  waiting for stack "eksctl-k1-nodegroup-ng01" to get deleted
-2021-02-22 15:55:39 [ℹ]  waiting for CloudFormation stack "eksctl-k1-nodegroup-ng01"
-2021-02-22 15:55:39 [!]  retryable error (Throttling: Rate exceeded
-2021-02-22 15:55:59 [ℹ]  waiting for CloudFormation stack "eksctl-k1-nodegroup-ng01"
-2021-02-22 16:02:10 [ℹ]  waiting for CloudFormation stack "eksctl-k1-nodegroup-ng01"
-2021-02-22 16:02:10 [ℹ]  will delete stack "eksctl-k1-addon-iamserviceaccount-harbor-harbor"
-2021-02-22 16:02:10 [ℹ]  waiting for stack "eksctl-k1-addon-iamserviceaccount-harbor-harbor" to get deleted
-2021-02-22 16:02:10 [ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-harbor-harbor"
-2021-02-22 16:02:10 [ℹ]  will delete stack "eksctl-k1-addon-iamserviceaccount-kube-system-aws-node"
-2021-02-22 16:02:10 [ℹ]  waiting for stack "eksctl-k1-addon-iamserviceaccount-kube-system-aws-node" to get deleted
-2021-02-22 16:02:10 [ℹ]  will delete stack "eksctl-k1-addon-iamserviceaccount-cert-manager-cert-manager"
-2021-02-22 16:02:10 [ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-kube-system-aws-node"
-2021-02-22 16:02:10 [ℹ]  waiting for stack "eksctl-k1-addon-iamserviceaccount-cert-manager-cert-manager" to get deleted
-2021-02-22 16:02:10 [ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-cert-manager-cert-manager"
-2021-02-22 16:02:10 [ℹ]  will delete stack "eksctl-k1-addon-iamserviceaccount-external-dns-external-dns"
-2021-02-22 16:02:10 [ℹ]  waiting for stack "eksctl-k1-addon-iamserviceaccount-external-dns-external-dns" to get deleted
-2021-02-22 16:02:10 [ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-external-dns-external-dns"
-2021-02-22 16:02:10 [ℹ]  will delete stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-csi-controller"
-2021-02-22 16:02:10 [ℹ]  waiting for stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-csi-controller" to get deleted
-2021-02-22 16:02:10 [ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-csi-controller"
-2021-02-22 16:02:27 [ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-cert-manager-cert-manager"
-2021-02-22 16:02:28 [ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-external-dns-external-dns"
-2021-02-22 16:02:28 [ℹ]  deleted serviceaccount "cert-manager/cert-manager"
-2021-02-22 16:02:28 [ℹ]  deleted serviceaccount "external-dns/external-dns"
-2021-02-22 16:02:28 [ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-kube-system-aws-node"
-2021-02-22 16:02:28 [ℹ]  deleted serviceaccount "kube-system/aws-node"
-2021-02-22 16:02:28 [ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-kube-system-ebs-csi-controller"
-2021-02-22 16:02:28 [ℹ]  deleted serviceaccount "kube-system/ebs-csi-controller"
-2021-02-22 16:02:30 [ℹ]  waiting for CloudFormation stack "eksctl-k1-addon-iamserviceaccount-harbor-harbor"
-2021-02-22 16:02:30 [ℹ]  deleted serviceaccount "harbor/harbor"
-2021-02-22 16:02:32 [ℹ]  will delete stack "eksctl-k1-cluster"
-2021-02-22 16:02:32 [✔]  all cluster resources were deleted
+"argo" has been added to your repositories
+manifest_sorter.go:192: info: skipping unknown hook: "crd-install"
+manifest_sorter.go:192: info: skipping unknown hook: "crd-install"
+NAME: argocd
+LAST DEPLOYED: Thu Dec 10 16:02:58 2020
+NAMESPACE: argocd
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+In order to access the server UI you have the following options:
+
+1. kubectl port-forward service/argocd-server -n argocd 8080:443
+
+    and then open the browser on http://localhost:8080 and accept the certificate
+
+2. enable ingress in the values file `service.ingress.enabled` and either
+      - Add the annotation for ssl passthrough: https://github.com/argoproj/argo-cd/blob/master/docs/operator-manual/ingress.md#option-1-ssl-passthrough
+      - Add the `--insecure` flag to `server.extraArgs` in the values file and terminate SSL at your ingress: https://github.com/argoproj/argo-cd/blob/master/docs/operator-manual/ingress.md#option-2-multiple-ingress-objects-and-hosts
+
+
+After reaching the UI the first time you can login with username: admin and the password will be the
+name of the server pod. You can get the pod name by running:
+
+kubectl get pods -n argocd -l app.kubernetes.io/name=argocd-server -o name | cut -d'/' -f 2
 ```
 
-Remove Route 53 DNS records from DNS Zone:
+## Flux
+
+Make sure you have the `GITHUB_TOKEN` configured properly.
+
+Install Flux on a Kubernetes cluster and configure it to manage itself from
+a Git repository:
 
 ```bash
-CLUSTER_FQDN_ZONE_ID=$(aws route53 list-hosted-zones --query "HostedZones[?Name==\`${CLUSTER_FQDN}.\`].Id" --output text)
-if [[ -n "${CLUSTER_FQDN_ZONE_ID}" ]]; then
-  aws route53 list-resource-record-sets --hosted-zone-id "${CLUSTER_FQDN_ZONE_ID}" | jq -c '.ResourceRecordSets[] | select (.Type != "SOA" and .Type != "NS")' |
-  while read -r RESOURCERECORDSET; do
-    aws route53 change-resource-record-sets \
-      --hosted-zone-id "${CLUSTER_FQDN_ZONE_ID}" \
-      --change-batch '{"Changes":[{"Action":"DELETE","ResourceRecordSet": '"${RESOURCERECORDSET}"' }]}' \
-      --output text --query 'ChangeInfo.Id'
-  done
-fi
+flux bootstrap github --owner=ruzickap --repository="${CLUSTER_FQDN}" --path=clusters/${CLUSTER_FQDN} --branch=master --personal
 ```
 
-Remove all S3 data form the bucket:
+Output:
 
-```bash
-if aws s3api head-bucket --bucket "${CLUSTER_FQDN}" 2>/dev/null; then
-  aws s3 rm s3://${CLUSTER_FQDN}/ --recursive
-fi
-```
-
-Remove CloudFormation stacks [Route53+IAM+S3+EBS]
-
-```bash
-aws cloudformation delete-stack --stack-name "${CLUSTER_NAME}-route53-iam-s3-ebs"
-```
-
-Remove CloudFormation created by ClusterAPI:
-
-```shell
-clusterawsadm bootstrap iam delete-cloudformation-stack
-```
-
-Remove Volumes and Snapshots related to the cluster:
-
-```bash
-VOLUMES=$(aws ec2 describe-volumes --filter Name=tag:kubernetes.io/cluster/${CLUSTER_FQDN},Values=owned --query 'Volumes[].VolumeId' --output text) && \
-for VOLUME in ${VOLUMES}; do
-  echo "Removing Volume: ${VOLUME}"
-  aws ec2 delete-volume --volume-id "${VOLUME}"
-done
-
-SNAPSHOTS=$(aws ec2 describe-snapshots --filter Name=tag:kubernetes.io/cluster/${CLUSTER_FQDN},Values=owned --query 'Snapshots[].SnapshotId' --output text) && \
-for SNAPSHOT in ${SNAPSHOTS}; do
-  echo "Removing Snapshot: ${SNAPSHOT}"
-  aws ec2 delete-snapshot --snapshot-id "${SNAPSHOT}"
-done
-```
-
-Remove CloudWatch log groups:
-
-```bash
-for LOG_GROUP in $(aws logs describe-log-groups | jq -r ".logGroups[] | select(.logGroupName|test(\"/${CLUSTER_NAME}/|/${CLUSTER_FQDN}/\")) .logGroupName"); do
-  echo "*** Delete log group: ${LOG_GROUP}"
-  aws logs delete-log-group --log-group-name "${LOG_GROUP}"
-done
-```
-
-Remove Helm data:
-
-```bash
-if [[ -d ~/Library/Caches/helm ]]; then rm -rf ~/Library/Caches/helm; fi
-if [[ -d ~/Library/Preferences/helm ]]; then rm -rf ~/Library/Preferences/helm; fi
-if [[ -d ~/.helm ]]; then rm -rf ~/.helm; fi
-```
-
-Remove `tmp/${CLUSTER_FQDN}` directory:
-
-```bash
-rm -rf "tmp/${CLUSTER_FQDN}" &> /dev/null
-```
-
-Remove other files:
-
-```bash
-rm demo-magic.sh "${KUBECONFIG}" README.sh "kubeconfig-${CLUSTER_NAME}.conf.eksctl.lock" &> /dev/null || true
-```
-
-Wait for CloudFormation to be deleted:
-
-```bash
-aws cloudformation wait stack-delete-complete --stack-name "${CLUSTER_NAME}-route53-iam-s3-ebs"
-aws cloudformation wait stack-delete-complete --stack-name "eksctl-${CLUSTER_NAME}-cluster"
-```
-
-Cleanup completed:
-
-```bash
-echo "Cleanup completed..."
+```text
+► connecting to github.com
+✔ repository created
+✔ repository cloned
+✚ generating manifests
+✔ components manifests pushed
+I0320 10:36:05.631729   56136 request.go:655] Throttling request took 2.251906176s, request: GET:https://A30F2A05E6BCE8B011E3B68F8AC4B68B.gr7.eu-central-1.eks.amazonaws.com/apis/vpcresources.k8s.aws/v1beta1?timeout=32s
+► installing components in flux-system namespace
+namespace/flux-system created
+customresourcedefinition.apiextensions.k8s.io/alerts.notification.toolkit.fluxcd.io created
+customresourcedefinition.apiextensions.k8s.io/buckets.source.toolkit.fluxcd.io created
+customresourcedefinition.apiextensions.k8s.io/gitrepositories.source.toolkit.fluxcd.io created
+customresourcedefinition.apiextensions.k8s.io/helmcharts.source.toolkit.fluxcd.io created
+customresourcedefinition.apiextensions.k8s.io/helmreleases.helm.toolkit.fluxcd.io created
+customresourcedefinition.apiextensions.k8s.io/helmrepositories.source.toolkit.fluxcd.io created
+customresourcedefinition.apiextensions.k8s.io/kustomizations.kustomize.toolkit.fluxcd.io created
+customresourcedefinition.apiextensions.k8s.io/providers.notification.toolkit.fluxcd.io created
+customresourcedefinition.apiextensions.k8s.io/receivers.notification.toolkit.fluxcd.io created
+serviceaccount/helm-controller created
+serviceaccount/kustomize-controller created
+serviceaccount/notification-controller created
+serviceaccount/source-controller created
+clusterrole.rbac.authorization.k8s.io/crd-controller-flux-system created
+clusterrolebinding.rbac.authorization.k8s.io/cluster-reconciler-flux-system created
+clusterrolebinding.rbac.authorization.k8s.io/crd-controller-flux-system created
+service/notification-controller created
+service/source-controller created
+service/webhook-receiver created
+deployment.apps/helm-controller created
+deployment.apps/kustomize-controller created
+deployment.apps/notification-controller created
+deployment.apps/source-controller created
+networkpolicy.networking.k8s.io/allow-scraping created
+networkpolicy.networking.k8s.io/allow-webhooks created
+networkpolicy.networking.k8s.io/deny-ingress created
+◎ verifying installation
+✔ kustomize-controller: deployment ready
+✔ helm-controller: deployment ready
+✔ notification-controller: deployment ready
+✔ source-controller: deployment ready
+✔ install completed
+► configuring deploy key
+✔ deploy key configured
+► generating sync manifests
+✔ sync manifests pushed
+► applying sync manifests
+◎ waiting for cluster sync
+✔ bootstrap finished
 ```
