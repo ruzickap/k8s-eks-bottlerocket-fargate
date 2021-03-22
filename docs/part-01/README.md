@@ -68,6 +68,8 @@ export AQUA_ENFORCER_TOKEN="xxx"
 export SPLUNK_HOST="xxx"
 export SPLUNK_TOKEN="xxx"
 export SPLUNK_INDEX_NAME="xxx"
+# Slack incoming webhook
+export SLACK_INCOMING_WEBHOOK_URL="https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK"
 ```
 
 ## Prepare the local working environment

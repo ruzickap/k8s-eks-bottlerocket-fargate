@@ -221,3 +221,63 @@ metrics:
     enabled: true
 EOF
 ```
+
+## kubewatch
+
+Install `kubewatch`
+[helm chart](https://artifacthub.io/packages/helm/bitnami/kubewatch)
+and modify the
+[default values](https://github.com/bitnami/charts/blob/master/bitnami/kubewatch/values.yaml).
+
+Details: [Kubernetes Event Notifications to a Slack Channel](https://www.powerupcloud.com/kubernetes-event-notifications-to-a-slack-channel-part-v/)
+
+```shell
+helm install --version 3.2.2 --namespace kubewatch --create-namespace --values - kubewatch bitnami/kubewatch << EOF
+slack:
+  enabled: true
+  channel: "#mylabs"
+  token: ${SLACK_BOT_API_TOKEN}
+resourcesToWatch:
+  deployment: false
+  pod: false
+  persistentvolume: true
+  namespace: true
+rbac:
+  create: false
+EOF
+```
+
+Create `ClusterRole` and `ClusterRoleBinding` to allow `kubewatch` to access
+necessary resources:
+
+```shell
+kubectl apply -f - << EOF
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  name: system:kubewatch
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - namespaces
+  - persistentvolumes
+  verbs:
+  - list
+  - watch
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: system:kubewatch
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:kubewatch
+subjects:
+- kind: ServiceAccount
+  name: kubewatch
+  namespace: kubewatch
+EOF
+```

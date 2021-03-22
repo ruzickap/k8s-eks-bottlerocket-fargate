@@ -31,6 +31,86 @@ defaultRules:
     kubernetesSystem: false
     kubeScheduler: false
 alertmanager:
+  config:
+    global:
+      slack_api_url: ${SLACK_INCOMING_WEBHOOK_URL}
+    route:
+      receiver: slack-notifications
+      group_by: ["alertname", "job"]
+    receivers:
+      - name: "null"
+      - name: "slack-notifications"
+        slack_configs:
+          - channel: "#mylabs"
+            send_resolved: True
+            icon_url: "https://avatars3.githubusercontent.com/u/3380462"
+            title: "{{ template \"slack.cp.title\" . }}"
+            text: "{{ template \"slack.cp.text\" . }}"
+            footer: "https://${CLUSTER_FQDN}"
+            actions:
+              - type: button
+                text: "Runbook :blue_book:"
+                url: "{{ (index .Alerts 0).Annotations.runbook_url }}"
+              - type: button
+                text: "Query :mag:"
+                url: "{{ (index .Alerts 0).GeneratorURL }}"
+              - type: button
+                text: "Silence :no_bell:"
+                url: "{{ template \"__alert_silence_link\" . }}"
+    templates:
+      - "/etc/alertmanager/config/cp-slack-templates.tmpl"
+  templateFiles:
+    cp-slack-templates.tmpl: |-
+      {{ define "slack.cp.title" -}}
+        [{{ .Status | toUpper -}}
+        {{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{- end -}}
+        ] {{ template "__alert_severity_prefix_title" . }} {{ .CommonLabels.alertname }}
+      {{- end }}
+      {{/* The test to display in the alert */}}
+      {{ define "slack.cp.text" -}}
+        {{ range .Alerts }}
+            *Alert:* {{ .Annotations.message}}
+            *Details:*
+            {{ range .Labels.SortedPairs }} - *{{ .Name }}:* \`{{ .Value }}\`
+            {{ end }}
+            *-----*
+          {{ end }}
+      {{- end }}
+      {{ define "__alert_silence_link" -}}
+        {{ .ExternalURL }}/#/silences/new?filter=%7B
+        {{- range .CommonLabels.SortedPairs -}}
+          {{- if ne .Name "alertname" -}}
+            {{- .Name }}%3D"{{- .Value -}}"%2C%20
+          {{- end -}}
+        {{- end -}}
+          alertname%3D"{{ .CommonLabels.alertname }}"%7D
+      {{- end }}
+      {{ define "__alert_severity_prefix" -}}
+          {{ if ne .Status "firing" -}}
+          :white_check_mark:
+          {{- else if eq .Labels.severity "critical" -}}
+          :fire:
+          {{- else if eq .Labels.severity "warning" -}}
+          :warning:
+          {{- else -}}
+          :question:
+          {{- end }}
+      {{- end }}
+      {{ define "__alert_severity_prefix_title" -}}
+          {{ if ne .Status "firing" -}}
+          :white_check_mark:
+          {{- else if eq .CommonLabels.severity "critical" -}}
+          :fire:
+          {{- else if eq .CommonLabels.severity "warning" -}}
+          :warning:
+          {{- else if eq .CommonLabels.severity "info" -}}
+          :information_source:
+          {{- else if eq .CommonLabels.status_icon "information" -}}
+          :information_source:
+          {{- else -}}
+          :question:
+          {{- end }}
+      {{- end }}
   ingress:
     enabled: true
     annotations:
@@ -161,6 +241,13 @@ grafana:
       loki-promtail:
         gnetId: 10880
         revision: 1
+        datasource: Prometheus
+      # https://github.com/fluxcd/flux2/blob/main/manifests/monitoring/grafana/dashboards/cluster.json
+      gitops-toolkit-control-plane:
+        url: https://raw.githubusercontent.com/fluxcd/flux2/9916a5376123b4bcdc0f11999a8f8781ce5ee78c/manifests/monitoring/grafana/dashboards/control-plane.json
+        datasource: Prometheus
+      gitops-toolkit-cluster:
+        url: https://raw.githubusercontent.com/fluxcd/flux2/344a909d19498f1f02b936882b529d84bbd460b8/manifests/monitoring/grafana/dashboards/cluster.json
         datasource: Prometheus
   grafana.ini:
     server:
