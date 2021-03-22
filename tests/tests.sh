@@ -37,6 +37,7 @@ export OKTA_CLIENT_ID="0xxxxxxxxx7"
 export OKTA_CLIENT_SECRET="1xxxxxH"
 export VAULT_CERT_MANAGER_ROLE_ID="test"
 export VAULT_CERT_MANAGER_SECRET_ID="test"
+export SLACK_INCOMING_WEBHOOK_URL="https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK"
 
 test -d tests || ( echo -e "\n*** Run in top level of git repository\n"; exit 1 )
 

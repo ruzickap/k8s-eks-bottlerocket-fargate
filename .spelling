@@ -53,6 +53,7 @@ kubei
 Kubernetes
 kubernetes-dashboard
 kubeview
+kubewatch
 loki
 MariaDB
 mylabs.dev
