@@ -132,7 +132,7 @@ server:
         path = "/vault/data"
       }
 EOF
-sleep 60
+sleep 80
 ```
 
 Check the status of the vault server - it should be sealed and uninitialized:
@@ -222,6 +222,8 @@ VAULT_ROOT_TOKEN=$(jq -r ".root_token" "tmp/${CLUSTER_FQDN}/vault_cluster-keys.j
 export VAULT_ROOT_TOKEN
 export VAULT_ADDR="https://vault.${CLUSTER_FQDN}"
 export VAULT_SKIP_VERIFY="true"
+VAULT_CLUSTER_FQDN=$(echo "${CLUSTER_FQDN}" | tr . -)
+export VAULT_CLUSTER_FQDN
 ```
 
 Login to vault as root user:
@@ -309,21 +311,22 @@ I used these guides to set it up:
 Configure PKI secrets engine:
 
 ```bash
-vault secrets enable pki
+vault secrets enable -path="${VAULT_CLUSTER_FQDN}-pki" pki
 ```
 
-Tune the `pki` secrets engine to issue certificates with a maximum time-to-live
-(TTL) of 87600 hours:
+Tune the `${VAULT_CLUSTER_FQDN}-pki` secrets engine to issue certificates with
+a maximum time-to-live (TTL) of 87600 hours:
 
 ```bash
-vault secrets tune -max-lease-ttl=87600h pki
+vault secrets tune -max-lease-ttl=87600h "${VAULT_CLUSTER_FQDN}-pki"
 ```
 
 Generate the `root` certificate and save the certificate in `CA_cert.crt`:
 
 ```bash
-vault write -field=certificate pki/root/generate/internal \
-  common_name="${CLUSTER_FQDN}" \
+vault write -field=certificate "${VAULT_CLUSTER_FQDN}-pki/root/generate/internal" \
+  common_name="${CLUSTER_FQDN}" country="CZ" organization="PA" \
+  alt_names="${CLUSTER_FQDN},*.${CLUSTER_FQDN}" \
   ttl=87600h > tmp/${CLUSTER_FQDN}/CA_cert.crt
 ```
 
@@ -331,32 +334,33 @@ Configure the PKI secrets engine certificate issuing and certificate revocation
 list (CRL) endpoints to use the Vault service in the `vault` namespace:
 
 ```bash
-vault write pki/config/urls \
+vault write "${VAULT_CLUSTER_FQDN}-pki/config/urls" \
   issuing_certificates="https://vault.${CLUSTER_FQDN}/v1/pki/ca" \
   crl_distribution_points="https://vault.${CLUSTER_FQDN}/v1/pki/crl"
 ```
 
 ### Generate Intermediate CA
 
-Enable the `pki` secrets engine at the `pki_int` path:
+Enable the `pki` secrets engine at the `${VAULT_CLUSTER_FQDN}-pki_int` path:
 
 ```bash
-vault secrets enable -path=pki_int pki
+vault secrets enable -path="${VAULT_CLUSTER_FQDN}-pki_int" pki
 ```
 
-Tune the `pki_int` secrets engine to issue certificates with a maximum
-time-to-live (TTL) of 43800 hours:
+Tune the `${VAULT_CLUSTER_FQDN}-pki_int` secrets engine to issue certificates
+with a maximum time-to-live (TTL) of 43800 hours:
 
 ```bash
-vault secrets tune -max-lease-ttl=43800h pki_int
+vault secrets tune -max-lease-ttl=43800h "${VAULT_CLUSTER_FQDN}-pki_int"
 ```
 
 Execute the following command to generate an intermediate and save the
 CSR as `pki_intermediate.csr`:
 
 ```bash
-vault write -format=json pki_int/intermediate/generate/internal \
-  common_name="${CLUSTER_FQDN} Intermediate Authority" \
+vault write -format=json "${VAULT_CLUSTER_FQDN}-pki_int/intermediate/generate/internal" \
+  common_name="${CLUSTER_FQDN}" country="CZ" organization="PA2" \
+  alt_names="${CLUSTER_FQDN},*.${CLUSTER_FQDN}" \
   | jq -r ".data.csr" > tmp/${CLUSTER_FQDN}/pki_intermediate.csr
 ```
 
@@ -364,7 +368,7 @@ Sign the intermediate certificate with the root certificate and save the
 generated certificate as `intermediate.cert.pem`:
 
 ```bash
-vault write -format=json pki/root/sign-intermediate csr=@tmp/${CLUSTER_FQDN}/pki_intermediate.csr \
+vault write -format=json "${VAULT_CLUSTER_FQDN}-pki/root/sign-intermediate" csr=@tmp/${CLUSTER_FQDN}/pki_intermediate.csr \
   format=pem_bundle ttl="43800h" \
   | jq -r ".data.certificate" > tmp/${CLUSTER_FQDN}/intermediate.cert.pem
 ```
@@ -373,7 +377,7 @@ Once the CSR is signed and the root CA returns a certificate, it can be
 imported back into Vault:
 
 ```bash
-vault write pki_int/intermediate/set-signed certificate=@tmp/${CLUSTER_FQDN}/intermediate.cert.pem
+vault write "${VAULT_CLUSTER_FQDN}-pki_int/intermediate/set-signed" certificate=@tmp/${CLUSTER_FQDN}/intermediate.cert.pem
 ```
 
 ### Configure cert-manager authentication to vault
@@ -383,13 +387,6 @@ external Vault instance - therefore I can not use the Kubernetes authentication.
 The vault instance is running on the same K8s cluster, but I will configure the
 cert-manager to use [AppRole](https://cert-manager.io/docs/configuration/vault/#authenticating-via-an-approle)
 to simulate "external vault access".
-
-Set default variables:
-
-```bash
-VAULT_CERT_MANAGER_ROLE="cert-manager-role-$(echo "${CLUSTER_FQDN}" | tr . -)"
-VAULT_CERT_MANAGER_POLICY="cert-manager-policy-$(echo "${CLUSTER_FQDN}" | tr . -)"
-```
 
 Enable the AppRole auth method:
 
@@ -401,25 +398,25 @@ Create a policy that enables read access to the PKI secrets engine paths:
 
 ```bash
 cat > tmp/pki_int_policy.hcl << EOF
-path "pki_int*"                                   { capabilities = ["read", "list"] }
-path "pki_int/roles/${VAULT_CERT_MANAGER_ROLE}"   { capabilities = ["create", "update"] }
-path "pki_int/sign/${VAULT_CERT_MANAGER_ROLE}"    { capabilities = ["create", "update"] }
-path "pki_int/issue/${VAULT_CERT_MANAGER_ROLE}"   { capabilities = ["create"] }
+path "${VAULT_CLUSTER_FQDN}-pki_int*"                                              { capabilities = ["read", "list"] }
+path "${VAULT_CLUSTER_FQDN}-pki_int/roles/cert-manager-role-${VAULT_CLUSTER_FQDN}" { capabilities = ["create", "update"] }
+path "${VAULT_CLUSTER_FQDN}-pki_int/sign/cert-manager-role-${VAULT_CLUSTER_FQDN}"  { capabilities = ["create", "update"] }
+path "${VAULT_CLUSTER_FQDN}-pki_int/issue/cert-manager-role-${VAULT_CLUSTER_FQDN}" { capabilities = ["create"] }
 EOF
-vault policy write "${VAULT_CERT_MANAGER_POLICY}" tmp/pki_int_policy.hcl
+vault policy write "cert-manager-policy-${VAULT_CLUSTER_FQDN}" tmp/pki_int_policy.hcl
 ```
 
 Create a named role:
 
 ```bash
-vault write "auth/approle/role/${VAULT_CERT_MANAGER_ROLE}" policies="${VAULT_CERT_MANAGER_POLICY}"
+vault write "auth/approle/role/cert-manager-role-${VAULT_CLUSTER_FQDN}" policies="cert-manager-policy-${VAULT_CLUSTER_FQDN}"
 ```
 
 Configure a role that enables the creation of certificates for domain with any
 subdomains:
 
 ```bash
-vault write "pki_int/roles/${VAULT_CERT_MANAGER_ROLE}" \
+vault write "${VAULT_CLUSTER_FQDN}-pki_int/roles/cert-manager-role-${VAULT_CLUSTER_FQDN}" \
   allowed_domains=${CLUSTER_FQDN} \
   allow_subdomains=true \
   max_ttl=720h \
@@ -429,8 +426,8 @@ vault write "pki_int/roles/${VAULT_CERT_MANAGER_ROLE}" \
 Get `secretId` and `roleId`:
 
 ```bash
-VAULT_CERT_MANAGER_ROLE_ID=$(vault read "auth/approle/role/${VAULT_CERT_MANAGER_ROLE}/role-id" --format=json | jq -r ".data.role_id")
-VAULT_CERT_MANAGER_SECRET_ID=$(vault write -f "auth/approle/role/${VAULT_CERT_MANAGER_ROLE}/secret-id" --format=json | jq -r ".data.secret_id")
+VAULT_CERT_MANAGER_ROLE_ID=$(vault read "auth/approle/role/cert-manager-role-${VAULT_CLUSTER_FQDN}/role-id" --format=json | jq -r ".data.role_id")
+VAULT_CERT_MANAGER_SECRET_ID=$(vault write -f "auth/approle/role/cert-manager-role-${VAULT_CLUSTER_FQDN}/secret-id" --format=json | jq -r ".data.secret_id")
 ```
 
 Create K8s secret with `secretId`:
@@ -460,7 +457,7 @@ metadata:
   namespace: cert-manager
 spec:
   vault:
-    path: pki_int/sign/${VAULT_CERT_MANAGER_ROLE}
+    path: ${VAULT_CLUSTER_FQDN}-pki_int/sign/cert-manager-role-${VAULT_CLUSTER_FQDN}
     server: https://vault.${CLUSTER_FQDN}
     caBundle: $(curl -s "${LETSENCRYPT_CERTIFICATE}" | base64 -w0)
     auth:

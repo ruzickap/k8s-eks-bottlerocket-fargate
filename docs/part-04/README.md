@@ -134,13 +134,12 @@ Install `aws-load-balancer-controller`
 and modify the
 [default values](https://github.com/aws/eks-charts/blob/master/stable/aws-load-balancer-controller/values.yaml).
 
-```shell
+```bash
 helm install --version 1.1.5 --namespace kube-system --values - aws-load-balancer-controller eks/aws-load-balancer-controller << EOF
-clusterName: ${CLUSTER_FQDN}
+clusterName: ${CLUSTER_NAME}
 serviceAccount:
   create: false
   name: aws-load-balancer-controller
-enableCertManager: true
 enableShield: false
 enableWaf: false
 enableWafv2: false

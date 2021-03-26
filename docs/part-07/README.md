@@ -31,6 +31,8 @@ Install `podinfo` secured by `oauth2`:
 ```bash
 helm install --version 5.0.2 --namespace default --values - podinfo-oauth sp/podinfo << EOF
 # https://github.com/stefanprodan/podinfo/blob/master/charts/podinfo/values.yaml
+ui:
+  message: "Running behind SSO"
 serviceMonitor:
   enabled: true
 ingress:
@@ -45,6 +47,27 @@ ingress:
     - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
       hosts:
         - podinfo-oauth.${CLUSTER_FQDN}
+EOF
+```
+
+Install `podinfo` and use Application Load Balancer:
+
+```shell
+helm install --version 5.1.1 --namespace default --values - podinfo-alb sp/podinfo << EOF
+ui:
+  message: "Running using Application Load Balancer"
+service:
+  type: NodePort
+serviceMonitor:
+  enabled: true
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+  path: /
+  hosts:
+    - podinfo-alb.${CLUSTER_FQDN}
 EOF
 ```
 
