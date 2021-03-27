@@ -148,3 +148,83 @@ driver: ebs.csi.aws.com
 deletionPolicy: Retain
 EOF
 ```
+
+## Test Amazon EKS pod limits
+
+By default, there is certain number of pods which can be run on Amazon EKS
+worker nodes. The "max number of pods" depends on node type an you can read
+about it on these links:
+
+* [https://github.com/awslabs/amazon-eks-ami/blob/master/files/eni-max-pods.txt](https://github.com/awslabs/amazon-eks-ami/blob/master/files/eni-max-pods.txt)
+* [Elastic network interfaces](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-eni.html#AvailableIpPerENI)
+* [Pod limit on Node - AWS EKS](https://stackoverflow.com/questions/57970896/pod-limit-on-node-aws-eks/57971006)
+
+I would like to put some notes here how this can be tested...
+
+Start the EKS cluster with `t2.micro` where you can run max 4 pods per node:
+
+```shell
+eksctl create cluster --name test-max-pod --region eu-central-1 --node-type=t2.micro --nodes=2 --node-volume-size=4 --kubeconfig "kubeconfig-test-max-pod.conf" --max-pods-per-node 100
+```
+
+Run 3 `nginx` pods:
+
+```shell
+kubectl apply -f https://k8s.io/examples/controllers/nginx-deployment.yaml
+```
+
+One of them will fail:
+
+```shell
+kubectl describe pod
+```
+
+Output:
+
+```text
+...
+  Warning  FailedCreatePodSandBox  33s                 kubelet            Failed to create pod sandbox: rpc error: code = Unknown desc = failed to set up sandbox container "738ecb9c495143df8647e69e70d19181643ebda1d3ce5d89e06526cf4285b89d" network for pod "nginx-deployment-6b474476c4-df8rz": networkPlugin cni failed to set up pod "nginx-deployment-6b474476c4-df8rz_default" network: add cmd: failed to assign an IP address to container
+...
+```
+
+Delete the cluster:
+
+```shell
+eksctl delete cluster --name test-max-pod --region eu-central-1
+```
+
+Do the same with Amazon EKS + Calico:
+
+```shell
+eksctl create cluster --name test-max-pod --region eu-central-1  --without-nodegroup --kubeconfig "kubeconfig-test-max-pod.conf"
+kubectl delete daemonset -n kube-system aws-node
+kubectl apply -f https://docs.projectcalico.org/manifests/calico-vxlan.yaml
+eksctl create nodegroup --cluster test-max-pod --region eu-central-1 --node-type=t2.micro --nodes=2 --node-volume-size=4 --max-pods-per-node 100
+kubectl apply -f https://k8s.io/examples/controllers/nginx-deployment.yaml
+kubectl scale --replicas=10 deployment nginx-deployment
+```
+
+Check the running pods:
+
+```shell
+kubectl get pods
+```
+
+Output:
+
+```text
+NAME                                READY   STATUS    RESTARTS   AGE
+nginx-deployment-6b474476c4-26d4x   1/1     Running   0          34s
+nginx-deployment-6b474476c4-2nbnc   1/1     Running   0          70s
+nginx-deployment-6b474476c4-7cfpn   1/1     Running   0          70s
+nginx-deployment-6b474476c4-7wdk4   1/1     Running   0          2m10s
+nginx-deployment-6b474476c4-8dhmb   1/1     Running   0          34s
+nginx-deployment-6b474476c4-kp8p8   1/1     Running   0          34s
+nginx-deployment-6b474476c4-nk699   1/1     Running   0          34s
+nginx-deployment-6b474476c4-rk26b   1/1     Running   0          2m10s
+nginx-deployment-6b474476c4-x6w29   1/1     Running   0          34s
+nginx-deployment-6b474476c4-x8wkv   1/1     Running   0          2m10s
+```
+
+It should be possible to run more pods than 4 comparing to "non-calico"
+example.
