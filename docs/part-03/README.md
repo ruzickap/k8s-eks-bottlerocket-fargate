@@ -12,6 +12,8 @@ helm repo add bitnami https://charts.bitnami.com/bitnami
 helm install --version 5.3.2 --namespace kube-system --values - metrics-server bitnami/metrics-server << EOF
 apiService:
   create: true
+# Needed for calico
+hostNetwork: true
 EOF
 ```
 

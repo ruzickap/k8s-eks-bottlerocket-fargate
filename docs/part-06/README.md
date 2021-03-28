@@ -157,6 +157,12 @@ spec:
             service.beta.kubernetes.io/aws-load-balancer-additional-resource-tags: "$(echo "${TAGS}" | tr " " ,)"
     pilot:
       k8s:
+        overlays:
+          - kind: Deployment
+            name: istiod
+            patches:
+              - path: spec.template.spec.hostNetwork
+                value: true
         # Reduce resource requirements for local testing. This is NOT
         # recommended for the real use cases.
         resources:

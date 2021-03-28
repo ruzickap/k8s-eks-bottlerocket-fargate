@@ -26,6 +26,10 @@ securityContext:
 prometheus:
   servicemonitor:
     enabled: true
+webhook:
+  # Needed for calico
+  securePort: 10251
+  hostNetwork: true
 EOF
 ```
 
@@ -127,34 +131,6 @@ kubectl wait --namespace cert-manager --for=condition=Ready --timeout=15m certif
 kubectl annotate secret "ingress-cert-${LETSENCRYPT_ENVIRONMENT}" -n cert-manager kubed.appscode.com/sync=""
 ```
 
-## aws-load-balancer-controller
-
-Install `aws-load-balancer-controller`
-[helm chart](https://artifacthub.io/packages/helm/aws/aws-load-balancer-controller)
-and modify the
-[default values](https://github.com/aws/eks-charts/blob/master/stable/aws-load-balancer-controller/values.yaml).
-
-```bash
-helm install --version 1.1.5 --namespace kube-system --values - aws-load-balancer-controller eks/aws-load-balancer-controller << EOF
-clusterName: ${CLUSTER_NAME}
-serviceAccount:
-  create: false
-  name: aws-load-balancer-controller
-enableShield: false
-enableWaf: false
-enableWafv2: false
-defaultTags:
-$(echo "${TAGS}" | sed "s/ /\\n  /g; s/^/  /g; s/=/: /g")
-EOF
-```
-
-It seems like there are some issues with ALB and cert-manager / Istio:
-
-* [https://github.com/kubernetes-sigs/aws-load-balancer-controller/issues/1084](https://github.com/kubernetes-sigs/aws-load-balancer-controller/issues/1084)
-* [https://github.com/kubernetes-sigs/aws-load-balancer-controller/issues/1143](https://github.com/kubernetes-sigs/aws-load-balancer-controller/issues/1143)
-
-I'll use NLB as main "Load Balancer type" in AWS.
-
 ## ingress-nginx
 
 Install `ingress-nginx`
@@ -166,6 +142,8 @@ and modify the
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 helm install --version 3.20.1 --namespace ingress-nginx --create-namespace --wait --wait-for-jobs --values - ingress-nginx ingress-nginx/ingress-nginx << EOF
 controller:
+  # Needed for calico
+  hostNetwork: true
   extraArgs:
     default-ssl-certificate: cert-manager/ingress-cert-${LETSENCRYPT_ENVIRONMENT}
   replicaCount: 1

@@ -14,6 +14,7 @@ backend
 Base64
 bookinfo
 Bottlerocket
+calicoctl
 ChartMuseum
 Cleanup
 CloudFlare

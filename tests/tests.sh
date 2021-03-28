@@ -56,6 +56,11 @@ else
   helm version
 fi
 
+if [[ ! -x /usr/local/bin/calicoctl ]]; then
+  sudo curl -s -Lo /usr/local/bin/calicoctl https://github.com/projectcalico/calicoctl/releases/download/v3.18.1/calicoctl
+  sudo chmod a+x /usr/local/bin/calicoctl
+fi
+
 echo "*** Remove cluster (if exists)"
 kind get clusters | grep "${CLUSTER_NAME}" && kind delete cluster --name "${CLUSTER_NAME}"
 
@@ -89,6 +94,9 @@ configInline:
       addresses:
         - 172.17.255.1-172.17.255.250
 EOF
+
+# Install calico
+kubectl apply -f https://docs.projectcalico.org/v3.8/manifests/calico.yaml
 
 # Create namespaces
 kubectl create namespace cert-manager
@@ -136,6 +144,7 @@ sed docs/part-{02..08}/README.md \
   -e "s/^kubectl patch storageclass gp3/# &/" \
   -e "s/^vault /# &/ ; s/.*\$(vault /# &/ ; s/^kubectl exec -n vault vault-0/# &/ ; s/.*VAULT_ROOT_TOKEN/# &/" \
   -e "s/+ttlid a vault.\${CLUSTER_FQDN}/+ttlid a google.com/" \
+  -e "s/hostNetwork: true/# &/" \
   -e '/^# Create ClusterIssuer for production/i \
 apiVersion: cert-manager.io/v1 \
 kind: ClusterIssuer \

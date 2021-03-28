@@ -92,7 +92,7 @@ and modify the
 
 ```bash
 helm repo add hashicorp https://helm.releases.hashicorp.com
-helm install --version 0.9.1 --namespace vault --wait --wait-for-jobs --values - vault hashicorp/vault << EOF
+helm install --version 0.10.0 --namespace vault --wait --wait-for-jobs --values - vault hashicorp/vault << EOF
 injector:
   metrics:
     enabled: false
