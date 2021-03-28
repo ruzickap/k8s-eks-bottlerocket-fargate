@@ -1,5 +1,43 @@
 # AWS
 
+Attach the policy to the [pod execution role](https://docs.aws.amazon.com/eks/latest/userguide/pod-execution-role.html)
+of your EKS on Fargate cluster:
+
+```bash
+FARGATE_POD_EXECUTION_ROLE_ARN=$(eksctl get iamidentitymapping --cluster=${CLUSTER_NAME} -o json | jq -r ".[] | select (.rolearn | contains(\"FargatePodExecutionRole\")) .rolearn")
+aws iam attach-role-policy --policy-arn "${CLOUDWATCH_POLICY_ARN}" --role-name "${FARGATE_POD_EXECUTION_ROLE_ARN#*/}"
+```
+
+Create the dedicated `aws-observability` namespace and the ConfigMap for Fluent Bit:
+
+```bash
+kubectl apply -f - << EOF
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: aws-observability
+  labels:
+    aws-observability: enabled
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: aws-logging
+  namespace: aws-observability
+data:
+  output.conf: |
+    [OUTPUT]
+        Name cloudwatch_logs
+        Match   *
+        region ${AWS_DEFAULT_REGION}
+        log_group_name /aws/eks/${CLUSTER_FQDN}/logs
+        log_stream_prefix fluentbit-
+        auto_create_group On
+EOF
+```
+
+All the Fargate pods should now send the log to CloudWatch...
+
 ## aws-for-fluent-bit
 
 Install `aws-for-fluent-bit`
@@ -149,6 +187,53 @@ deletionPolicy: Retain
 EOF
 ```
 
+## aws-load-balancer-controller
+
+Install `aws-load-balancer-controller`
+[helm chart](https://artifacthub.io/packages/helm/aws/aws-load-balancer-controller)
+and modify the
+[default values](https://github.com/aws/eks-charts/blob/master/stable/aws-load-balancer-controller/values.yaml).
+
+```bash
+helm install --version 1.1.5 --namespace kube-system --values - aws-load-balancer-controller eks/aws-load-balancer-controller << EOF
+clusterName: ${CLUSTER_NAME}
+serviceAccount:
+  create: false
+  name: aws-load-balancer-controller
+enableShield: false
+enableWaf: false
+enableWafv2: false
+defaultTags:
+$(echo "${TAGS}" | sed "s/ /\\n  /g; s/^/  /g; s/=/: /g")
+EOF
+```
+
+It seems like there are some issues with ALB and cert-manager / Istio:
+
+* [https://github.com/kubernetes-sigs/aws-load-balancer-controller/issues/1084](https://github.com/kubernetes-sigs/aws-load-balancer-controller/issues/1084)
+* [https://github.com/kubernetes-sigs/aws-load-balancer-controller/issues/1143](https://github.com/kubernetes-sigs/aws-load-balancer-controller/issues/1143)
+
+I'll use NLB as main "Load Balancer type" in AWS.
+
+## Calico commands
+
+```bash
+calicoctl ipam show --show-block
+```
+
+Output:
+
+```text
++----------+-------------------+-----------+------------+--------------+
+| GROUPING |       CIDR        | IPS TOTAL | IPS IN USE |   IPS FREE   |
++----------+-------------------+-----------+------------+--------------+
+| IP Pool  | 172.16.0.0/16     |     65536 | 15 (0%)    | 65521 (100%) |
+| Block    | 172.16.115.128/26 |        64 | 4 (6%)     | 60 (94%)     |
+| Block    | 172.16.20.192/26  |        64 | 7 (11%)    | 57 (89%)     |
+| Block    | 172.16.90.128/26  |        64 | 4 (6%)     | 60 (94%)     |
++----------+-------------------+-----------+------------+--------------+
+```
+
 ## Test Amazon EKS pod limits
 
 By default, there is certain number of pods which can be run on Amazon EKS
@@ -165,6 +250,18 @@ Start the EKS cluster with `t2.micro` where you can run max 4 pods per node:
 
 ```shell
 eksctl create cluster --name test-max-pod --region eu-central-1 --node-type=t2.micro --nodes=2 --node-volume-size=4 --kubeconfig "kubeconfig-test-max-pod.conf" --max-pods-per-node 100
+```
+
+Show the limits of the node, which can not be fulfilled due to IP limitations:
+
+```shell
+kubectl describe nodes -A | grep "pods:" | uniq
+```
+
+Output:
+
+```text
+  pods:                        1k
 ```
 
 Run 3 `nginx` pods:
