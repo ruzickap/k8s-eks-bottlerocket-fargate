@@ -397,13 +397,13 @@ vault auth enable approle
 Create a policy that enables read access to the PKI secrets engine paths:
 
 ```bash
-cat > tmp/pki_int_policy.hcl << EOF
+cat > tmp/${CLUSTER_FQDN}/pki_int_policy.hcl << EOF
 path "${VAULT_CLUSTER_FQDN}-pki_int*"                                              { capabilities = ["read", "list"] }
 path "${VAULT_CLUSTER_FQDN}-pki_int/roles/cert-manager-role-${VAULT_CLUSTER_FQDN}" { capabilities = ["create", "update"] }
 path "${VAULT_CLUSTER_FQDN}-pki_int/sign/cert-manager-role-${VAULT_CLUSTER_FQDN}"  { capabilities = ["create", "update"] }
 path "${VAULT_CLUSTER_FQDN}-pki_int/issue/cert-manager-role-${VAULT_CLUSTER_FQDN}" { capabilities = ["create"] }
 EOF
-vault policy write "cert-manager-policy-${VAULT_CLUSTER_FQDN}" tmp/pki_int_policy.hcl
+vault policy write "cert-manager-policy-${VAULT_CLUSTER_FQDN}" tmp/${CLUSTER_FQDN}/pki_int_policy.hcl
 ```
 
 Create a named role:
