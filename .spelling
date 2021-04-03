@@ -37,6 +37,8 @@ Fargate
 GitOps
 Grafana
 HashiCorp
+HelmRelease
+HelmRepository
 ingress-nginx
 Istio
 IstioOperator
@@ -80,3 +82,5 @@ sysdig-agent
 velero
 Velero
 Weaveworks
+webhook
+Wordpress
