@@ -26,12 +26,25 @@ and modify the
 
 ```bash
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm install --version 13.4.1 --namespace kube-prometheus-stack --create-namespace --values - kube-prometheus-stack prometheus-community/kube-prometheus-stack << EOF
+helm install --version 14.4.0 --namespace kube-prometheus-stack --create-namespace --values - kube-prometheus-stack prometheus-community/kube-prometheus-stack << EOF
 defaultRules:
   rules:
     etcd: false
     kubernetesSystem: false
     kubeScheduler: false
+additionalPrometheusRulesMap:
+# Flux rule: https://toolkit.fluxcd.io/guides/monitoring/
+  rule-name:
+    groups:
+    - name: GitOpsToolkit
+      rules:
+      - alert: ReconciliationFailure
+        expr: max(gotk_reconcile_condition{status="False",type="Ready"}) by (namespace, name, kind) + on(namespace, name, kind) (max(gotk_reconcile_condition{status="Deleted"}) by (namespace, name, kind)) * 2 == 1
+        for: 10m
+        labels:
+          severity: page
+        annotations:
+          summary: "{{ \$labels.kind }} {{ \$labels.namespace }}/{{ \$labels.name }} reconciliation has been failing for more than ten minutes."
 alertmanager:
   config:
     global:
@@ -43,7 +56,7 @@ alertmanager:
       - name: "null"
       - name: "slack-notifications"
         slack_configs:
-          - channel: "#mylabs"
+          - channel: "#${SLACK_CHANNEL}"
             send_resolved: True
             icon_url: "https://avatars3.githubusercontent.com/u/3380462"
             title: "{{ template \"slack.cp.title\" . }}"
@@ -251,6 +264,18 @@ grafana:
       gitops-toolkit-cluster:
         url: https://raw.githubusercontent.com/fluxcd/flux2/344a909d19498f1f02b936882b529d84bbd460b8/manifests/monitoring/grafana/dashboards/cluster.json
         datasource: Prometheus
+      kyverno-cluster-policy-report:
+        gnetId: 13996
+        revision: 3
+        datasource: Prometheus
+      kyverno-policy-report:
+        gnetId: 13995
+        revision: 3
+        datasource: Prometheus
+      kyverno-policy-reports:
+        gnetId: 13968
+        revision: 1
+        datasource: Prometheus
   grafana.ini:
     server:
       root_url: https://grafana.${CLUSTER_FQDN}
@@ -352,6 +377,239 @@ deleteLocalData: true
 podMonitor:
   create: true
 EOF
+```
+
+## kyverno
+
+Install `kyverno`
+[helm chart](https://artifacthub.io/packages/helm/kyverno/kyverno)
+and modify the
+[default values](https://github.com/kyverno/kyverno/blob/main/charts/kyverno/values.yaml).
+
+```bash
+helm repo add kyverno https://kyverno.github.io/kyverno/
+helm install --version v1.3.4 --namespace kyverno --create-namespace --values - kyverno kyverno/kyverno << EOF
+hostNetwork: true
+EOF
+```
+
+Install `policy-reporter`
+[helm chart](https://github.com/fjogeleit/policy-reporter/tree/main/charts/policy-reporter)
+and modify the
+[default values](https://github.com/fjogeleit/policy-reporter/blob/main/charts/policy-reporter/values.yaml).
+
+```bash
+helm repo add policy-reporter https://fjogeleit.github.io/policy-reporter
+helm install --version 0.22.0 --namespace policy-reporter --create-namespace --values - policy-reporter policy-reporter/policy-reporter << EOF
+ui:
+  enabled: true
+  ingress:
+    enabled: true
+    annotations:
+      nginx.ingress.kubernetes.io/auth-url: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/auth
+      nginx.ingress.kubernetes.io/auth-signin: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/start?rd=\$scheme://\$host\$request_uri
+    hosts:
+      - host: policy-reporter.${CLUSTER_FQDN}
+        paths: ["/"]
+    tls:
+      - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
+        hosts:
+          - policy-reporter.${CLUSTER_FQDN}
+monitoring:
+  enabled: true
+  namespace: default
+target:
+  loki:
+    host: http://loki-headless.loki:3100
+    minimumPriority: "info"
+    skipExistingOnStartup: true
+  # slack:
+  #   webhook: "${SLACK_INCOMING_WEBHOOK_URL}"
+  #   minimumPriority: "warning"
+  #   skipExistingOnStartup: true
+EOF
+```
+
+Install kyverno policies:
+
+```bash
+mkdir tmp/${CLUSTER_FQDN}/kyverno-policies
+cat > "tmp/${CLUSTER_FQDN}/kyverno-policies/kustomization.yaml" << EOF
+resources:
+- github.com/kyverno/policies/pod-security?ref=930b579b1d81be74678045dd3d397f668d321cdf
+
+patches:
+  - patch: |-
+      - op: replace
+        path: /spec/validationFailureAction
+        value: audit
+    target:
+      kind: ClusterPolicy
+EOF
+kustomize build "tmp/${CLUSTER_FQDN}/kyverno-policies" | kubectl apply -f -
+```
+
+Check if all policies are in place in `audit` mode:
+
+```shell
+kubectl get clusterpolicies.kyverno.io
+```
+
+Output:
+
+```text
+NAME                             BACKGROUND   ACTION
+deny-privilege-escalation        true         audit
+disallow-add-capabilities        true         audit
+disallow-host-namespaces         true         audit
+disallow-host-path               true         audit
+disallow-host-ports              true         audit
+disallow-privileged-containers   true         audit
+disallow-selinux                 true         audit
+require-default-proc-mount       true         audit
+require-non-root-groups          true         audit
+require-run-as-non-root          true         audit
+restrict-apparmor-profiles       true         audit
+restrict-seccomp                 true         audit
+restrict-sysctls                 true         audit
+restrict-volume-types            true         audit
+```
+
+Viewing policy report summaries
+
+```shell
+kubectl get policyreport -A
+```
+
+Output:
+
+```text
+NAMESPACE               NAME                            PASS   FAIL   WARN   ERROR   SKIP   AGE
+amazon-cloudwatch       polr-ns-amazon-cloudwatch       99     6      0      0       0      3h55m
+kube-prometheus-stack   polr-ns-kube-prometheus-stack   261    19     0      0       0      3h55m
+loki                    polr-ns-loki                    34     1      0      0       0      3h55m
+promtail                polr-ns-promtail                96     9      0      0       0      3h55m
+```
+
+Viewing policy violations:
+
+```shell
+kubectl describe policyreport -n amazon-cloudwatch polr-ns-amazon-cloudwatch | grep "Status: \+fail" -B10
+```
+
+Output:
+
+```text
+  Message:        validation error: Running as root is not allowed. The fields spec.securityContext.runAsNonRoot, spec.containers[*].securityContext.runAsNonRoot, and spec.initContainers[*].securityContext.runAsNonRoot must be `true`. Rule check-containers[0] failed at path /spec/securityContext/runAsNonRoot/. Rule check-containers[1] failed at path /spec/containers/0/securityContext/.
+  Policy:         require-run-as-non-root
+  Resources:
+    API Version:  v1
+    Kind:         Pod
+    Name:         aws-cloudwatch-metrics-ft9fv
+    Namespace:    amazon-cloudwatch
+    UID:          8a520c22-4103-4c47-a0ce-dc0e77c7f4a8
+  Rule:           check-containers
+  Scored:         true
+  Status:         fail
+--
+  Message:        validation error: Running as root is not allowed. The fields spec.securityContext.runAsNonRoot, spec.containers[*].securityContext.runAsNonRoot, and spec.initContainers[*].securityContext.runAsNonRoot must be `true`. Rule check-containers[0] failed at path /spec/securityContext/runAsNonRoot/. Rule check-containers[1] failed at path /spec/containers/0/securityContext/.
+  Policy:         require-run-as-non-root
+  Resources:
+    API Version:  v1
+    Kind:         Pod
+    Name:         aws-cloudwatch-metrics-wrqmq
+    Namespace:    amazon-cloudwatch
+    UID:          18c08ec4-6aad-4e82-8a6a-b78ef7c79dd1
+  Rule:           check-containers
+  Scored:         true
+  Status:         fail
+--
+  Message:        validation error: HostPath volumes are forbidden. The fields spec.volumes[*].hostPath must not be set. Rule host-path failed at path /spec/volumes/1/hostPath/
+  Policy:         disallow-host-path
+  Resources:
+    API Version:  v1
+    Kind:         Pod
+    Name:         aws-cloudwatch-metrics-xzcl2
+    Namespace:    amazon-cloudwatch
+    UID:          8a1104f8-dc74-4f12-ac21-0939b73aa651
+  Rule:           host-path
+  Scored:         true
+  Status:         fail
+--
+  Message:        validation error: Running as root is not allowed. The fields spec.securityContext.runAsNonRoot, spec.containers[*].securityContext.runAsNonRoot, and spec.initContainers[*].securityContext.runAsNonRoot must be `true`. Rule check-containers[0] failed at path /spec/securityContext/runAsNonRoot/. Rule check-containers[1] failed at path /spec/containers/0/securityContext/.
+  Policy:         require-run-as-non-root
+  Resources:
+    API Version:  v1
+    Kind:         Pod
+    Name:         aws-cloudwatch-metrics-xzcl2
+    Namespace:    amazon-cloudwatch
+    UID:          8a1104f8-dc74-4f12-ac21-0939b73aa651
+  Rule:           check-containers
+  Scored:         true
+  Status:         fail
+--
+  Message:        validation error: HostPath volumes are forbidden. The fields spec.volumes[*].hostPath must not be set. Rule host-path failed at path /spec/volumes/1/hostPath/
+  Policy:         disallow-host-path
+  Resources:
+    API Version:  v1
+    Kind:         Pod
+    Name:         aws-cloudwatch-metrics-ft9fv
+    Namespace:    amazon-cloudwatch
+    UID:          8a520c22-4103-4c47-a0ce-dc0e77c7f4a8
+  Rule:           host-path
+  Scored:         true
+  Status:         fail
+--
+  Message:        validation error: HostPath volumes are forbidden. The fields spec.volumes[*].hostPath must not be set. Rule host-path failed at path /spec/volumes/1/hostPath/
+  Policy:         disallow-host-path
+  Resources:
+    API Version:  v1
+    Kind:         Pod
+    Name:         aws-cloudwatch-metrics-wrqmq
+    Namespace:    amazon-cloudwatch
+    UID:          18c08ec4-6aad-4e82-8a6a-b78ef7c79dd1
+  Rule:           host-path
+  Scored:         true
+  Status:         fail
+```
+
+Create ClusterPolicy to check if `team_name` label is present in namespaces:
+
+```bash
+kubectl apply -f - << \EOF
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-ns-labels
+spec:
+  validationFailureAction: audit
+  background: true
+  rules:
+  - name: check-for-labels-on-namespace
+    match:
+      resources:
+        kinds:
+        - Namespace
+    validate:
+      message: "The label `team_name` is required."
+      pattern:
+        metadata:
+          labels:
+            team_name: "?*"
+EOF
+```
+
+See the results:
+
+```bash
+kubectl get clusterpolicyreport
+```
+
+Output:
+
+```text
+NAME                  PASS   FAIL   WARN   ERROR   SKIP   AGE
+clusterpolicyreport   0      9      0      0       0      129m
 ```
 
 ## nri-bundle
