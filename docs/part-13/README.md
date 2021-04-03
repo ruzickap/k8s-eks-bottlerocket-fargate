@@ -11,6 +11,7 @@ export CLUSTER_NAME="kube1"
 export CLUSTER_FQDN="${CLUSTER_NAME}.${BASE_DOMAIN}"
 export AWS_DEFAULT_REGION="eu-central-1"
 export KUBECONFIG=${PWD}/kubeconfig-${CLUSTER_NAME}.conf
+export MY_GITHUB_USERNAME="ruzickap"
 ```
 
 Remove CloudFormation stacks [RDS, EFS]:
@@ -184,7 +185,7 @@ done
 Remove GitHub repository created for Flux:
 
 ```bash
-curl -H "Authorization: token $GITHUB_TOKEN" -X DELETE "https://api.github.com/repos/ruzickap/${CLUSTER_FQDN}"
+curl -H "Authorization: token $GITHUB_TOKEN" -X DELETE "https://api.github.com/repos/${MY_GITHUB_USERNAME}/${CLUSTER_NAME}-k8s-clusters"
 ```
 
 Remove Helm data:

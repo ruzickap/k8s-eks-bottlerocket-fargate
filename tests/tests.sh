@@ -38,6 +38,7 @@ export OKTA_CLIENT_SECRET="1xxxxxH"
 export VAULT_CERT_MANAGER_ROLE_ID="test"
 export VAULT_CERT_MANAGER_SECRET_ID="test"
 export SLACK_INCOMING_WEBHOOK_URL="https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK"
+export SLACK_CHANNEL="mylabs"
 
 test -d tests || ( echo -e "\n*** Run in top level of git repository\n"; exit 1 )
 
@@ -129,7 +130,7 @@ test -s ./demo-magic.sh || curl --silent https://raw.githubusercontent.com/paxto
 # shellcheck disable=SC1091
 . ./demo-magic.sh
 
-export TYPE_SPEED=600
+export TYPE_SPEED=6000
 export PROMPT_TIMEOUT=0
 export NO_WAIT=true
 export DEMO_PROMPT="${GREEN}➜ ${CYAN}$ "

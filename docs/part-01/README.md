@@ -36,8 +36,10 @@ export MY_EMAIL="petr.ruzicka@gmail.com"
 # to K8s resources (Grafana). Only users in GitHub organization
 # (MY_GITHUB_ORG_NAME) will be able to access the apps via ingress.
 export MY_GITHUB_ORG_NAME="ruzickap-org"
+export MY_GITHUB_USERNAME="ruzickap"
 # AWS Region
 export AWS_DEFAULT_REGION="eu-central-1"
+export SLACK_CHANNEL="mylabs"
 # Tags used to tag the AWS resources
 export TAGS="Owner=${MY_EMAIL} Environment=Dev Tribe=Cloud_Native Squad=Cloud_Container_Platform"
 echo -e "${MY_EMAIL} | ${LETSENCRYPT_ENVIRONMENT} | ${CLUSTER_NAME} | ${BASE_DOMAIN} | ${CLUSTER_FQDN}\n${TAGS}"
@@ -586,7 +588,7 @@ managedNodeGroups:
     volumeSize: 20
     ssh:
       # Enable ssh access (via the admin container)
-      allow: true
+      allow: false
       publicKeyPath: ~/.ssh/id_rsa.pub
     labels:
       role: worker

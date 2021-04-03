@@ -212,7 +212,7 @@ Details: [Kubernetes Event Notifications to a Slack Channel](https://www.powerup
 helm install --version 3.2.2 --namespace kubewatch --create-namespace --values - kubewatch bitnami/kubewatch << EOF
 slack:
   enabled: true
-  channel: "#mylabs"
+  channel: "#${SLACK_CHANNEL}"
   token: ${SLACK_BOT_API_TOKEN}
 resourcesToWatch:
   deployment: false
