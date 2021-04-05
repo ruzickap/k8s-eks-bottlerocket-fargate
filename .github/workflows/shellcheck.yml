@@ -32,4 +32,4 @@ jobs:
           >> README.sh
 
       - name: Lint check
-        uses: azohra/shell-linter@latest
+        uses: azohra/shell-linter@v0.4.0
