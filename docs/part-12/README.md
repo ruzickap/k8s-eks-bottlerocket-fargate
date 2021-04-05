@@ -104,7 +104,7 @@ Install Flux on a Kubernetes cluster and configure it to manage itself from
 a Git repository:
 
 ```bash
-flux bootstrap github --personal --private=false --owner=${MY_GITHUB_USERNAME} --repository="${CLUSTER_NAME}-k8s-clusters" --path=clusters/${CLUSTER_FQDN} --branch=master
+flux bootstrap github --personal --owner=${MY_GITHUB_USERNAME} --repository="${CLUSTER_NAME}-k8s-clusters" --path=clusters/${CLUSTER_FQDN} --branch=master
 ```
 
 Output:
@@ -158,17 +158,138 @@ networkpolicy.networking.k8s.io/deny-ingress created
 ✔ bootstrap finished
 ```
 
+Create GPG key in `tmp/${CLUSTER_FQDN}/.gnupg` directory:
+
+```bash
+export GNUPGHOME="${PWD}/tmp/${CLUSTER_FQDN}/.gnupg"
+mkdir -v "${GNUPGHOME}" && chmod 0700 "${GNUPGHOME}"
+
+cat > "${GNUPGHOME}/my_gpg_key" << EOF
+Key-Type: RSA
+Key-Length: 4096
+Subkey-Type: RSA
+Subkey-Length: 4096
+Name-Comment: Flux secrets
+Name-Real: ${CLUSTER_FQDN}
+Name-Email: ${MY_EMAIL}
+Expire-Date: 0
+%no-protection
+%commit
+EOF
+
+gpg --verbose --batch --gen-key "${GNUPGHOME}/my_gpg_key"
+```
+
+Output
+
+```text
+mkdir: created directory '/Users/ruzickap/git/k8s-eks-bottlerocket-fargate/tmp/kube1.k8s.mylabs.dev/.gnupg'
+gpg: keybox '/Users/ruzickap/git/k8s-eks-bottlerocket-fargate/tmp/kube1.k8s.mylabs.dev/.gnupg/pubring.kbx' created
+gpg: no running gpg-agent - starting '/usr/local/Cellar/gnupg/2.2.27/bin/gpg-agent'
+gpg: waiting for the agent to come up ... (5s)
+gpg: connection to agent established
+gpg: writing self signature
+gpg: RSA/SHA256 signature from: "793D8A6CC3AC8401 [?]"
+gpg: writing key binding signature
+gpg: RSA/SHA256 signature from: "793D8A6CC3AC8401 [?]"
+gpg: RSA/SHA256 signature from: "F350D2445C4EFBA5 [?]"
+gpg: writing public key to '/Users/ruzickap/git/k8s-eks-bottlerocket-fargate/tmp/kube1.k8s.mylabs.dev/.gnupg/pubring.kbx'
+gpg: /Users/ruzickap/git/k8s-eks-bottlerocket-fargate/tmp/kube1.k8s.mylabs.dev/.gnupg/trustdb.gpg: trustdb created
+gpg: using pgp trust model
+gpg: key 793D8A6CC3AC8401 marked as ultimately trusted
+gpg: directory '/Users/ruzickap/git/k8s-eks-bottlerocket-fargate/tmp/kube1.k8s.mylabs.dev/.gnupg/openpgp-revocs.d' created
+gpg: writing to '/Users/ruzickap/git/k8s-eks-bottlerocket-fargate/tmp/kube1.k8s.mylabs.dev/.gnupg/openpgp-revocs.d/2055792FD06D60E6CD8A345E793D8A6CC3AC8401.rev'
+gpg: RSA/SHA256 signature from: "793D8A6CC3AC8401 kube1.k8s.mylabs.dev (Flux secrets) <petr.ruzicka@gmail.com>"
+gpg: revocation certificate stored as '/Users/ruzickap/git/k8s-eks-bottlerocket-fargate/tmp/kube1.k8s.mylabs.dev/.gnupg/openpgp-revocs.d/2055792FD06D60E6CD8A345E793D8A6CC3AC8401.rev'
+```
+
+Store the key fingerprint as an environment variable:
+
+```bash
+KEY_FP=$(gpg --list-secret-keys --with-colons ${CLUSTER_FQDN} | awk  -F: "NR == 2 { print \$10 }")
+export KEY_FP
+```
+
+Output:
+
+```text
+gpg: checking the trustdb
+gpg: marginals needed: 3  completes needed: 1  trust model: pgp
+gpg: depth: 0  valid:   1  signed:   0  trust: 0-, 0q, 0n, 0m, 0f, 1u
+```
+
+Export the public and private keypair from your local GPG keyring and create
+a Kubernetes secret named `sops-gpg` in the `flux-system` namespace:
+
+```bash
+gpg --export-secret-keys --armor "${KEY_FP}" |
+kubectl create secret generic sops-gpg \
+--namespace=flux-system \
+--from-file=sops.asc=/dev/stdin
+```
+
+Configure Git:
+
+```bash
+grep -q "github.com" ~/.ssh/known_hosts || ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
+test -f ~/.gitconfig || git config --global user.email "${MY_EMAIL}"
+```
+
 Clone git repository created by flux:
 
 ```bash
-git clone --quiet "git@github.com:${MY_GITHUB_USERNAME}/${CLUSTER_NAME}-k8s-clusters.git" "tmp/${CLUSTER_FQDN}/${CLUSTER_NAME}-k8s-clusters"
+git clone --quiet "https://${GITHUB_TOKEN}@github.com/${MY_GITHUB_USERNAME}/${CLUSTER_NAME}-k8s-clusters.git" "tmp/${CLUSTER_FQDN}/${CLUSTER_NAME}-k8s-clusters"
 cd tmp/${CLUSTER_FQDN}/${CLUSTER_NAME}-k8s-clusters
 ```
 
-Create secret with Slack incoming webhook:
+Export the public key into the Git directory
 
 ```bash
-kubectl -n flux-system create secret generic slack-url --from-literal=address=${SLACK_INCOMING_WEBHOOK_URL}
+gpg --export --armor "${KEY_FP}" > clusters/${CLUSTER_FQDN}/.sops.pub.asc
+git add clusters/${CLUSTER_FQDN}/.sops.pub.asc
+git commit -m "Share GPG public key for secrets generation"
+```
+
+Configure the Git directory for encryption:
+
+```bash
+cat > clusters/${CLUSTER_FQDN}/.sops.yaml << EOF
+creation_rules:
+  - path_regex: .*.yaml
+    encrypted_regex: ^(data|stringData|wordpress_password)$
+    pgp: ${KEY_FP}
+EOF
+
+echo "**/.sops.yaml" > .sourceignore
+git add .sourceignore clusters/${CLUSTER_FQDN}/.sops.yaml
+git commit -m "Configure the Git directory for encryption"
+```
+
+Configure in-cluster secrets decryption:
+
+```bash
+cat > clusters/${CLUSTER_FQDN}/sops.yaml << EOF
+apiVersion: kustomize.toolkit.fluxcd.io/v1beta1
+kind: Kustomization
+metadata:
+  name: sops-secrets
+  namespace: flux-system
+spec:
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-gpg
+  interval: 10m
+  path: ./clusters/${CLUSTER_FQDN}
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+EOF
+
+git add clusters/${CLUSTER_FQDN}/sops.yaml
+git commit -m "Configure the Git directory for encryption"
+git push && flux reconcile source git flux-system
 ```
 
 ### HelmRepository
@@ -224,7 +345,6 @@ EOF
 
 git add apps/base/helmrepository
 git commit -m "Add HelmRepository files"
-git push
 ```
 
 ### Application configuration
@@ -299,7 +419,6 @@ EOF
 
 git add apps/base/flux
 git commit -m "Add podmonitor and configure slack notifications to flux"
-git push
 ```
 
 Add podinfo:
@@ -342,7 +461,6 @@ EOF
 
 git add apps/base/podinfo
 git commit -m "Add podinfo"
-git push
 ```
 
 Add Wordpress:
@@ -385,7 +503,6 @@ EOF
 
 git add apps/base/wordpress
 git commit -m "Add wordpress"
-git push
 ```
 
 ### Dev group configuration
@@ -401,8 +518,8 @@ kind: Kustomization
 commonLabels:
   group: dev
 resources:
-  - ../base/flux
   - ../base/helmrepository
+  - ../base/flux
   - ../base/podinfo
   - ../base/wordpress
 patchesStrategicMerge:
@@ -437,16 +554,16 @@ spec:
       enabled: true
     ui:
       color: "#577c34"
-      message: "Environment: dev | Cluster: ${cluster_fqdn} | Certificate: ${letsencrypt_environment:=staging}"
+      message: "Environment: dev | Hostname: ${podinfo_hostname} | Certificate: ${letsencrypt_environment:=staging}"
     ingress:
       enabled: true
       path: /
       hosts:
-        - ${podinfo_dns_name}.${cluster_fqdn}
+        - ${podinfo_hostname}
       tls:
         - secretName: ingress-cert-${letsencrypt_environment:=staging}
           hosts:
-            - ${podinfo_dns_name}.${cluster_fqdn}
+            - ${podinfo_hostname}
 EOF
 
 cat > apps/dev/wordpress-values.yaml << \EOF
@@ -491,7 +608,6 @@ EOF
 
 git add apps/dev
 git commit -m "Add dev group"
-git push
 ```
 
 ### Cluster apps configuration
@@ -517,12 +633,16 @@ spec:
     substitute:
       cluster_fqdn: "${CLUSTER_FQDN}"
       letsencrypt_environment: "${LETSENCRYPT_ENVIRONMENT}"
-      podinfo_dns_name: flux-dev-podinfo
+      podinfo_hostname: flux-dev-podinfo.${CLUSTER_FQDN}
       slack_channel: ${SLACK_CHANNEL}
       wordpress_password: ${MY_PASSWORD}
       wordpress_email: ${MY_EMAIL}
       wordpress_hostname: flux-dev-wordpress.${CLUSTER_FQDN}
 EOF
+sops --encrypt --in-place --config clusters/${CLUSTER_FQDN}/.sops.yaml clusters/${CLUSTER_FQDN}/apps.yaml
+
+kubectl -n flux-system create secret generic slack-url --from-literal=address=${SLACK_INCOMING_WEBHOOK_URL} --dry-run=client -o yaml > clusters/${CLUSTER_FQDN}/secret-slack-url.yaml
+sops --encrypt --in-place --config clusters/${CLUSTER_FQDN}/.sops.yaml clusters/${CLUSTER_FQDN}/secret-slack-url.yaml
 
 git add clusters/${CLUSTER_FQDN}
 git commit -m "Configure cluster applications"
