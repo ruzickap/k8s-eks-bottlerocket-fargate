@@ -11,7 +11,7 @@ and modify the
 
 ```bash
 helm repo add jaegertracing https://jaegertracing.github.io/helm-charts
-helm install --version 2.19.0 --namespace jaeger-operator --create-namespace --values - jaeger-operator jaegertracing/jaeger-operator << EOF
+helm install --version 2.19.1 --namespace jaeger-operator --create-namespace --values - jaeger-operator jaegertracing/jaeger-operator << EOF
 rbac:
   clusterRole: true
 EOF
@@ -97,7 +97,7 @@ EOF
 Download `istioctl`:
 
 ```bash
-ISTIO_VERSION="1.9.0"
+ISTIO_VERSION="1.9.2"
 
 if [[ ! -f /usr/local/bin/istioctl ]]; then
   if [[ $(uname) == "Darwin" ]]; then
