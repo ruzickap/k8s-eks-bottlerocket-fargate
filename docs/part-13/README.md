@@ -6,8 +6,8 @@
 Set necessary variables:
 
 ```bash
-export BASE_DOMAIN="k8s.mylabs.dev"
-export CLUSTER_NAME="kube1"
+export BASE_DOMAIN=${BASE_DOMAIN:-k8s.mylabs.dev}
+export CLUSTER_NAME=${CLUSTER_NAME:-kube1}
 export CLUSTER_FQDN="${CLUSTER_NAME}.${BASE_DOMAIN}"
 export AWS_DEFAULT_REGION="eu-central-1"
 export KUBECONFIG=${PWD}/kubeconfig-${CLUSTER_NAME}.conf
@@ -32,7 +32,7 @@ Detach policy from IAM role:
 ```bash
 if AWS_CLOUDFORMATION_DETAILS=$(aws cloudformation describe-stacks --stack-name "${CLUSTER_NAME}-route53-iam-s3-ebs"); then
   CLOUDWATCH_POLICY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"CloudWatchPolicyArn\") .OutputValue")
-  FARGATE_POD_EXECUTION_ROLE_ARN=$(eksctl get iamidentitymapping --cluster=${CLUSTER_NAME} -o json | jq -r ".[] | select (.rolearn | contains(\"FargatePodExecutionRole\")) .rolearn")
+  FARGATE_POD_EXECUTION_ROLE_ARN=$(eksctl get iamidentitymapping --cluster="${CLUSTER_NAME}" -o json | jq -r ".[] | select (.rolearn | contains(\"FargatePodExecutionRole\")) .rolearn")
   aws iam detach-role-policy --policy-arn "${CLOUDWATCH_POLICY_ARN}" --role-name "${FARGATE_POD_EXECUTION_ROLE_ARN#*/}" || true
 fi
 ```
@@ -205,7 +205,7 @@ rm -rf "tmp/${CLUSTER_FQDN}" &> /dev/null
 Remove other files:
 
 ```bash
-rm demo-magic.sh "${KUBECONFIG}" README.sh "kubeconfig-${CLUSTER_NAME}.conf.eksctl.lock" &> /dev/null || true
+rm /tmp/demo-magic.sh "${KUBECONFIG}" /tmp/README-${CLUSTER_NAME}.sh "kubeconfig-${CLUSTER_NAME}.conf.eksctl.lock" &> /dev/null || true
 ```
 
 Wait for CloudFormation to be deleted:

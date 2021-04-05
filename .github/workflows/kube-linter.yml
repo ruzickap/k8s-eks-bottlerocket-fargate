@@ -30,3 +30,4 @@ jobs:
         uses: stackrox/kube-linter-action@v1
         with:
           directory: docs
+          config: .kube-linter/config.yaml

@@ -562,7 +562,7 @@ Get the details about recovery:
 
 ```bash
 velero restore describe restore-vault
-sleep 100
+sleep 120
 ```
 
 Output:

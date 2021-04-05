@@ -4,14 +4,8 @@
 # release-it configuration file
 .release-it.yml
 
-# demo-magic.sh script
-demo-magic.sh
-
 # Kubernetes kubeconfig file
 kubeconfig*.conf*
-
-# README.sh script
-README*.sh
 
 # Vuepress Pages
 docs/.vuepress/dist

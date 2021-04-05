@@ -21,15 +21,15 @@ names will look like `CLUSTER_NAME`.`BASE_DOMAIN` (`kube1.k8s.mylabs.dev`).
 
 ```bash
 # Hostname / FQDN definitions
-export BASE_DOMAIN="k8s.mylabs.dev"
-export CLUSTER_NAME="kube1"
+export BASE_DOMAIN=${BASE_DOMAIN:-k8s.mylabs.dev}
+export CLUSTER_NAME=${CLUSTER_NAME:-kube1}
 export CLUSTER_FQDN="${CLUSTER_NAME}.${BASE_DOMAIN}"
 export KUBECONFIG=${PWD}/kubeconfig-${CLUSTER_NAME}.conf
 # * "production" - valid certificates signed by Lets Encrypt ""
 # * "staging" - not trusted certs signed by Lets Encrypt "Fake LE Intermediate X1"
-export LETSENCRYPT_ENVIRONMENT=${LETSENCRYPT_ENVIRONMENT:-staging}
+export LETSENCRYPT_ENVIRONMENT="staging"
 export LETSENCRYPT_CERTIFICATE="https://letsencrypt.org/certs/staging/letsencrypt-stg-root-x1.pem"
-# export LETSENCRYPT_ENVIRONMENT=${LETSENCRYPT_ENVIRONMENT:-production}
+# export LETSENCRYPT_ENVIRONMENT="production"
 # export LETSENCRYPT_CERTIFICATE="https://letsencrypt.org/certs/lets-encrypt-r3.pem"
 export MY_EMAIL="petr.ruzicka@gmail.com"
 # GitHub Organization + Team where are the users who will have the admin access
@@ -86,7 +86,7 @@ Install necessary software:
 ```bash
 if [[ -x /usr/bin/apt-get ]]; then
   apt update -qq
-  DEBIAN_FRONTEND=noninteractive apt-get install -y -qq apache2-utils ansible awscli dnsutils git jq sudo unzip > /dev/null
+  DEBIAN_FRONTEND=noninteractive apt-get install -y -qq apache2-utils ansible awscli dnsutils git gnupg2 jq sudo unzip > /dev/null
 fi
 ```
 
@@ -163,13 +163,39 @@ if [[ ! -x /usr/local/bin/calicoctl ]]; then
 fi
 ```
 
+Install [SOPS: Secrets OPerationS](https://github.com/mozilla/sops):
+
+```bash
+if [[ ! -x /usr/local/bin/sops ]]; then
+  sudo curl -s -Lo /usr/local/bin/sops "https://github.com/mozilla/sops/releases/download/v3.7.0/sops-v3.7.0.$(uname | sed "s/./\L&/g")"
+  sudo chmod a+x /usr/local/bin/sops
+fi
+```
+
+Install [kustomize](https://kustomize.io/):
+
+```bash
+if [[ ! -x /usr/local/bin/kustomize ]]; then
+  curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | sudo bash -s 4.0.5 /usr/local/bin/
+fi
+```
+
+Install [hey](https://github.com/rakyll/hey):
+
+```bash
+if [[ ! -x /usr/local/bin/hey ]]; then
+  sudo curl -s -Lo /usr/local/bin/hey "https://hey-release.s3.us-east-2.amazonaws.com/hey_$(uname | sed "s/./\L&/g")_amd64"
+  sudo chmod a+x /usr/local/bin/hey
+fi
+```
+
 ## Configure AWS Route 53 Domain delegation
 
 Create DNS zone (`BASE_DOMAIN`):
 
 ```shell
 aws route53 create-hosted-zone --output json \
-  --name ${BASE_DOMAIN} \
+  --name "${BASE_DOMAIN}" \
   --caller-reference "$(date)" \
   --hosted-zone-config="{\"Comment\": \"Created by ${MY_EMAIL}\", \"PrivateZone\": false}" | jq
 ```
@@ -503,13 +529,13 @@ EKS cluster and nodes.
 Generate SSH key if not exists:
 
 ```bash
-test -f ~/.ssh/id_rsa || ( install -m 0700 -d ~/.ssh && ssh-keygen -b 2048 -t rsa -f ~/.ssh/id_rsa -q -N "" )
+test -f ~/.ssh/id_rsa.pub || ( install -m 0700 -d ~/.ssh && ssh-keygen -b 2048 -t rsa -f ~/.ssh/id_rsa -q -N "" )
 ```
 
 Create the Amazon EKS cluster with Calico using `eksctl`:
 
 ```bash
-cat > tmp/${CLUSTER_FQDN}/eksctl.yaml << EOF
+cat > "tmp/${CLUSTER_FQDN}/eksctl.yaml" << EOF
 apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
 metadata:
@@ -619,10 +645,10 @@ cloudWatch:
     enableTypes: ["audit", "authenticator", "controllerManager"]
 EOF
 
-eksctl create cluster --config-file tmp/${CLUSTER_FQDN}/eksctl.yaml --kubeconfig "${KUBECONFIG}" --without-nodegroup
+eksctl create cluster --config-file "tmp/${CLUSTER_FQDN}/eksctl.yaml" --kubeconfig "${KUBECONFIG}" --without-nodegroup
 kubectl delete daemonset -n kube-system aws-node
 kubectl apply -f https://docs.projectcalico.org/manifests/calico-vxlan.yaml
-eksctl create nodegroup --config-file tmp/${CLUSTER_FQDN}/eksctl.yaml
+eksctl create nodegroup --config-file "tmp/${CLUSTER_FQDN}/eksctl.yaml"
 ```
 
 Output:
