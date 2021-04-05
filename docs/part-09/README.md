@@ -605,5 +605,5 @@ EOF
 Generate traffic going to Drupal2:
 
 ```bash
-hey -n 2000 -c 1 -q 1 -h2 https://drupal2.${CLUSTER_FQDN} > /dev/null &
+hey -n 2000 -c 1 -q 1 -h2 "https://drupal2.${CLUSTER_FQDN}" > /dev/null &
 ```

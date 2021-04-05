@@ -27,11 +27,12 @@ jobs:
       - name: Apostrophe code check
         env:
           TERM: xterm
+          CLUSTER_NAME: kube1-test
         run: |
           ./run-k8s-eks-bottlerocket-fargate.sh readme_output_only > /dev/null
-          if [[ $(grep \' README.sh | sort | uniq | wc -l) != "2" ]]; then
+          if [[ $(grep \' "/tmp/README-${CLUSTER_NAME}.sh" | sort | uniq | wc -l) != "2" ]]; then
             echo "*** Additional apostrophe found. Please check the source code and remove them..."
-            grep \' README.sh | sort | uniq
+            grep \' "/tmp/README-${CLUSTER_NAME}.sh" | sort | uniq
             exit 1
           fi
 

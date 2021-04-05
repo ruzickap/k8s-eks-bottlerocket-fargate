@@ -45,6 +45,61 @@ additionalPrometheusRulesMap:
           severity: page
         annotations:
           summary: "{{ \$labels.kind }} {{ \$labels.namespace }}/{{ \$labels.name }} reconciliation has been failing for more than ten minutes."
+    # https://github.com/openstack/openstack-helm-infra/blob/master/prometheus/values_overrides/kubernetes.yaml
+    - name: calico.rules
+      rules:
+      - alert: prom_exporter_calico_unavailable
+        expr: avg_over_time(up{job="kubernetes-pods",application="calico"}[5m]) == 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          description: Calico exporter is not collecting metrics or is not available for past 10 minutes
+          title: Calico exporter is not collecting metrics or is not available
+      - alert: calico_datapane_failures_high_1h
+        expr: absent(felix_int_dataplane_failures) OR increase(felix_int_dataplane_failures[1h]) > 5
+        labels:
+          severity: page
+        annotations:
+          description: "Felix instance {{ \$labels.instance }} has seen {{ \$value }} dataplane failures within the last hour"
+          summary: "A high number of dataplane failures within Felix are happening"
+      - alert: calico_datapane_address_msg_batch_size_high_5m
+        expr: absent(felix_int_dataplane_addr_msg_batch_size_sum) OR absent(felix_int_dataplane_addr_msg_batch_size_count) OR (felix_int_dataplane_addr_msg_batch_size_sum/felix_int_dataplane_addr_msg_batch_size_count) > 5
+        for: 5m
+        labels:
+          severity: page
+        annotations:
+          description: "Felix instance {{ \$labels.instance }} has seen a high value of {{ \$value }} dataplane address message batch size"
+          summary: "Felix address message batch size is higher"
+      - alert: calico_datapane_iface_msg_batch_size_high_5m
+        expr: absent(felix_int_dataplane_iface_msg_batch_size_sum) OR absent(felix_int_dataplane_iface_msg_batch_size_count) OR (felix_int_dataplane_iface_msg_batch_size_sum/felix_int_dataplane_iface_msg_batch_size_count) > 5
+        for: 5m
+        labels:
+          severity: page
+        annotations:
+          description: "Felix instance {{ \$labels.instance }} has seen a high value of {{ \$value }} dataplane interface message batch size"
+          summary: "Felix interface message batch size is higher"
+      - alert: calico_ipset_errors_high_1h
+        expr: absent(felix_ipset_errors) OR increase(felix_ipset_errors[1h]) > 5
+        labels:
+          severity: page
+        annotations:
+          description: "Felix instance {{ \$labels.instance }} has seen {{ \$value }} ipset errors within the last hour"
+          summary: "A high number of ipset errors within Felix are happening"
+      - alert: calico_iptable_save_errors_high_1h
+        expr: absent(felix_iptables_save_errors) OR increase(felix_iptables_save_errors[1h]) > 5
+        labels:
+          severity: page
+        annotations:
+          description: "Felix instance {{ \$labels.instance }} has seen {{ \$value }} iptable save errors within the last hour"
+          summary: "A high number of iptable save errors within Felix are happening"
+      - alert: calico_iptable_restore_errors_high_1h
+        expr: absent(felix_iptables_restore_errors) OR increase(felix_iptables_restore_errors[1h]) > 5
+        labels:
+          severity: page
+        annotations:
+          description: "Felix instance {{ \$labels.instance }} has seen {{ \$value }} iptable restore errors within the last hour"
+          summary: "A high number of iptable restore errors within Felix are happening"
 alertmanager:
   config:
     global:
@@ -187,72 +242,58 @@ grafana:
         gnetId: 8685
         revision: 1
         datasource: Prometheus
-      # https://grafana.com/grafana/dashboards/1860
       node-exporter-full:
         gnetId: 1860
         revision: 21
         datasource: Prometheus
-      # https://grafana.com/grafana/dashboards/3662
       prometheus-2-0-overview:
         gnetId: 3662
         revision: 2
         datasource: Prometheus
-      # https://grafana.com/grafana/dashboards/9852
       stians-disk-graphs:
         gnetId: 9852
         revision: 1
         datasource: Prometheus
-      # https://grafana.com/grafana/dashboards/12006
       kubernetes-apiserver:
         gnetId: 12006
         revision: 1
         datasource: Prometheus
-      # https://grafana.com/grafana/dashboards/9614
       ingress-nginx:
         gnetId: 9614
         revision: 1
         datasource: Prometheus
-      # https://grafana.com/grafana/dashboards/11875
       ingress-nginx2:
         gnetId: 11875
         revision: 1
         datasource: Prometheus
-      # https://grafana.com/grafana/dashboards/7639
       istio-mesh:
         gnetId: 7639
         revision: 54
         datasource: Prometheus
-      # https://grafana.com/grafana/dashboards/11829
       istio-performance:
         gnetId: 11829
         revision: 54
         datasource: Prometheus
-      # https://grafana.com/grafana/dashboards/7636
       istio-service:
         gnetId: 7636
         revision: 54
         datasource: Prometheus
-      # https://grafana.com/grafana/dashboards/7630
       istio-workload:
         gnetId: 7630
         revision: 54
         datasource: Prometheus
-      # https://grafana.com/grafana/dashboards/7645
       istio-control-plane:
         gnetId: 7645
         revision: 54
         datasource: Prometheus
-      # https://grafana.com/grafana/dashboards/11055
       velero-stats:
         gnetId: 11055
         revision: 2
         datasource: Prometheus
-      # https://grafana.com/grafana/dashboards/10001
       jaeger:
         gnetId: 10001
         revision: 2
         datasource: Prometheus
-      # https://grafana.com/grafana/dashboards/10880
       loki-promtail:
         gnetId: 10880
         revision: 1
@@ -275,6 +316,10 @@ grafana:
       kyverno-policy-reports:
         gnetId: 13968
         revision: 1
+        datasource: Prometheus
+      calico-felix-dashboard:
+        gnetId: 12175
+        revision: 5
         datasource: Prometheus
   grafana.ini:
     server:
@@ -321,6 +366,96 @@ prometheus:
           resources:
             requests:
               storage: 2Gi
+EOF
+```
+
+## Enable calico monitoring
+
+> This step should be done right after Prometheus installation to prevent
+> Alertmanager from firing calico related alarms
+
+Enable Felix Prometheus metrics:
+
+```bash
+calicoctl patch felixConfiguration default --patch "{\"spec\":{\"prometheusMetricsEnabled\": true}}"
+```
+
+Creating a service to expose Felix metrics according
+[Monitor Calico component metrics](https://docs.projectcalico.org/maintenance/monitor/monitor-component-metrics):
+
+```bash
+kubectl apply -f - << EOF
+apiVersion: v1
+kind: Service
+metadata:
+  name: felix-metrics-svc
+  namespace: kube-system
+  labels:
+    app: calico-felix
+spec:
+  selector:
+    k8s-app: calico-node
+  ports:
+  - name: metrics-http
+    port: 9091
+    targetPort: 9091
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: felix-metrics-sm
+  namespace: kube-system
+  labels:
+    app: calico
+spec:
+  endpoints:
+  - interval: 10s
+    path: /metrics
+    port: metrics-http
+  namespaceSelector:
+    matchNames:
+    - kube-system
+  selector:
+    matchLabels:
+      app: calico-felix
+EOF
+```
+
+Creating a service to expose kube-controllers metrics:
+
+```bash
+kubectl apply -f - << EOF
+apiVersion: v1
+kind: Service
+metadata:
+  name: kube-controllers-metrics-svc
+  namespace: kube-system
+  labels:
+    app: calico-kube-controllers
+spec:
+  selector:
+    k8s-app: calico-kube-controllers
+  ports:
+  - name: metrics-http
+    port: 9094
+    targetPort: 9094
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: kube-controllers-metrics-sm
+  namespace: kube-system
+spec:
+  endpoints:
+  - interval: 10s
+    path: /metrics
+    port: metrics-http
+  namespaceSelector:
+    matchNames:
+    - kube-system
+  selector:
+    matchLabels:
+      app: calico-kube-controllers
 EOF
 ```
 
@@ -433,7 +568,7 @@ EOF
 Install kyverno policies:
 
 ```bash
-mkdir tmp/${CLUSTER_FQDN}/kyverno-policies
+mkdir "tmp/${CLUSTER_FQDN}/kyverno-policies"
 cat > "tmp/${CLUSTER_FQDN}/kyverno-policies/kustomization.yaml" << EOF
 resources:
 - github.com/kyverno/policies/pod-security?ref=930b579b1d81be74678045dd3d397f668d321cdf

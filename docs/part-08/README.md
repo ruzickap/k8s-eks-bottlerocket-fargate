@@ -269,7 +269,7 @@ vault write auth/github/config organization="${MY_GITHUB_ORG_NAME}"
 vault write auth/github/map/teams/cluster-admin value=my-admin-policy
 
 # Wait for DNS vault.${CLUSTER_FQDN} to be ready...
-while [[ -z "$(dig +nocmd +noall +answer +ttlid a vault.${CLUSTER_FQDN})" ]]; do
+while [[ -z "$(dig +nocmd +noall +answer +ttlid a "vault.${CLUSTER_FQDN}")" ]]; do
   date
   sleep 5
 done
@@ -327,7 +327,7 @@ Generate the `root` certificate and save the certificate in `CA_cert.crt`:
 vault write -field=certificate "${VAULT_CLUSTER_FQDN}-pki/root/generate/internal" \
   common_name="${CLUSTER_FQDN}" country="CZ" organization="PA" \
   alt_names="${CLUSTER_FQDN},*.${CLUSTER_FQDN}" \
-  ttl=87600h > tmp/${CLUSTER_FQDN}/CA_cert.crt
+  ttl=87600h > "tmp/${CLUSTER_FQDN}/CA_cert.crt"
 ```
 
 Configure the PKI secrets engine certificate issuing and certificate revocation
@@ -361,23 +361,23 @@ CSR as `pki_intermediate.csr`:
 vault write -format=json "${VAULT_CLUSTER_FQDN}-pki_int/intermediate/generate/internal" \
   common_name="${CLUSTER_FQDN}" country="CZ" organization="PA2" \
   alt_names="${CLUSTER_FQDN},*.${CLUSTER_FQDN}" \
-  | jq -r ".data.csr" > tmp/${CLUSTER_FQDN}/pki_intermediate.csr
+  | jq -r ".data.csr" > "tmp/${CLUSTER_FQDN}/pki_intermediate.csr"
 ```
 
 Sign the intermediate certificate with the root certificate and save the
 generated certificate as `intermediate.cert.pem`:
 
 ```bash
-vault write -format=json "${VAULT_CLUSTER_FQDN}-pki/root/sign-intermediate" csr=@tmp/${CLUSTER_FQDN}/pki_intermediate.csr \
+vault write -format=json "${VAULT_CLUSTER_FQDN}-pki/root/sign-intermediate" csr="@tmp/${CLUSTER_FQDN}/pki_intermediate.csr" \
   format=pem_bundle ttl="43800h" \
-  | jq -r ".data.certificate" > tmp/${CLUSTER_FQDN}/intermediate.cert.pem
+  | jq -r ".data.certificate" > "tmp/${CLUSTER_FQDN}/intermediate.cert.pem"
 ```
 
 Once the CSR is signed and the root CA returns a certificate, it can be
 imported back into Vault:
 
 ```bash
-vault write "${VAULT_CLUSTER_FQDN}-pki_int/intermediate/set-signed" certificate=@tmp/${CLUSTER_FQDN}/intermediate.cert.pem
+vault write "${VAULT_CLUSTER_FQDN}-pki_int/intermediate/set-signed" certificate="@tmp/${CLUSTER_FQDN}/intermediate.cert.pem"
 ```
 
 ### Configure cert-manager authentication to vault
@@ -397,13 +397,13 @@ vault auth enable approle
 Create a policy that enables read access to the PKI secrets engine paths:
 
 ```bash
-cat > tmp/${CLUSTER_FQDN}/pki_int_policy.hcl << EOF
+cat > "tmp/${CLUSTER_FQDN}/pki_int_policy.hcl" << EOF
 path "${VAULT_CLUSTER_FQDN}-pki_int*"                                              { capabilities = ["read", "list"] }
 path "${VAULT_CLUSTER_FQDN}-pki_int/roles/cert-manager-role-${VAULT_CLUSTER_FQDN}" { capabilities = ["create", "update"] }
 path "${VAULT_CLUSTER_FQDN}-pki_int/sign/cert-manager-role-${VAULT_CLUSTER_FQDN}"  { capabilities = ["create", "update"] }
 path "${VAULT_CLUSTER_FQDN}-pki_int/issue/cert-manager-role-${VAULT_CLUSTER_FQDN}" { capabilities = ["create"] }
 EOF
-vault policy write "cert-manager-policy-${VAULT_CLUSTER_FQDN}" tmp/${CLUSTER_FQDN}/pki_int_policy.hcl
+vault policy write "cert-manager-policy-${VAULT_CLUSTER_FQDN}" "tmp/${CLUSTER_FQDN}/pki_int_policy.hcl"
 ```
 
 Create a named role:
@@ -417,7 +417,7 @@ subdomains:
 
 ```bash
 vault write "${VAULT_CLUSTER_FQDN}-pki_int/roles/cert-manager-role-${VAULT_CLUSTER_FQDN}" \
-  allowed_domains=${CLUSTER_FQDN} \
+  allowed_domains="${CLUSTER_FQDN}" \
   allow_subdomains=true \
   max_ttl=720h \
   require_cn=false

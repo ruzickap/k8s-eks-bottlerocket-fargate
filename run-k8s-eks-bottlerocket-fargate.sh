@@ -5,9 +5,9 @@ set -euo pipefail
 ################################################
 # include the magic
 ################################################
-test -s ./demo-magic.sh || curl --silent https://raw.githubusercontent.com/paxtonhare/demo-magic/master/demo-magic.sh > demo-magic.sh
+test -s /tmp/demo-magic.sh || curl --silent https://raw.githubusercontent.com/paxtonhare/demo-magic/master/demo-magic.sh > /tmp/demo-magic.sh
 # shellcheck disable=SC1091
-. ./demo-magic.sh
+. /tmp/demo-magic.sh
 
 ################################################
 # Configure the options
@@ -33,6 +33,8 @@ export NO_WAIT=true
 #DEMO_PROMPT="${GREEN}➜ ${CYAN}\W "
 export DEMO_PROMPT="${GREEN}➜ ${CYAN}$ "
 
+export README_NAME="${CLUSTER_NAME:-kube1}"
+
 # hide the evidence
 clear
 
@@ -42,13 +44,13 @@ sed \
   -e 's/^-----$/\np  ""\np  "################################################################################################### Press <ENTER> to continue"\nwait\n/' \
   -e 's/^```bash.*/\npe '"'"'/' \
   -e 's/^```$/'"'"'/' \
-> README.sh
+> "/tmp/README-${README_NAME}.sh"
 
 if [ "$#" -eq 0 ]; then
   # shellcheck disable=SC1090
   source "${HOME}/Documents/secrets/secret_variables"
-  # shellcheck disable=SC1091
-  source README.sh
+  # shellcheck disable=SC1090
+  source "/tmp/README-${README_NAME}.sh"
 else
-  cat README.sh
+  cat "/tmp/README-${README_NAME}.sh"
 fi

@@ -50,18 +50,6 @@ else
   kind version
 fi
 
-if [[ ! -x /usr/local/bin/helm ]]; then
-  curl -s https://raw.githubusercontent.com/helm/helm/master/scripts/get | bash -s -- --version v3.5.2
-else
-  command -v helm
-  helm version
-fi
-
-if [[ ! -x /usr/local/bin/calicoctl ]]; then
-  sudo curl -s -Lo /usr/local/bin/calicoctl https://github.com/projectcalico/calicoctl/releases/download/v3.18.1/calicoctl
-  sudo chmod a+x /usr/local/bin/calicoctl
-fi
-
 echo "*** Remove cluster (if exists)"
 kind get clusters | grep "${CLUSTER_NAME}" && kind delete cluster --name "${CLUSTER_NAME}"
 
@@ -74,6 +62,11 @@ nodes:
  - role: worker
 EOF
 
+# Install calico
+kubectl apply -f https://docs.projectcalico.org/v3.8/manifests/calico.yaml
+# Wait for calico to start
+sleep 60
+
 echo -e "\n*** Create StorageClass called 'gp2'"
 kubectl apply -f - << EOF
 apiVersion: storage.k8s.io/v1
@@ -85,6 +78,13 @@ volumeBindingMode: WaitForFirstConsumer
 reclaimPolicy: Delete
 EOF
 
+if [[ ! -x /usr/local/bin/helm ]]; then
+  curl -s https://raw.githubusercontent.com/helm/helm/master/scripts/get | bash -s -- --version v3.5.2
+else
+  command -v helm
+  helm version
+fi
+
 echo -e "\n*** Install MetalLB"
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm install --version 2.3.1 --namespace metallb --create-namespace --values - metallb bitnami/metallb << EOF
@@ -95,9 +95,6 @@ configInline:
       addresses:
         - 172.17.255.1-172.17.255.250
 EOF
-
-# Install calico
-kubectl apply -f https://docs.projectcalico.org/v3.8/manifests/calico.yaml
 
 # Create namespaces
 kubectl create namespace cert-manager
@@ -124,11 +121,16 @@ metadata:
 EOF
 done
 
+if [[ ! -x /usr/local/bin/calicoctl ]]; then
+  sudo curl -s -Lo /usr/local/bin/calicoctl https://github.com/projectcalico/calicoctl/releases/download/v3.18.1/calicoctl
+  sudo chmod a+x /usr/local/bin/calicoctl
+fi
+
 echo -e "\n\n******************************\n*** Main tests\n******************************\n"
 
-test -s ./demo-magic.sh || curl --silent https://raw.githubusercontent.com/paxtonhare/demo-magic/master/demo-magic.sh > demo-magic.sh
+test -s /tmp/demo-magic.sh || curl --silent https://raw.githubusercontent.com/paxtonhare/demo-magic/master/demo-magic.sh > /tmp/demo-magic.sh
 # shellcheck disable=SC1091
-. ./demo-magic.sh
+. /tmp/demo-magic.sh
 
 export TYPE_SPEED=6000
 export PROMPT_TIMEOUT=0
@@ -144,7 +146,7 @@ sed docs/part-{02..08}/README.md \
   -e "/kubectl delete CSIDriver efs.csi.aws.com/d" \
   -e "s/^kubectl patch storageclass gp3/# &/" \
   -e "s/^vault /# &/ ; s/.*\$(vault /# &/ ; s/^kubectl exec -n vault vault-0/# &/ ; s/.*VAULT_ROOT_TOKEN/# &/" \
-  -e "s/+ttlid a vault.\${CLUSTER_FQDN}/+ttlid a google.com/" \
+  -e "s/+ttlid a \"vault.\${CLUSTER_FQDN}\"/+ttlid a google.com/" \
   -e "s/hostNetwork: true/# &/" \
   -e '/^# Create ClusterIssuer for production/i \
 apiVersion: cert-manager.io/v1 \
@@ -162,17 +164,17 @@ sed -n "/^\`\`\`bash.*/,/^\`\`\`$/p" \
 sed \
   -e 's/^```bash.*/\npe '"'"'/' \
   -e 's/^```$/'"'"'/' \
-> README-test.sh
+> /tmp/README-test.sh
 
 test -d "tmp/${CLUSTER_FQDN}/" && rm -rf "tmp/${CLUSTER_FQDN}/"
 mkdir -vp "tmp/${CLUSTER_FQDN}"
 
 # shellcheck disable=SC1091
-source README-test.sh
+source /tmp/README-test.sh
 
 kubectl get pods --all-namespaces
 
 kind delete cluster --name "${CLUSTER_NAME}"
 
-rm "${KUBECONFIG}" README-test.sh demo-magic.sh
+rm "${KUBECONFIG}" /tmp/README-test.sh /tmp/demo-magic.sh
 rm -rf "tmp/${CLUSTER_FQDN}/"

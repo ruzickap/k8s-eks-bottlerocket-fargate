@@ -1,3 +1,4 @@
+Alertmanager
 Ansible
 AppRole
 ArgoCD
@@ -41,12 +42,14 @@ HelmRelease
 HelmRepository
 ingress-nginx
 Istio
+istioctl
 IstioOperator
 K8s
 k8s-eks-bottlerocket-fargate
 Kiali
 kuard
 kube-bench
+kube-controllers
 kube-oidc-proxy
 kube-ops-view
 kube-prometheus-stack
@@ -58,6 +61,7 @@ Kubernetes
 kubernetes-dashboard
 kubeview
 kubewatch
+kustomize
 kyverno
 loki
 MariaDB
