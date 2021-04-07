@@ -15,7 +15,7 @@ and modify the
 HARBOR_ADMIN_PASSWORD="${MY_PASSWORD}"
 
 helm repo add harbor https://helm.goharbor.io
-helm install --version 1.5.3 --namespace harbor --wait --wait-for-jobs --values - harbor harbor/harbor << EOF
+helm install --version 1.6.1 --namespace harbor --wait --wait-for-jobs --values - harbor harbor/harbor << EOF
 # https://github.com/goharbor/harbor-helm/blob/master/values.yaml
 expose:
   tls:
@@ -49,8 +49,32 @@ persistence:
       secretkey: ${AWS_SECRET_ACCESS_KEY}
       rootdirectory: /harbor
       storageclass: REDUCED_REDUNDANCY
-imagePullPolicy: Always
 harborAdminPassword: ${HARBOR_ADMIN_PASSWORD}
+metrics:
+  enabled: true
+EOF
+```
+
+Create ServiceMonitor to allow Prometheus to get metric data:
+
+```bash
+kubectl apply -f - << EOF
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: harbor
+  namespace: harbor
+  labels:
+    app: harbor
+spec:
+  selector:
+    matchLabels:
+      app: harbor
+  namespaceSelector:
+    matchNames:
+    - harbor
+  endpoints:
+  - port: metrics
 EOF
 ```
 

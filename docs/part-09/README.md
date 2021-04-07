@@ -99,6 +99,21 @@ Parameters:
     Description: "Enter VPC CIDR that hosts the EKS cluster. Ex: 10.0.0.0/16"
     Type: String
 Resources:
+  DBMonitoringRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: "/"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - monitoring.rds.amazonaws.com
+            Action:
+              - sts:AssumeRole
   RdsInstance:
     Type: "AWS::RDS::DBInstance"
     DependsOn:
@@ -124,6 +139,8 @@ Resources:
       KmsKeyId: !Ref KmsKeyId
       MasterUsername: !Ref RdsMasterUsername
       MasterUserPassword: !Ref RdsMasterPassword
+      MonitoringInterval: 60
+      MonitoringRoleArn: !GetAtt DBMonitoringRole.Arn
       MultiAZ: !Ref MultiAzDatabase
       StorageEncrypted: true
       # gp3 is not supported yet (2021-01-30)
@@ -187,7 +204,7 @@ Outputs:
         Fn::Sub: "${AWS::StackName}-RdsMasterPassword"
 EOF
 
-eval aws cloudformation deploy --stack-name "${CLUSTER_NAME}-rds" --parameter-overrides "ClusterName=${CLUSTER_NAME} KmsKeyId=${EKS_KMS_KEY_ID} RdsMasterPassword=${RDS_DB_PASSWORD} RdsMasterUsername=${RDS_DB_USERNAME} VpcIPCidr=${EKS_VPC_CIDR}" --template-file "tmp/${CLUSTER_FQDN}/cf_rds.yml" --tags "${TAGS}"
+eval aws cloudformation deploy --capabilities CAPABILITY_NAMED_IAM --stack-name "${CLUSTER_NAME}-rds" --parameter-overrides "ClusterName=${CLUSTER_NAME} KmsKeyId=${EKS_KMS_KEY_ID} RdsMasterPassword=${RDS_DB_PASSWORD} RdsMasterUsername=${RDS_DB_USERNAME} VpcIPCidr=${EKS_VPC_CIDR}" --template-file "tmp/${CLUSTER_FQDN}/cf_rds.yml" --tags "${TAGS}"
 
 RDS_DB_HOST=$(aws rds describe-db-instances --query "DBInstances[?DBInstanceIdentifier==\`${CLUSTER_NAME}db\`].[Endpoint.Address]" --output text)
 ```
@@ -200,25 +217,24 @@ and modify the
 [default values](https://github.com/bitnami/charts/blob/master/bitnami/phpmyadmin/values.yaml).
 
 ```bash
-helm install --version 6.5.4 --namespace phpmyadmin --create-namespace --values - phpmyadmin bitnami/phpmyadmin << EOF
-serviceMonitor:
-  enabled: true
+helm install --version 8.2.4 --namespace phpmyadmin --create-namespace --values - phpmyadmin bitnami/phpmyadmin << EOF
 db:
   allowArbitraryServer: false
   host: ${RDS_DB_HOST}
 ingress:
   enabled: true
+  hostname: phpmyadmin.${CLUSTER_FQDN}
   annotations:
     nginx.ingress.kubernetes.io/auth-url: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/auth
     nginx.ingress.kubernetes.io/auth-signin: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/start?rd=\$scheme://\$host\$request_uri
-  hosts:
-    - name: phpmyadmin.${CLUSTER_FQDN}
-  tls: true
-  tlsHosts:
-    - phpmyadmin.${CLUSTER_FQDN}
-  tlsSecret: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
+  extraTls:
+  - hosts:
+      - phpmyadmin.${CLUSTER_FQDN}
+    secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
 metrics:
   enabled: true
+  serviceMonitor:
+    enabled: true
 EOF
 ```
 
@@ -423,7 +439,7 @@ DRUPAL_USERNAME="mydrupaluser"
 DRUPAL_PASSWORD="${MY_PASSWORD}"
 
 helm repo add bitnami https://charts.bitnami.com/bitnami
-helm install --version 10.1.1 --namespace drupal --values - drupal bitnami/drupal << EOF
+helm install --version 10.2.9 --namespace drupal --values - drupal bitnami/drupal << EOF
 replicaCount: 2
 drupalUsername: ${DRUPAL_USERNAME}
 drupalPassword: ${DRUPAL_PASSWORD}
@@ -521,7 +537,7 @@ DRUPAL2_USERNAME="mydrupal2user"
 DRUPAL2_PASSWORD="${MY_PASSWORD}"
 
 helm repo add bitnami https://charts.bitnami.com/bitnami
-helm install --version 10.1.1 --namespace drupal2 --values - drupal2 bitnami/drupal << EOF
+helm install --version 10.2.9 --namespace drupal2 --values - drupal2 bitnami/drupal << EOF
 replicaCount: 2
 drupalUsername: ${DRUPAL2_USERNAME}
 drupalPassword: ${DRUPAL2_PASSWORD}
