@@ -78,6 +78,7 @@ ReadWriteMany
 Route53
 ServiceAccount
 serviceaccounts
+ServiceMonitor
 Snapshotting
 splunk-connect
 StorageClass

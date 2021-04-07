@@ -9,7 +9,7 @@ and modify the
 
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
-helm install --version 5.3.2 --namespace kube-system --values - metrics-server bitnami/metrics-server << EOF
+helm install --version 5.8.3 --namespace kube-system --values - metrics-server bitnami/metrics-server << EOF
 apiService:
   create: true
 # Needed for calico
@@ -26,7 +26,7 @@ and modify the
 
 ```bash
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm install --version 14.4.0 --namespace kube-prometheus-stack --create-namespace --values - kube-prometheus-stack prometheus-community/kube-prometheus-stack << EOF
+helm install --version 14.5.0 --namespace kube-prometheus-stack --values - kube-prometheus-stack prometheus-community/kube-prometheus-stack << EOF
 defaultRules:
   rules:
     etcd: false
@@ -202,6 +202,9 @@ alertmanager:
               storage: 1Gi
 # https://github.com/grafana/helm-charts/blob/main/charts/grafana/values.yaml
 grafana:
+  serviceAccount:
+    create: false
+    name: grafana
   ingress:
     enabled: true
     annotations:
@@ -223,6 +226,11 @@ grafana:
         type: loki
         access: proxy
         url: http://loki.loki:3100
+  additionalDataSources:
+  - name: CloudWatch
+    type: cloudwatch
+    jsonData:
+      defaultRegion: ${AWS_DEFAULT_REGION}
   dashboardProviders:
     dashboardproviders.yaml:
       apiVersion: 1
@@ -321,6 +329,38 @@ grafana:
         gnetId: 12175
         revision: 5
         datasource: Prometheus
+      harbor:
+        gnetId: 14075
+        revision: 2
+        datasource: Prometheus
+      aws-efs:
+        gnetId: 653
+        revision: 4
+        datasource: CloudWatch
+      amazon-rds-os-metrics:
+        gnetId: 702
+        revision: 1
+        datasource: CloudWatch
+      aws-rds:
+        gnetId: 707
+        revision: 5
+        datasource: CloudWatch
+      aws-rds-opt:
+        gnetId: 11698
+        revision: 1
+        datasource: CloudWatch
+      aws-ec2:
+        gnetId: 617
+        revision: 4
+        datasource: CloudWatch
+      aws-network-load-balancer:
+        gnetId: 12111
+        revision: 2
+        datasource: CloudWatch
+      aws-ebs:
+        gnetId: 623
+        revision: 4
+        datasource: CloudWatch
   grafana.ini:
     server:
       root_url: https://grafana.${CLUSTER_FQDN}
@@ -468,7 +508,7 @@ and modify the
 
 ```bash
 helm repo add grafana https://grafana.github.io/helm-charts
-helm install --version 2.3.0 --namespace loki --create-namespace --values - loki grafana/loki << EOF
+helm install --version 2.5.0 --namespace loki --create-namespace --values - loki grafana/loki << EOF
 serviceMonitor:
   enabled: true
 EOF
@@ -482,7 +522,7 @@ and modify the
 [default values](https://github.com/grafana/helm-charts/blob/main/charts/promtail/values.yaml).
 
 ```bash
-helm install --version 3.1.0 --namespace promtail --create-namespace --values - promtail grafana/promtail << EOF
+helm install --version 3.5.0 --namespace promtail --create-namespace --values - promtail grafana/promtail << EOF
 serviceMonitor:
   enabled: true
 config:
@@ -503,7 +543,7 @@ and modify the
 [default values](https://github.com/aws/aws-node-termination-handler/blob/main/config/helm/aws-node-termination-handler/values.yaml).
 
 ```bash
-helm install --version 0.13.2 --namespace kube-system --create-namespace --values - aws-node-termination-handler eks/aws-node-termination-handler << EOF
+helm install --version 0.14.2 --namespace kube-system --create-namespace --values - aws-node-termination-handler eks/aws-node-termination-handler << EOF
 enableRebalanceMonitoring: true
 awsRegion: ${AWS_DEFAULT_REGION}
 enableSpotInterruptionDraining: true
@@ -535,7 +575,7 @@ and modify the
 
 ```bash
 helm repo add policy-reporter https://fjogeleit.github.io/policy-reporter
-helm install --version 0.22.0 --namespace policy-reporter --create-namespace --values - policy-reporter policy-reporter/policy-reporter << EOF
+helm install --version 1.0.0 --namespace policy-reporter --create-namespace --values - policy-reporter policy-reporter/policy-reporter << EOF
 ui:
   enabled: true
   ingress:
@@ -756,7 +796,7 @@ and modify the
 
 ```shell
 helm repo add newrelic https://helm-charts.newrelic.com
-helm install --version 2.1.2 --namespace nri-bundle --create-namespace --values - nri-bundle newrelic/nri-bundle << EOF
+helm install --version 2.6.0 --namespace nri-bundle --create-namespace --values - nri-bundle newrelic/nri-bundle << EOF
 prometheus:
   enabled: true
 kubeEvents:
@@ -778,7 +818,7 @@ and modify the
 
 ```shell
 helm repo add splunk https://splunk.github.io/splunk-connect-for-kubernetes/
-helm install --version 1.4.6 --namespace splunk-connect --create-namespace --values - splunk-connect splunk/splunk-connect-for-kubernetes << EOF
+helm install --version 1.4.7 --namespace splunk-connect --create-namespace --values - splunk-connect splunk/splunk-connect-for-kubernetes << EOF
 global:
   splunk:
     hec:
@@ -823,7 +863,7 @@ and modify the
 
 ```shell
 helm repo add sysdig https://charts.sysdig.com
-helm install --version 1.11.5 --namespace sysdig-agent --create-namespace --values - sysdig-agent sysdig/sysdig << EOF
+helm install --version 1.11.11 --namespace sysdig-agent --create-namespace --values - sysdig-agent sysdig/sysdig << EOF
 sysdig:
   accessKey: ${SYSDIG_AGENT_ACCESSKEY}
   settings:
