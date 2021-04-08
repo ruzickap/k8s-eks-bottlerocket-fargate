@@ -9,7 +9,7 @@ and modify the
 
 ```bash
 helm repo add dex https://charts.dexidp.io
-helm install --version 0.0.6 --namespace dex --create-namespace --values - dex dex/dex << EOF
+helm install --version 0.0.7 --namespace dex --create-namespace --values - dex dex/dex << EOF
 ingress:
   enabled: true
   annotations:
@@ -101,7 +101,7 @@ and modify the
 
 ```bash
 helm repo add k8s-at-home https://k8s-at-home.com/charts/
-helm install --version 4.3.0 --namespace oauth2-proxy --create-namespace --values - oauth2-proxy k8s-at-home/oauth2-proxy << EOF
+helm install --version 5.0.2 --namespace oauth2-proxy --create-namespace --values - oauth2-proxy k8s-at-home/oauth2-proxy << EOF
 # https://github.com/helm/charts/blob/master/stable/oauth2-proxy/values.yaml
 config:
   clientID: oauth2-proxy.${CLUSTER_FQDN}
@@ -133,7 +133,7 @@ Install gangway:
 
 ```bash
 helm repo add stable https://charts.helm.sh/stable
-helm install --version 0.4.3 --namespace gangway --create-namespace --values - gangway stable/gangway << EOF
+helm install --version 0.4.5 --namespace gangway --create-namespace --values - gangway stable/gangway << EOF
 # https://github.com/helm/charts/blob/master/stable/gangway/values.yaml
 trustedCACert: |
 $(curl -s "${LETSENCRYPT_CERTIFICATE}" | sed  "s/^/  /" )

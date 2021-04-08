@@ -499,7 +499,7 @@ and modify the
 [default values](https://github.com/stefanprodan/podinfo/blob/master/charts/podinfo/values.yaml).
 
 ```bash
-helm install --version 5.1.1 --namespace default --values - podinfo-vault-test-crt sp/podinfo << EOF
+helm install --version 5.2.0 --namespace default --values - podinfo-vault-test-crt sp/podinfo << EOF
 ui:
   message: "Vault Certificate"
 serviceMonitor:

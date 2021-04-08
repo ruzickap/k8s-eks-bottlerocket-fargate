@@ -11,7 +11,7 @@ and modify the
 
 ```bash
 helm repo add sp https://stefanprodan.github.io/podinfo
-helm install --version 5.1.1 --namespace default --values - podinfo sp/podinfo << EOF
+helm install --version 5.2.0 --namespace default --values - podinfo sp/podinfo << EOF
 serviceMonitor:
   enabled: true
 ingress:
@@ -29,7 +29,7 @@ EOF
 Install `podinfo` secured by `oauth2`:
 
 ```bash
-helm install --version 5.0.2 --namespace default --values - podinfo-oauth sp/podinfo << EOF
+helm install --version 5.2.0 --namespace default --values - podinfo-oauth sp/podinfo << EOF
 # https://github.com/stefanprodan/podinfo/blob/master/charts/podinfo/values.yaml
 ui:
   message: "Running behind SSO"
@@ -53,7 +53,7 @@ EOF
 Install `podinfo` and use Application Load Balancer:
 
 ```shell
-helm install --version 5.1.1 --namespace default --values - podinfo-alb sp/podinfo << EOF
+helm install --version 5.2.0 --namespace default --values - podinfo-alb sp/podinfo << EOF
 ui:
   message: "Running using Application Load Balancer"
 service:
@@ -113,7 +113,7 @@ and modify the
 
 ```bash
 helm repo add fairwinds-stable https://charts.fairwinds.com/stable
-helm install --version 1.3.1 --namespace polaris --create-namespace --values - polaris fairwinds-stable/polaris << EOF
+helm install --version 3.1.1 --namespace polaris --create-namespace --values - polaris fairwinds-stable/polaris << EOF
 dashboard:
   ingress:
     enabled: true
@@ -181,7 +181,7 @@ and modify the
 
 ```bash
 helm repo add kubernetes-dashboard https://kubernetes.github.io/dashboard/
-helm install --version 3.0.1 --namespace kubernetes-dashboard --create-namespace --values - kubernetes-dashboard kubernetes-dashboard/kubernetes-dashboard << EOF
+helm install --version 4.0.2 --namespace kubernetes-dashboard --create-namespace --values - kubernetes-dashboard kubernetes-dashboard/kubernetes-dashboard << EOF
 extraArgs:
   - --enable-skip-login
   - --enable-insecure-login
@@ -219,7 +219,7 @@ kubectl create clusterrolebinding kubernetes-dashboard-admin --clusterrole=clust
 
 ```bash
 helm repo add octant-dashboard https://aleveille.github.io/octant-dashboard-turnkey/repo
-helm install --version 0.16.2 --namespace octant --create-namespace --values - octant octant-dashboard/octant << EOF
+helm install --version 0.18.0 --namespace octant --create-namespace --values - octant octant-dashboard/octant << EOF
 # https://github.com/aleveille/octant-dashboard-turnkey/blob/master/helm/values.yaml
 plugins:
   install:
@@ -248,7 +248,7 @@ and modify the
 
 ```bash
 helm repo add kubeview https://benc-uk.github.io/kubeview/charts
-helm install --version 0.1.17 --namespace kubeview --create-namespace --values - kubeview kubeview/kubeview << EOF
+helm install --version 0.1.20 --namespace kubeview --create-namespace --values - kubeview kubeview/kubeview << EOF
 ingress:
   enabled: true
   annotations:

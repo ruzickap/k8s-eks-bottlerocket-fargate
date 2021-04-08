@@ -47,7 +47,7 @@ and modify the
 
 ```bash
 helm repo add eks https://aws.github.io/eks-charts
-helm install --version 0.1.5 --namespace kube-system --values - aws-for-fluent-bit eks/aws-for-fluent-bit << EOF
+helm install --version 0.1.7 --namespace kube-system --values - aws-for-fluent-bit eks/aws-for-fluent-bit << EOF
 cloudWatch:
   region: ${AWS_DEFAULT_REGION}
   logGroupName: /aws/eks/${CLUSTER_FQDN}/logs
@@ -71,7 +71,7 @@ and modify the
 [default values](https://github.com/aws/eks-charts/blob/master/stable/aws-cloudwatch-metrics/values.yaml).
 
 ```bash
-helm install --version 0.0.1 --namespace amazon-cloudwatch --create-namespace --values - aws-cloudwatch-metrics eks/aws-cloudwatch-metrics << EOF
+helm install --version 0.0.4 --namespace amazon-cloudwatch --create-namespace --values - aws-cloudwatch-metrics eks/aws-cloudwatch-metrics << EOF
 clusterName: ${CLUSTER_FQDN}
 EOF
 ```
@@ -92,7 +92,7 @@ and modify the
 ```bash
 helm repo add aws-efs-csi-driver https://kubernetes-sigs.github.io/aws-efs-csi-driver/
 kubectl delete CSIDriver efs.csi.aws.com
-helm install --version 1.1.1 --namespace kube-system aws-efs-csi-driver aws-efs-csi-driver/aws-efs-csi-driver
+helm install --version 1.2.2 --namespace kube-system aws-efs-csi-driver aws-efs-csi-driver/aws-efs-csi-driver
 ```
 
 Create storage class for EFS:
@@ -117,7 +117,7 @@ The ServiceAccount `ebs-csi-controller` was created by `eksctl`.
 
 ```bash
 helm repo add aws-ebs-csi-driver https://kubernetes-sigs.github.io/aws-ebs-csi-driver
-helm install --version 0.9.8 --namespace kube-system --values - aws-ebs-csi-driver aws-ebs-csi-driver/aws-ebs-csi-driver << EOF
+helm install --version 0.10.0 --namespace kube-system --values - aws-ebs-csi-driver aws-ebs-csi-driver/aws-ebs-csi-driver << EOF
 enableVolumeScheduling: true
 enableVolumeResizing: true
 enableVolumeSnapshot: true
@@ -195,7 +195,7 @@ and modify the
 [default values](https://github.com/aws/eks-charts/blob/master/stable/aws-load-balancer-controller/values.yaml).
 
 ```bash
-helm install --version 1.1.5 --namespace kube-system --values - aws-load-balancer-controller eks/aws-load-balancer-controller << EOF
+helm install --version 1.1.6 --namespace kube-system --values - aws-load-balancer-controller eks/aws-load-balancer-controller << EOF
 clusterName: ${CLUSTER_NAME}
 serviceAccount:
   create: false
