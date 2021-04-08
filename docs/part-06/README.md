@@ -196,7 +196,7 @@ and modify the
 
 ```bash
 helm repo add kiali https://kiali.org/helm-charts
-helm install --version 1.29.0 --namespace kiali-operator --create-namespace kiali-operator kiali/kiali-operator
+helm install --version 1.32.0 --namespace kiali-operator --create-namespace kiali-operator kiali/kiali-operator
 ```
 
 Install Kiali CR:
@@ -266,7 +266,7 @@ and modify the
 
 ```bash
 helm repo add autoscaler https://kubernetes.github.io/autoscaler
-helm install --version 9.3.0 --namespace kube-system --values - cluster-autoscaler autoscaler/cluster-autoscaler << EOF
+helm install --version 9.9.2 --namespace kube-system --values - cluster-autoscaler autoscaler/cluster-autoscaler << EOF
 autoDiscovery:
   clusterName: ${CLUSTER_NAME}
 awsRegion: ${AWS_DEFAULT_REGION}
