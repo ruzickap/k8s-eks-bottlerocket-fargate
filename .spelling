@@ -36,6 +36,7 @@ external-dns
 external-snapshotter
 Fargate
 GitOps
+gpg-agent
 Grafana
 HashiCorp
 HelmRelease
