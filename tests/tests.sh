@@ -45,16 +45,13 @@ test -d tests || ( echo -e "\n*** Run in top level of git repository\n"; exit 1 
 if [[ ! -x /usr/local/bin/kind ]]; then
   sudo curl -s -Lo /usr/local/bin/kind "https://kind.sigs.k8s.io/dl/v0.10.0/kind-$(uname | sed "s/./\L&/g" )-amd64"
   sudo chmod a+x /usr/local/bin/kind
-else
-  command -v kind
-  kind version
 fi
 
 echo "*** Remove cluster (if exists)"
 kind get clusters | grep "${CLUSTER_NAME}" && kind delete cluster --name "${CLUSTER_NAME}"
 
 echo -e "\n*** Create a new Kubernetes cluster using kind"
-kind create cluster --name "${CLUSTER_NAME}" --image kindest/node:v1.18.15 --kubeconfig "${KUBECONFIG}" --quiet --config - << EOF
+kind create cluster --name "${CLUSTER_NAME}" --image kindest/node:v1.19.7 --kubeconfig "${KUBECONFIG}" --quiet --config - << EOF
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 nodes:
@@ -80,9 +77,6 @@ EOF
 
 if [[ ! -x /usr/local/bin/helm ]]; then
   curl -s https://raw.githubusercontent.com/helm/helm/master/scripts/get | bash -s -- --version v3.5.2
-else
-  command -v helm
-  helm version
 fi
 
 echo -e "\n*** Install MetalLB"

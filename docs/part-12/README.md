@@ -4,7 +4,7 @@
 
 Set the `ARGOCD_ADMIN_PASSWORD` with password:
 
-```bash
+```shell
 ARGOCD_ADMIN_PASSWORD=$(htpasswd -nbBC 10 "" ${MY_PASSWORD} | tr -d ":\n" | sed "s/\$2y/\$2a/")
 ```
 
@@ -15,7 +15,7 @@ and modify the
 
 ```shell
 helm repo add argo https://argoproj.github.io/argo-helm
-helm install --version 2.11.3 --namespace argocd --create-namespace --values - argocd argo/argo-cd << EOF
+helm install --version 2.17.5 --namespace argocd --create-namespace --values - argocd argo/argo-cd << EOF
 controller:
   metrics:
     enabled: true
@@ -162,7 +162,7 @@ Create GPG key in `tmp/${CLUSTER_FQDN}/.gnupg` directory:
 
 ```bash
 export GNUPGHOME="${PWD}/tmp/${CLUSTER_FQDN}/.gnupg"
-mkdir -v "${GNUPGHOME}" && chmod 0700 "${GNUPGHOME}"
+mkdir -vp "${GNUPGHOME}" && chmod 0700 "${GNUPGHOME}"
 
 cat > "${GNUPGHOME}/my_gpg_key" << EOF
 Key-Type: RSA
@@ -256,40 +256,12 @@ Configure the Git directory for encryption:
 cat > clusters/${CLUSTER_FQDN}/.sops.yaml << EOF
 creation_rules:
   - path_regex: .*.yaml
-    encrypted_regex: ^(data|stringData|wordpress_password)$
+    encrypted_regex: ^(data|stringData)$
     pgp: ${KEY_FP}
 EOF
 
-echo "**/.sops.yaml" > .sourceignore
-git add .sourceignore clusters/${CLUSTER_FQDN}/.sops.yaml
+git add clusters/${CLUSTER_FQDN}/.sops.yaml
 git commit -m "Configure the Git directory for encryption"
-```
-
-Configure in-cluster secrets decryption:
-
-```bash
-cat > clusters/${CLUSTER_FQDN}/sops.yaml << EOF
-apiVersion: kustomize.toolkit.fluxcd.io/v1beta1
-kind: Kustomization
-metadata:
-  name: sops-secrets
-  namespace: flux-system
-spec:
-  decryption:
-    provider: sops
-    secretRef:
-      name: sops-gpg
-  interval: 10m
-  path: ./clusters/${CLUSTER_FQDN}
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-EOF
-
-git add clusters/${CLUSTER_FQDN}/sops.yaml
-git commit -m "Configure the Git directory for encryption"
-git push && flux reconcile source git flux-system
 ```
 
 ### HelmRepository
@@ -349,12 +321,17 @@ git commit -m "Add HelmRepository files"
 
 ### Application configuration
 
-Create Flux configuration for Slack notification + Prometheus monitoring:
+#### Flux configuration
+
+Create Flux configuration for Slack notification + Prometheus monitoring.
+
+Providers needs to be configured/installed before the alerts - that is the
+reason why I'm doing the `Kustomization` which contains `dependsOn`.
 
 ```bash
-mkdir -pv apps/base/flux
+mkdir -pv apps/base/flux/{providers,alerts}
 
-cat > apps/base/flux/provider-slack.yaml << \EOF
+cat > apps/base/flux/providers/provider-slack.yaml << \EOF
 apiVersion: notification.toolkit.fluxcd.io/v1beta1
 kind: Provider
 metadata:
@@ -362,12 +339,38 @@ metadata:
   namespace: flux-system
 spec:
   type: slack
-  channel: general
+  channel: ${slack_channel}
   secretRef:
     name: slack-url
 EOF
 
-cat > apps/base/flux/alert-slack.yaml << \EOF
+cat > apps/base/flux/providers/kustomization.yaml << \EOF
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: flux-system
+resources:
+  - provider-slack.yaml
+EOF
+
+cat > apps/base/flux/providers.yaml << EOF
+apiVersion: kustomize.toolkit.fluxcd.io/v1beta1
+kind: Kustomization
+metadata:
+  name: providers
+  namespace: flux-system
+spec:
+  interval: 1m
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./apps/base/flux/providers/
+  postBuild:
+    substitute:
+      slack_channel: general
+EOF
+
+cat > apps/base/flux/alerts/alert-slack.yaml << \EOF
 apiVersion: notification.toolkit.fluxcd.io/v1beta1
 kind: Alert
 metadata:
@@ -390,6 +393,31 @@ spec:
       name: "*"
 EOF
 
+cat > apps/base/flux/alerts/kustomization.yaml << \EOF
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: flux-system
+resources:
+  - alert-slack.yaml
+EOF
+
+cat > apps/base/flux/alerts.yaml << EOF
+apiVersion: kustomize.toolkit.fluxcd.io/v1beta1
+kind: Kustomization
+metadata:
+  name: alerts
+  namespace: flux-system
+spec:
+  dependsOn:
+    - name: providers
+  interval: 1m
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./apps/base/flux/alerts/
+EOF
+
 cat > apps/base/flux/monitoring.yaml << \EOF
 apiVersion: monitoring.coreos.com/v1
 kind: PodMonitor
@@ -407,19 +435,46 @@ spec:
   - port: http-prom
 EOF
 
+cat > apps/base/flux/github-receiver.yaml << \EOF
+apiVersion: notification.toolkit.fluxcd.io/v1beta1
+kind: Receiver
+metadata:
+  name: github-receiver
+  namespace: flux-system
+spec:
+  type: github
+  events:
+    - "ping"
+    - "push"
+  secretRef:
+    name: github-webhook-token
+  resources:
+    - kind: GitRepository
+      name: flux-system
+---
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: flux-receiver
+  namespace: flux-system
+EOF
+
 cat > apps/base/flux/kustomization.yaml << \EOF
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: flux-system
 resources:
-  - provider-slack.yaml
-  - alert-slack.yaml
+  - alerts.yaml
+  - github-receiver.yaml
   - monitoring.yaml
+  - providers.yaml
 EOF
 
 git add apps/base/flux
-git commit -m "Add podmonitor and configure slack notifications to flux"
+git commit -m "Add podmonitor and configure slack notifications for flux"
 ```
+
+#### podinfo
 
 Add podinfo:
 
@@ -434,6 +489,7 @@ metadata:
 EOF
 
 cat > apps/base/podinfo/helmrelease.yaml << \EOF
+# https://github.com/stefanprodan/podinfo/blob/master/charts/podinfo/values.yaml
 apiVersion: helm.toolkit.fluxcd.io/v2beta1
 kind: HelmRelease
 metadata:
@@ -444,6 +500,7 @@ spec:
   chart:
     spec:
       chart: podinfo
+      # Version can be overwritten by values specified in apps/{dev,stage,prod}/podinfo-values.yaml
       version: 5.2.0
       sourceRef:
         kind: HelmRepository
@@ -463,19 +520,15 @@ git add apps/base/podinfo
 git commit -m "Add podinfo"
 ```
 
+#### Wordpress
+
 Add Wordpress:
 
 ```bash
 mkdir -pv apps/base/wordpress
 
-cat > apps/base/wordpress/namespace.yaml << \EOF
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: wordpress
-EOF
-
 cat > apps/base/wordpress/helmrelease.yaml << \EOF
+# https://github.com/bitnami/charts/blob/master/bitnami/wordpress/values.yaml
 apiVersion: helm.toolkit.fluxcd.io/v2beta1
 kind: HelmRelease
 metadata:
@@ -486,18 +539,32 @@ spec:
   chart:
     spec:
       chart: wordpress
+      # Version should be overwritten ba values specified in apps/{dev,stage,prod}/wordpress-values.yaml
       version: 10.8.0
       sourceRef:
         kind: HelmRepository
         name: bitnami
         namespace: flux-system
+  values:
+    wordpressSkipInstall: false
+    service:
+      type: ClusterIP
+    persistence:
+      enabled: false
+    metrics:
+      enabled: true
+    serviceMonitor:
+      enabled: true
+    mariadb:
+      primary:
+        persistence:
+          enabled: false
 EOF
 
 cat > apps/base/wordpress/kustomization.yaml << \EOF
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - namespace.yaml
   - helmrelease.yaml
 EOF
 
@@ -510,15 +577,19 @@ git commit -m "Add wordpress"
 Add group of applications which belongs to `dev` group of K8s clusters:
 
 ```bash
-mkdir -pv apps/dev
+mkdir -pv apps/dev/helmrepository
+
+cat > apps/dev/helmrepository/kustomization.yaml << \EOF
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base/helmrepository
+EOF
 
 cat > apps/dev/kustomization.yaml << \EOF
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-commonLabels:
-  group: dev
 resources:
-  - ../base/helmrepository
   - ../base/flux
   - ../base/podinfo
   - ../base/wordpress
@@ -529,16 +600,38 @@ patchesStrategicMerge:
 EOF
 
 cat > apps/dev/flux-values.yaml << \EOF
-apiVersion: notification.toolkit.fluxcd.io/v1beta1
-kind: Provider
+apiVersion: kustomize.toolkit.fluxcd.io/v1beta1
+kind: Kustomization
 metadata:
-  name: slack
+  name: providers
   namespace: flux-system
 spec:
-  channel: ${slack_channel}
+  postBuild:
+    substitute:
+      slack_channel: ${slack_channel}
+---
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: flux-receiver
+  namespace: flux-system
+spec:
+  rules:
+  - host: flux-receiver.${cluster_fqdn}
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: webhook-receiver
+          servicePort: http
+  tls:
+  - hosts:
+    - flux-receiver.${cluster_fqdn}
+    secretName: flux-receiver.${cluster_fqdn}
 EOF
 
 cat > apps/dev/podinfo-values.yaml << \EOF
+# https://github.com/stefanprodan/podinfo/blob/master/charts/podinfo/values.yaml
 apiVersion: helm.toolkit.fluxcd.io/v2beta1
 kind: HelmRelease
 metadata:
@@ -547,8 +640,7 @@ metadata:
 spec:
   chart:
     spec:
-      version: 5.2.0
-  values:
+      version: 5.1.0
   values:
     serviceMonitor:
       enabled: true
@@ -559,11 +651,11 @@ spec:
       enabled: true
       path: /
       hosts:
-        - ${podinfo_hostname}
+      - ${podinfo_hostname}
       tls:
-        - secretName: ingress-cert-${letsencrypt_environment:=staging}
-          hosts:
-            - ${podinfo_hostname}
+      - secretName: ingress-cert-${letsencrypt_environment:=staging}
+        hosts:
+        - ${podinfo_hostname}
 EOF
 
 cat > apps/dev/wordpress-values.yaml << \EOF
@@ -574,13 +666,13 @@ metadata:
   name: wordpress
   namespace: wordpress
 spec:
+  chart:
+    spec:
+      version: 10.7.0
   values:
     wordpressUsername: admin
-    wordpressPassword: ${wordpress_password}
+    existingSecret: wordpress-password
     wordpressEmail: ${wordpress_email}
-    wordpressSkipInstall: false
-    service:
-      type: ClusterIP
     ingress:
       enabled: true
       hostname: ${wordpress_hostname}
@@ -588,22 +680,12 @@ spec:
         nginx.ingress.kubernetes.io/auth-url: https://oauth2-proxy.${cluster_fqdn}/oauth2/auth
         nginx.ingress.kubernetes.io/auth-signin: https://oauth2-proxy.${cluster_fqdn}/oauth2/start?rd=\$scheme://\$host\$request_uri
       extraTls:
-        - hosts:
-            - ${wordpress_hostname}
-          secretName: ingress-cert-${letsencrypt_environment:=staging}
-    persistence:
-      enabled: false
-    # metrics:
-    #   enabled: true
-    serviceMonitor:
-      enabled: true
+      - hosts:
+          - ${wordpress_hostname}
+        secretName: ingress-cert-${letsencrypt_environment:=staging}
     mariadb:
       auth:
-        rootPassword: ${wordpress_password}
-        password: ${wordpress_password}
-      primary:
-        persistence:
-          enabled: false
+        existingSecret: mariadb-auth-secret
 EOF
 
 git add apps/dev
@@ -615,13 +697,62 @@ git commit -m "Add dev group"
 Configure cluster applications and their variables:
 
 ```bash
-cat > clusters/${CLUSTER_FQDN}/apps.yaml << EOF
+cat > clusters/${CLUSTER_FQDN}/local.yaml << EOF
+apiVersion: kustomize.toolkit.fluxcd.io/v1beta1
+kind: Kustomization
+metadata:
+  name: local
+  namespace: flux-system
+spec:
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-gpg
+  interval: 10m
+  path: ./clusters/${CLUSTER_FQDN}/local
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+EOF
+
+# This customization is needed to force flux to work with specific
+# files/directories and not go to "unwanted" directories
+# (like local without proper SOPS confoguration)
+cat > clusters/${CLUSTER_FQDN}/kustomization.yaml << EOF
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- flux-system
+- local.yaml
+EOF
+
+mkdir clusters/${CLUSTER_FQDN}/local
+cat > clusters/${CLUSTER_FQDN}/local/helmrepository.yaml << EOF
+apiVersion: kustomize.toolkit.fluxcd.io/v1beta1
+kind: Kustomization
+metadata:
+  name: helmrepository-dev
+  namespace: flux-system
+spec:
+  interval: 1m
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  validation: client
+  path: ./apps/dev/helmrepository
+EOF
+
+cat > clusters/${CLUSTER_FQDN}/local/apps.yaml << EOF
 apiVersion: kustomize.toolkit.fluxcd.io/v1beta1
 kind: Kustomization
 metadata:
   name: apps
   namespace: flux-system
 spec:
+  dependsOn:
+    - name: helmrepository-dev
   interval: 1m
   prune: true
   sourceRef:
@@ -635,18 +766,56 @@ spec:
       letsencrypt_environment: "${LETSENCRYPT_ENVIRONMENT}"
       podinfo_hostname: flux-dev-podinfo.${CLUSTER_FQDN}
       slack_channel: ${SLACK_CHANNEL}
-      wordpress_password: ${MY_PASSWORD}
       wordpress_email: ${MY_EMAIL}
       wordpress_hostname: flux-dev-wordpress.${CLUSTER_FQDN}
 EOF
-sops --encrypt --in-place --config clusters/${CLUSTER_FQDN}/.sops.yaml clusters/${CLUSTER_FQDN}/apps.yaml
 
-kubectl -n flux-system create secret generic slack-url --from-literal=address=${SLACK_INCOMING_WEBHOOK_URL} --dry-run=client -o yaml > clusters/${CLUSTER_FQDN}/secret-slack-url.yaml
-sops --encrypt --in-place --config clusters/${CLUSTER_FQDN}/.sops.yaml clusters/${CLUSTER_FQDN}/secret-slack-url.yaml
+# Namespaces needs to be created before the flux+sops will decrypt the secrets
+# `secret-wordpress-password.yaml` into it
+cat > clusters/${CLUSTER_FQDN}/local/namespace-wordpess.yaml << \EOF
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: wordpress
+EOF
+
+kubectl create secret generic wordpress-password --namespace wordpress --from-literal=wordpress-password=${MY_PASSWORD} --dry-run=client -o yaml > clusters/${CLUSTER_FQDN}/local/secret-wordpress-password.yaml
+sops --encrypt --in-place --config clusters/${CLUSTER_FQDN}/.sops.yaml clusters/${CLUSTER_FQDN}/local/secret-wordpress-password.yaml
+
+kubectl create secret generic mariadb-auth-secret --namespace wordpress --from-literal=mariadb-root-password=${MY_PASSWORD} --from-literal=mariadb-password=${MY_PASSWORD} --dry-run=client -o yaml > clusters/${CLUSTER_FQDN}/local/secret-mariadb-auth.yaml
+sops --encrypt --in-place --config clusters/${CLUSTER_FQDN}/.sops.yaml clusters/${CLUSTER_FQDN}/local/secret-mariadb-auth.yaml
+
+kubectl -n flux-system create secret generic slack-url --from-literal=address=${SLACK_INCOMING_WEBHOOK_URL} --dry-run=client -o yaml > clusters/${CLUSTER_FQDN}/local/secret-slack-url.yaml
+sops --encrypt --in-place --config clusters/${CLUSTER_FQDN}/.sops.yaml clusters/${CLUSTER_FQDN}/local/secret-slack-url.yaml
+
+GITHUB_WEBHOOK_SECRET=$(head -c 12 /dev/urandom | shasum | cut -d " " -f1)
+kubectl -n flux-system create secret generic github-webhook-token --from-literal=token=${GITHUB_WEBHOOK_SECRET} --dry-run=client -o yaml > clusters/${CLUSTER_FQDN}/local/secret-github-webhook-token.yaml
+sops --encrypt --in-place --config clusters/${CLUSTER_FQDN}/.sops.yaml clusters/${CLUSTER_FQDN}/local/secret-github-webhook-token.yaml
+
+cat > clusters/${CLUSTER_FQDN}/local/kustomization.yaml << EOF
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- apps.yaml
+- helmrepository.yaml
+- namespace-wordpess.yaml
+- secret-mariadb-auth.yaml
+- secret-slack-url.yaml
+- secret-github-webhook-token.yaml
+- secret-wordpress-password.yaml
+EOF
 
 git add clusters/${CLUSTER_FQDN}
 git commit -m "Configure cluster applications"
-git push
+git push && flux reconcile source git flux-system
+```
+
+Configure GitHub Webhook:
+
+```bash
+sleep 50
+FLUX_RECEIVER_URL=$(kubectl -n flux-system get receiver github-receiver -o jsonpath="{.status.url}")
+curl -s -H "Authorization: token $GITHUB_TOKEN" -X POST -d "{\"active\": true, \"events\": [\"push\"], \"config\": {\"url\": \"https://flux-receiver.${CLUSTER_FQDN}${FLUX_RECEIVER_URL}\", \"content_type\": \"json\", \"secret\": \"${GITHUB_WEBHOOK_SECRET}\", \"insecure_ssl\": \"1\"}}" https://api.github.com/repos/${MY_GITHUB_USERNAME}/${CLUSTER_NAME}-k8s-clusters/hooks
 ```
 
 Check the flux errors:

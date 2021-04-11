@@ -648,7 +648,7 @@ managedNodeGroups:
     desiredCapacity: 3
     minSize: 2
     maxSize: 4
-    volumeSize: 20
+    volumeSize: 30
     ssh:
       # Enable ssh access (via the admin container)
       allow: false

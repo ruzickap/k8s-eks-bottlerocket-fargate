@@ -435,7 +435,7 @@ and modify the
 [default values](https://github.com/bitnami/charts/blob/master/bitnami/drupal/values.yaml).
 
 ```bash
-DRUPAL_USERNAME="mydrupaluser"
+DRUPAL_USERNAME="admin"
 DRUPAL_PASSWORD="${MY_PASSWORD}"
 
 helm repo add bitnami https://charts.bitnami.com/bitnami
@@ -533,7 +533,7 @@ and modify the
 [default values](https://github.com/bitnami/charts/blob/master/bitnami/drupal/values.yaml).
 
 ```bash
-DRUPAL2_USERNAME="mydrupal2user"
+DRUPAL2_USERNAME="admin"
 DRUPAL2_PASSWORD="${MY_PASSWORD}"
 
 helm repo add bitnami https://charts.bitnami.com/bitnami

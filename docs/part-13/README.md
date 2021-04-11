@@ -188,6 +188,12 @@ Remove GitHub repository created for Flux:
 curl -H "Authorization: token $GITHUB_TOKEN" -X DELETE "https://api.github.com/repos/${MY_GITHUB_USERNAME}/${CLUSTER_NAME}-k8s-clusters"
 ```
 
+Stop gpg-agent:
+
+```bash
+GNUPGHOME="${PWD}/tmp/${CLUSTER_FQDN}/.gnupg" gpgconf --kill gpg-agent
+```
+
 Remove Helm data:
 
 ```bash
