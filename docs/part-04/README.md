@@ -14,7 +14,7 @@ Service account `external-dns` was created by `eksctl`.
 
 ```bash
 helm repo add jetstack https://charts.jetstack.io
-helm install --version v1.2.0 --namespace cert-manager --wait --wait-for-jobs --values - cert-manager jetstack/cert-manager << EOF
+helm install --version v1.3.0 --namespace cert-manager --wait --wait-for-jobs --values - cert-manager jetstack/cert-manager << EOF
 installCRDs: true
 serviceAccount:
   create: false
@@ -140,7 +140,7 @@ and modify the
 
 ```bash
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-helm install --version 3.26.0 --namespace ingress-nginx --create-namespace --wait --wait-for-jobs --values - ingress-nginx ingress-nginx/ingress-nginx << EOF
+helm install --version 3.29.0 --namespace ingress-nginx --create-namespace --wait --wait-for-jobs --values - ingress-nginx ingress-nginx/ingress-nginx << EOF
 controller:
   # Needed for calico
   hostNetwork: true
@@ -170,7 +170,7 @@ Service account `external-dns` was created by `eksctl`.
 
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
-helm install --version 4.9.4 --namespace external-dns --values - external-dns bitnami/external-dns << EOF
+helm install --version 4.10.0 --namespace external-dns --values - external-dns bitnami/external-dns << EOF
 sources:
   - ingress
   - istio-gateway
@@ -199,6 +199,31 @@ metrics:
 EOF
 ```
 
+## mailhog
+
+Install `mailhog`
+[helm chart](https://artifacthub.io/packages/helm/codecentric/mailhog)
+and modify the
+[default values](https://github.com/codecentric/helm-charts/blob/master/charts/mailhog/values.yaml).
+
+```bash
+helm repo add codecentric https://codecentric.github.io/helm-charts
+helm install --version 4.1.0 --namespace mailhog --create-namespace --values - mailhog codecentric/mailhog << EOF
+ingress:
+  enabled: true
+  annotations:
+    nginx.ingress.kubernetes.io/auth-url: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/auth
+    nginx.ingress.kubernetes.io/auth-signin: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/start?rd=\$scheme://\$host\$request_uri
+  hosts:
+    - host: mailhog.${CLUSTER_FQDN}
+      paths: ["/"]
+  tls:
+    - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
+      hosts:
+        - mailhog.${CLUSTER_FQDN}
+EOF
+```
+
 ## kubewatch
 
 Install `kubewatch`
@@ -208,12 +233,18 @@ and modify the
 
 Details: [Kubernetes Event Notifications to a Slack Channel](https://www.powerupcloud.com/kubernetes-event-notifications-to-a-slack-channel-part-v/)
 
-```shell
-helm install --version 3.2.2 --namespace kubewatch --create-namespace --values - kubewatch bitnami/kubewatch << EOF
+```bash
+helm install --version 3.2.3 --namespace kubewatch --create-namespace --values - kubewatch bitnami/kubewatch << EOF
 slack:
-  enabled: true
+  enabled: false
   channel: "#${SLACK_CHANNEL}"
   token: ${SLACK_BOT_API_TOKEN}
+smtp:
+  enabled: true
+  to: "notification@${CLUSTER_FQDN}"
+  from: "kubewatch@${CLUSTER_FQDN}"
+  smarthost: "mailhog.mailhog.svc.cluster.local:1025"
+  subject: "kubewatch"
 resourcesToWatch:
   deployment: false
   pod: false
@@ -227,7 +258,7 @@ EOF
 Create `ClusterRole` and `ClusterRoleBinding` to allow `kubewatch` to access
 necessary resources:
 
-```shell
+```bash
 kubectl apply -f - << EOF
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRole

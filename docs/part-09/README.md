@@ -449,6 +449,8 @@ externalDatabase:
   user: ${RDS_DB_USERNAME}
   password: ${RDS_DB_PASSWORD}
   database: drupal
+smtpHost: mailhog.mailhog.svc.cluster.local
+smtpPort: 1025
 mariadb:
   enabled: false
 service:
@@ -469,8 +471,6 @@ persistence:
   accessMode: ReadWriteMany
   size: 1Gi
   existingClaim: drupal-efs-pvc
-metrics:
-  enabled: true
 EOF
 ```
 
@@ -550,6 +550,8 @@ externalDatabase:
   user: ${RDS_DB_USERNAME}
   password: ${RDS_DB_PASSWORD}
   database: drupal2
+smtpHost: mailhog.mailhog.svc.cluster.local
+smtpPort: 1025
 mariadb:
   enabled: false
 service:
@@ -560,8 +562,6 @@ persistence:
   accessMode: ReadWriteMany
   size: 1Gi
   existingClaim: drupal2-efs-pvc
-metrics:
-  enabled: true
 EOF
 ```
 

@@ -9,7 +9,7 @@ and modify the
 
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
-helm install --version 5.8.3 --namespace kube-system --values - metrics-server bitnami/metrics-server << EOF
+helm install --version 5.8.4 --namespace kube-system --values - metrics-server bitnami/metrics-server << EOF
 apiService:
   create: true
 # Needed for calico
@@ -26,7 +26,7 @@ and modify the
 
 ```bash
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm install --version 14.5.0 --namespace kube-prometheus-stack --values - kube-prometheus-stack prometheus-community/kube-prometheus-stack << EOF
+helm install --version 14.6.2 --namespace kube-prometheus-stack --values - kube-prometheus-stack prometheus-community/kube-prometheus-stack << EOF
 defaultRules:
   rules:
     etcd: false
@@ -104,11 +104,24 @@ alertmanager:
   config:
     global:
       slack_api_url: ${SLACK_INCOMING_WEBHOOK_URL}
+      smtp_smarthost: "mailhog.mailhog.svc.cluster.local:1025"
+      smtp_from: "alertmanager@${CLUSTER_FQDN}"
     route:
       receiver: slack-notifications
       group_by: ["alertname", "job"]
+      routes:
+        - match:
+            severity: warning
+          continue: true
+          receiver: slack-notifications
+        - match:
+            severity: warning
+          receiver: email-notifications
     receivers:
-      - name: "null"
+      - name: "email-notifications"
+        email_configs:
+        - to: "notification@${CLUSTER_FQDN}"
+          require_tls: false
       - name: "slack-notifications"
         slack_configs:
           - channel: "#${SLACK_CHANNEL}"
@@ -368,6 +381,10 @@ grafana:
     auth.anonymous:
       enabled: true
       org_role: Admin
+  smtp:
+    enabled: true
+    host: "mailhog.mailhog.svc.cluster.local:1025"
+    from_address: grafana@${CLUSTER_FQDN}
 kubeControllerManager:
   enabled: false
 kubeEtcd:
@@ -543,7 +560,7 @@ and modify the
 [default values](https://github.com/aws/aws-node-termination-handler/blob/main/config/helm/aws-node-termination-handler/values.yaml).
 
 ```bash
-helm install --version 0.14.2 --namespace kube-system --create-namespace --values - aws-node-termination-handler eks/aws-node-termination-handler << EOF
+helm install --version 0.15.0 --namespace kube-system --create-namespace --values - aws-node-termination-handler eks/aws-node-termination-handler << EOF
 enableRebalanceMonitoring: true
 awsRegion: ${AWS_DEFAULT_REGION}
 enableSpotInterruptionDraining: true
@@ -575,7 +592,7 @@ and modify the
 
 ```bash
 helm repo add policy-reporter https://fjogeleit.github.io/policy-reporter
-helm install --version 1.0.0 --namespace policy-reporter --create-namespace --values - policy-reporter policy-reporter/policy-reporter << EOF
+helm install --version 1.1.0 --namespace policy-reporter --create-namespace --values - policy-reporter policy-reporter/policy-reporter << EOF
 ui:
   enabled: true
   ingress:

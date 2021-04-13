@@ -47,6 +47,7 @@ istioctl
 IstioOperator
 K8s
 k8s-eks-bottlerocket-fargate
+Keycloak
 Kiali
 kuard
 kube-bench
@@ -65,6 +66,7 @@ kubewatch
 kustomize
 kyverno
 loki
+mailhog
 MariaDB
 mylabs.dev
 nameservers
