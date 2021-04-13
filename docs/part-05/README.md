@@ -1,5 +1,91 @@
 # Authentication
 
+## Keycloak
+
+Set the OIDC client secret:
+
+```bash
+KEYCLOAK_OIDC_CLIENT_SECRET=$(uuid)
+```
+
+Install `keycloak`
+[helm chart](https://artifacthub.io/packages/helm/bitnami/keycloak)
+and modify the
+[default values](https://github.com/bitnami/charts/blob/master/bitnami/keycloak/values.yaml).
+
+```bash
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm install --version 2.4.3 --namespace keycloak --create-namespace --values - keycloak bitnami/keycloak << EOF
+auth:
+  adminUser: admin
+  adminPassword: ${MY_PASSWORD}
+  managementUser: admin
+  managementPassword: ${MY_PASSWORD}
+proxyAddressForwarding: true
+service:
+  type: ClusterIP
+ingress:
+  enabled: true
+  hostname: keycloak.${CLUSTER_FQDN}
+  extraTls:
+  - hosts:
+      - keycloak.${CLUSTER_FQDN}
+    secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
+networkPolicy:
+  enabled: true
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+postgresql:
+  persistence:
+    enabled: false
+keycloakConfigCli:
+  enabled: true
+  configuration:
+    myrealm.yaml: |
+      realm: myrealm
+      displayName: My Realm
+      rememberMe: true
+      smtpServer:
+        from: myrealm-keycloak@${CLUSTER_FQDN}
+        fromDisplayName: Keycloak
+        host: mailhog.mailhog.svc.cluster.local
+        port: 1025
+      clients:
+        - clientId: myclient
+          name: myclient
+          description: "My Client"
+          rootUrl: \${authBaseUrl}
+          secret: ${KEYCLOAK_OIDC_CLIENT_SECRET}
+      users:
+      - username: myuser1
+        email: myuser1@${CLUSTER_FQDN}
+        enabled: true
+        firstName: My Firstname 1
+        lastName: My Lastname 1
+        credentials:
+        - type: password
+          value: ${MY_PASSWORD}
+      - username: myuser2
+        email: myuser2@${CLUSTER_FQDN}
+        enabled: true
+        firstName: My Firstname 2
+        lastName: My Lastname 2
+        credentials:
+        - type: password
+          value: ${MY_PASSWORD}
+      - username: myuser3
+        email: myuser3@${CLUSTER_FQDN}
+        enabled: true
+        firstName: My Firstname 3
+        lastName: My Lastname 3
+        credentials:
+        - type: password
+          value: ${MY_PASSWORD}
+EOF
+```
+
 ## Dex
 
 Install `dex`
@@ -101,7 +187,7 @@ and modify the
 
 ```bash
 helm repo add k8s-at-home https://k8s-at-home.com/charts/
-helm install --version 5.0.2 --namespace oauth2-proxy --create-namespace --values - oauth2-proxy k8s-at-home/oauth2-proxy << EOF
+helm install --version 5.0.3 --namespace oauth2-proxy --create-namespace --values - oauth2-proxy k8s-at-home/oauth2-proxy << EOF
 # https://github.com/helm/charts/blob/master/stable/oauth2-proxy/values.yaml
 config:
   clientID: oauth2-proxy.${CLUSTER_FQDN}

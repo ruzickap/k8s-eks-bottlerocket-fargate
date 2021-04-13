@@ -72,6 +72,7 @@ export SPLUNK_TOKEN="xxx"
 export SPLUNK_INDEX_NAME="xxx"
 # Slack incoming webhook
 export SLACK_INCOMING_WEBHOOK_URL="https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK"
+export SLACK_BOT_API_TOKEN="xxxx-xxxxxxxxxxxxx-xxxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxP"
 ```
 
 ## Prepare the local working environment
@@ -86,7 +87,7 @@ Install necessary software:
 ```bash
 if [[ -x /usr/bin/apt-get ]]; then
   apt update -qq
-  DEBIAN_FRONTEND=noninteractive apt-get install -y -qq apache2-utils ansible awscli dnsutils git gnupg2 jq sudo unzip > /dev/null
+  DEBIAN_FRONTEND=noninteractive apt-get install -y -qq apache2-utils ansible awscli dnsutils git gnupg2 jq sudo unzip uuid > /dev/null
 fi
 ```
 

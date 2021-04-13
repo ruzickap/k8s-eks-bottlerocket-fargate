@@ -84,6 +84,9 @@ Configure OIDC for Harbor:
 curl -sk -u "admin:${HARBOR_ADMIN_PASSWORD}" -X PUT "https://harbor.${CLUSTER_FQDN}/api/v2.0/configurations" -H "Content-Type: application/json" -d \
 "{
   \"auth_mode\": \"oidc_auth\",
+  \"email_from\": \"harbor@${CLUSTER_FQDN}\",
+  \"email_host\": \"mailhog.mailhog.svc.cluster.local\",
+  \"email_port\": \"1025\",
   \"self_registration\": \"false\",
   \"oidc_name\": \"Dex\",
   \"oidc_endpoint\": \"https://dex.${CLUSTER_FQDN}\",

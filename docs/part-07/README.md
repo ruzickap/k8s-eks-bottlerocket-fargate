@@ -181,7 +181,7 @@ and modify the
 
 ```bash
 helm repo add kubernetes-dashboard https://kubernetes.github.io/dashboard/
-helm install --version 4.0.2 --namespace kubernetes-dashboard --create-namespace --values - kubernetes-dashboard kubernetes-dashboard/kubernetes-dashboard << EOF
+helm install --version 4.0.3 --namespace kubernetes-dashboard --create-namespace --values - kubernetes-dashboard kubernetes-dashboard/kubernetes-dashboard << EOF
 extraArgs:
   - --enable-skip-login
   - --enable-insecure-login
