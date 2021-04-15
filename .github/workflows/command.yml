@@ -48,3 +48,7 @@ jobs:
         run: |
           sudo rm /usr/local/bin/helm
           script -e -c tests/tests.sh
+
+      - name: Run tests/update_helmcharts.sh
+        run: |
+          tests/update_helmcharts.sh
