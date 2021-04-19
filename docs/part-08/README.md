@@ -5,13 +5,13 @@
 Install `clusterctl`:
 
 ```shell
-CLUSTERAPI_VERSION="0.3.11"
+CLUSTERAPI_VERSION="0.3.15"
 if [[ ! -f /usr/local/bin/clusterctl ]]; then
   curl -s -L "https://github.com/kubernetes-sigs/cluster-api/releases/download/v${CLUSTERAPI_VERSION}/clusterctl-$(uname | sed "s/./\L&/g" )-amd64" -o /usr/local/bin/clusterctl
   chmod +x /usr/local/bin/clusterctl
 fi
 
-CLUSTERAWSADM_VERSION="0.6.3"
+CLUSTERAWSADM_VERSION="0.6.5"
 if [[ ! -f /usr/local/bin/clusterawsadm ]]; then
   curl -s -L "https://github.com/kubernetes-sigs/cluster-api-provider-aws/releases/download/v${CLUSTERAWSADM_VERSION}/clusterawsadm-$(uname | sed "s/./\L&/g" )-amd64" -o /usr/local/bin/clusterawsadm
   chmod +x /usr/local/bin/clusterawsadm
@@ -92,7 +92,7 @@ and modify the
 
 ```bash
 helm repo add hashicorp https://helm.releases.hashicorp.com
-helm install --version 0.10.0 --namespace vault --wait --wait-for-jobs --values - vault hashicorp/vault << EOF
+helm install --version 0.11.0 --namespace vault --wait --wait-for-jobs --values - vault hashicorp/vault << EOF
 injector:
   metrics:
     enabled: false

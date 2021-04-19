@@ -291,13 +291,11 @@ Details with examples are described on these links:
 * [https://github.com/kubernetes-sigs/external-dns/blob/master/docs/tutorials/aws.md](https://github.com/kubernetes-sigs/external-dns/blob/master/docs/tutorials/aws.md)
 
 Create CloudFormation template containing policies for Route53, S3 access
-(Harbor) and Domain. AWS IAM Policy `${ClusterFQDN}-AmazonRoute53Domains`
-allows `cert-manager` and `external-dns` to modify the Route 53 entries.
-Put new domain `CLUSTER_FQDN` to the Route 53 and configure the
-DNS delegation from the `BASE_DOMAIN`.
+(Harbor, Velero) and Domain. Put new domain `CLUSTER_FQDN` to the Route 53 and
+configure the DNS delegation from the `BASE_DOMAIN`.
 
 ```bash
-test -d "tmp/${CLUSTER_FQDN}" || mkdir -vp "tmp/${CLUSTER_FQDN}"
+mkdir -vp "tmp/${CLUSTER_FQDN}"
 
 cat > "tmp/${CLUSTER_FQDN}/aws_policies.yml" << \EOF
 Description: "Template to generate the necessary IAM Policies for access to Route53 and S3"
@@ -481,11 +479,11 @@ eval aws cloudformation deploy --capabilities CAPABILITY_NAMED_IAM \
   --stack-name "${CLUSTER_NAME}-route53-iam-s3-ebs" --template-file "tmp/${CLUSTER_FQDN}/aws_policies.yml" --tags "${TAGS}"
 
 AWS_CLOUDFORMATION_DETAILS=$(aws cloudformation describe-stacks --stack-name "${CLUSTER_NAME}-route53-iam-s3-ebs")
-EKS_KMS_KEY_ID=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"EKSKMSKeyId\") .OutputValue")
+CLOUDWATCH_POLICY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"CloudWatchPolicyArn\") .OutputValue")
 EKS_KMS_KEY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"EKSKMSKeyArn\") .OutputValue")
+EKS_KMS_KEY_ID=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"EKSKMSKeyId\") .OutputValue")
 S3_POLICY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"S3PolicyArn\") .OutputValue")
 VAULT_KMS_KEY_ID=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"VaultKMSKeyId\") .OutputValue")
-CLOUDWATCH_POLICY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"CloudWatchPolicyArn\") .OutputValue")
 ```
 
 Change TTL=60 of SOA + NS records for new domain
@@ -602,6 +600,11 @@ iam:
       attachPolicyARNs:
         - ${S3_POLICY_ARN}
     - metadata:
+        name: velero
+        namespace: velero
+      attachPolicyARNs:
+        - ${S3_POLICY_ARN}
+    - metadata:
         name: grafana
         namespace: kube-prometheus-stack
       attachPolicy:
@@ -638,6 +641,31 @@ iam:
           Effect: Allow
           Action: tag:GetResources
           Resource: "*"
+    # https://aws.amazon.com/blogs/containers/introducing-efs-csi-dynamic-provisioning/
+    - metadata:
+        name: efs-csi-controller-sa
+        namespace: kube-system
+      attachPolicy:
+        Version: "2012-10-17"
+        Statement:
+        - Effect: Allow
+          Action:
+          - elasticfilesystem:DescribeAccessPoints
+          - elasticfilesystem:DescribeFileSystems
+          Resource: "*"
+        - Effect: Allow
+          Action:
+          - elasticfilesystem:CreateAccessPoint
+          Resource: "*"
+          Condition:
+            StringLike:
+              aws:RequestTag/efs.csi.aws.com/cluster: true
+        - Effect: Allow
+          Action: elasticfilesystem:DeleteAccessPoint
+          Resource: "*"
+          Condition:
+            StringEquals:
+              aws:ResourceTag/efs.csi.aws.com/cluster: true
 vpc:
   nat:
     gateway: Disable

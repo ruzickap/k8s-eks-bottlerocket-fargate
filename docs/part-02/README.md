@@ -80,8 +80,150 @@ The `aws-cloudwatch-metrics` populates "Container insights" in CloudWatch...
 
 ## aws-efs-csi-driver
 
+Get the details about the VPC to be able to configure security groups for EFS:
+
+```bash
+EKS_VPC_ID=$(aws eks describe-cluster --name "${CLUSTER_NAME}" --query "cluster.resourcesVpcConfig.vpcId" --output text)
+EKS_VPC_CIDR=$(aws ec2 describe-vpcs --vpc-ids "${EKS_VPC_ID}" --query "Vpcs[].CidrBlock" --output text)
+```
+
+Create EFS using CloudFormation:
+
+Apply CloudFormation template to create Amazon EFS.
+The template below is inspired by: [https://github.com/so008mo/inkubator-play/blob/64a150dbdc35b9ade48ff21b9ae6ba2710d18b5d/roles/eks/files/amazon-eks-efs.yaml](https://github.com/so008mo/inkubator-play/blob/64a150dbdc35b9ade48ff21b9ae6ba2710d18b5d/roles/eks/files/amazon-eks-efs.yaml)
+
+```bash
+cat > "tmp/${CLUSTER_FQDN}/cf_efs.yml" << \EOF
+AWSTemplateFormatVersion: 2010-09-09
+Description: Create EFS, mount points, security groups for EKS
+Parameters:
+  ClusterName:
+    Description: "K8s Cluster name. Ex: kube1"
+    Type: String
+  KmsKeyId:
+    Description: The ID of the AWS KMS customer master key (CMK) to be used to protect the encrypted file system
+    Type: String
+  VpcIPCidr:
+    Description: "Enter VPC CIDR that hosts the EKS cluster. Ex: 10.0.0.0/16"
+    Type: String
+Resources:
+  MountTargetSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId:
+        Fn::ImportValue:
+          Fn::Sub: "eksctl-${ClusterName}-cluster::VPC"
+      GroupName: !Sub "${ClusterName}-efs-sg-groupname"
+      GroupDescription: Security group for mount target
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: "2049"
+          ToPort: "2049"
+          CidrIp:
+            Ref: VpcIPCidr
+      Tags:
+        - Key: Name
+          Value: !Sub "${ClusterName}-efs-sg-tagname"
+  FileSystem:
+    Type: AWS::EFS::FileSystem
+    Properties:
+      Encrypted: true
+      FileSystemTags:
+      - Key: Name
+        Value: !Sub "${ClusterName}-efs"
+      KmsKeyId: !Ref KmsKeyId
+  MountTargetAZ1:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId:
+        Ref: FileSystem
+      SubnetId:
+        Fn::Select:
+        - 0
+        - Fn::Split:
+          - ","
+          - Fn::ImportValue: !Sub "eksctl-${ClusterName}-cluster::SubnetsPrivate"
+      SecurityGroups:
+      - Ref: MountTargetSecurityGroup
+  MountTargetAZ2:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId:
+        Ref: FileSystem
+      SubnetId:
+        Fn::Select:
+        - 1
+        - Fn::Split:
+          - ","
+          - Fn::ImportValue: !Sub "eksctl-${ClusterName}-cluster::SubnetsPrivate"
+      SecurityGroups:
+      - Ref: MountTargetSecurityGroup
+  AccessPointDrupal:
+    Type: AWS::EFS::AccessPoint
+    Properties:
+      FileSystemId: !Ref FileSystem
+      # Set proper uid/gid: https://github.com/bitnami/bitnami-docker-drupal/blob/02f7e41c88eee96feb90c8b7845ee7aeb5927c38/9/debian-10/Dockerfile#L49
+      PosixUser:
+        Uid: "1001"
+        Gid: "1001"
+      RootDirectory:
+        CreationInfo:
+          OwnerGid: "1001"
+          OwnerUid: "1001"
+          Permissions: "700"
+        Path: "/drupal"
+      AccessPointTags:
+        - Key: Name
+          Value: !Sub "${ClusterName}-drupal-efs-ap"
+  AccessPointDrupal2:
+    Type: AWS::EFS::AccessPoint
+    Properties:
+      FileSystemId: !Ref FileSystem
+      # Set proper uid/gid: https://github.com/bitnami/bitnami-docker-drupal/blob/02f7e41c88eee96feb90c8b7845ee7aeb5927c38/9/debian-10/Dockerfile#L49
+      PosixUser:
+        Uid: "1001"
+        Gid: "1001"
+      RootDirectory:
+        CreationInfo:
+          OwnerGid: "1001"
+          OwnerUid: "1001"
+          Permissions: "700"
+        Path: "/drupal2"
+      AccessPointTags:
+        - Key: Name
+          Value: !Sub "${ClusterName}-drupal2-efs-ap"
+Outputs:
+  FileSystemId:
+    Description: Id of Elastic File System
+    Value:
+      Ref: FileSystem
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-FileSystemId"
+  AccessPointDrupal:
+    Description: EFS AccessPoint ID for Drupal
+    Value:
+      Ref: AccessPointDrupal
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-AccessPointDrupal"
+  AccessPointDrupal2:
+    Description: EFS AccessPoint2 ID for Drupal2
+    Value:
+      Ref: AccessPointDrupal2
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-AccessPointDrupal2"
+EOF
+
+eval aws cloudformation deploy --stack-name "${CLUSTER_NAME}-efs" --parameter-overrides "ClusterName=${CLUSTER_NAME} KmsKeyId=${EKS_KMS_KEY_ID} VpcIPCidr=${EKS_VPC_CIDR}" --template-file "tmp/${CLUSTER_FQDN}/cf_efs.yml" --tags "${TAGS}"
+
+EFS_FS_ID=$(aws efs describe-file-systems --query "FileSystems[?Name==\`${CLUSTER_NAME}-efs\`].[FileSystemId]" --output text)
+```
+
 Install [Amazon EFS CSI Driver](https://github.com/kubernetes-sigs/aws-efs-csi-driver),
-which supports ReadWriteMany PVC, is installed.
+which supports ReadWriteMany PVC. Details can be found here:
+[Introducing Amazon EFS CSI dynamic provisioning](https://aws.amazon.com/blogs/containers/introducing-efs-csi-dynamic-provisioning/)
 
 Install [Amazon EFS CSI Driver](https://github.com/kubernetes-sigs/aws-efs-csi-driver)
 `aws-efs-csi-driver`
@@ -91,18 +233,28 @@ and modify the
 
 ```bash
 helm repo add aws-efs-csi-driver https://kubernetes-sigs.github.io/aws-efs-csi-driver/
-kubectl delete CSIDriver efs.csi.aws.com
-helm install --version 1.2.2 --namespace kube-system aws-efs-csi-driver aws-efs-csi-driver/aws-efs-csi-driver
+helm install --version 1.2.2 --namespace kube-system --values - aws-efs-csi-driver aws-efs-csi-driver/aws-efs-csi-driver << EOF
+serviceAccount:
+  controller:
+    create: false
+storageClasses:
+- name: efs-dynamic-sc
+  parameters:
+    provisioningMode: efs-ap
+    fileSystemId: "${EFS_FS_ID}"
+    directoryPerms: "700"
+    basePath: "/dynamic_provisioning"
+EOF
 ```
 
-Create storage class for EFS:
+Create storage class for static EFS:
 
 ```bash
 kubectl apply -f - << EOF
 kind: StorageClass
 apiVersion: storage.k8s.io/v1
 metadata:
-  name: efs
+  name: efs-static-sc
 provisioner: efs.csi.aws.com
 EOF
 ```

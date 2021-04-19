@@ -196,7 +196,7 @@ and modify the
 
 ```bash
 helm repo add kiali https://kiali.org/helm-charts
-helm install --version 1.32.0 --namespace kiali-operator --create-namespace kiali-operator kiali/kiali-operator
+helm install --version 1.33.0 --namespace kiali-operator --create-namespace kiali-operator kiali/kiali-operator
 ```
 
 Install Kiali CR:
@@ -270,6 +270,8 @@ helm install --version 9.9.2 --namespace kube-system --values - cluster-autoscal
 autoDiscovery:
   clusterName: ${CLUSTER_NAME}
 awsRegion: ${AWS_DEFAULT_REGION}
+image:
+  tag: v1.19.0
 rbac:
   serviceAccount:
     create: false
@@ -285,6 +287,12 @@ You can test it by running:
 ```shell
 kubectl create deployment autoscaler-demo --image=nginx
 kubectl scale deployment autoscaler-demo --replicas=50
+```
+
+Check the details:
+
+```shell
+kubectl get configmap cluster-autoscaler-status -o yaml -n kube-system
 ```
 
 The `cluster-autoscaler` should start one more node and run there the pods:
