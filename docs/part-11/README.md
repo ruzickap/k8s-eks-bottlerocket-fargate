@@ -9,10 +9,10 @@ and modify the
 
 ```bash
 helm repo add vmware-tanzu https://vmware-tanzu.github.io/helm-charts
-helm install --version 2.16.0 --namespace velero --create-namespace --values - velero vmware-tanzu/velero << EOF
+helm install --version 2.17.2 --namespace velero --create-namespace --values - velero vmware-tanzu/velero << EOF
 initContainers:
   - name: velero-plugin-for-aws
-    image: velero/velero-plugin-for-aws:v1.1.0
+    image: velero/velero-plugin-for-aws:v1.2.0
     imagePullPolicy: Always
     volumeMounts:
       - mountPath: /target
@@ -39,17 +39,13 @@ configuration:
       region: ${AWS_DEFAULT_REGION}
   features: EnableCSI
 # IRSA not working due to bug: https://github.com/vmware-tanzu/velero/issues/2198
-# serviceAccount:
-#   server:
-#     annotations:
-#       eks.amazonaws.com/role-arn: ${S3_POLICY_ARN}
+serviceAccount:
+  server:
+    create: false
+    name: velero
 # This should be removed in favor of IRSA (see above)
 credentials:
-  secretContents:
-    cloud: |
-      [default]
-      aws_access_key_id=${AWS_ACCESS_KEY_ID}
-      aws_secret_access_key=${AWS_SECRET_ACCESS_KEY}
+  useSecret: false
 deployRestic: true
 EOF
 ```
@@ -488,7 +484,6 @@ kubectl get pods,deployments,services,ingress,secrets,pvc,statefulset,service,co
 Output:
 
 ```text
-
 Warning: extensions/v1beta1 Ingress is deprecated in v1.14+, unavailable in v1.22+; use networking.k8s.io/v1 Ingress
 NAME                                        READY   STATUS    RESTARTS   AGE
 pod/vault-0                                 1/1     Running   0          13m
@@ -562,7 +557,7 @@ Get the details about recovery:
 
 ```bash
 velero restore describe restore-vault
-sleep 150
+kubectl wait --namespace vault --for=condition=Ready --timeout=5m pod vault-0
 ```
 
 Output:
@@ -631,4 +626,207 @@ Output:
 ```text
 Request to delete backup "backup-vault" submitted successfully.
 The backup will be fully deleted after all associated data (disk snapshots, backup files, restores) are removed.
+```
+
+## Backup + Delete + Restore app with EFS storage using restic
+
+Run pod writing to the EFS storage:
+
+```bash
+kubectl apply -f - << EOF
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: backup-test
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: efs-backup-test-pv
+  namespace: backup-test
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: efs-dynamic-sc
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-app
+  namespace: backup-test
+spec:
+  containers:
+  - name: app
+    image: alpine
+    securityContext:
+      runAsUser: 1000
+      runAsGroup: 3000
+      readOnlyRootFilesystem: true
+    command: ["/bin/sh"]
+    args: ["-c", "while true; do date >> /data/out.txt; sleep 5; done"]
+    volumeMounts:
+    - name: persistent-storage
+      mountPath: /data
+    resources:
+      requests:
+        memory: "64Mi"
+        cpu: "250m"
+      limits:
+        memory: "128Mi"
+        cpu: "500m"
+  volumes:
+  - name: persistent-storage
+    persistentVolumeClaim:
+      claimName: efs-backup-test-pv
+EOF
+kubectl wait --namespace backup-test --for=condition=Ready --timeout=5m pod test-app
+sleep 10
+```
+
+The file is being continuously updated
+
+```bash
+kubectl exec -it -n backup-test test-app -- cat /data/out.txt
+```
+
+Output:
+
+```text
+```
+
+Run backup of "backup-test" namespace:
+
+```bash
+velero backup create backup-test --default-volumes-to-restic --ttl 24h --include-namespaces=backup-test --wait
+```
+
+Output:
+
+```text
+```
+
+Check the backups:
+
+```bash
+velero get backups
+```
+
+Output:
+
+```text
+```
+
+See the details of the "backup-test":
+
+```bash
+velero backup describe backup-test --details
+```
+
+Output:
+
+```text
+```
+
+See the files in S3 bucket:
+
+```bash
+aws s3 ls --recursive s3://${CLUSTER_FQDN}/velero/backups/backup-test/
+```
+
+Output:
+
+```text
+```
+
+Check the "backup-test" namespace and it's objects:
+
+```bash
+kubectl get pods,pvc,secret -n backup-test
+```
+
+Output:
+
+```text
+```
+
+Remove "backup-test" namespace - simulate unfortunate deletion of namespace:
+
+```bash
+kubectl delete namespace backup-test
+```
+
+Restore the object in the "backup-test" namespace:
+
+```bash
+velero restore create restore-backup-test --from-backup backup-test --include-namespaces backup-test --wait
+kubectl wait --namespace backup-test --for=condition=Ready --timeout=5m pod test-app
+```
+
+Output:
+
+```text
+```
+
+Get recovery list:
+
+```bash
+velero restore get
+```
+
+Output:
+
+```text
+```
+
+Get the details about recovery:
+
+```bash
+velero restore describe restore-backup-test
+```
+
+Output:
+
+```text
+```
+
+Check the "backup-test" namespace and it's objects:
+
+```bash
+kubectl get pods,pvc,secret -n backup-test
+```
+
+Output:
+
+```text
+```
+
+Check if the file "/data/out.txt" is being updated and see the "time gap":
+
+```bash
+kubectl exec -it -n backup-test test-app -- cat /data/out.txt
+```
+
+Output:
+
+```text
+```
+
+Delete the backup
+
+```bash
+velero backup delete backup-test --confirm
+```
+
+Output:
+
+```text
+```
+
+Delete namespace:
+
+```bash
+kubectl delete namespace backup-test
 ```

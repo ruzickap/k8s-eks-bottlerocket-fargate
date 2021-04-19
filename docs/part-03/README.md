@@ -26,14 +26,14 @@ and modify the
 
 ```bash
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm install --version 14.6.2 --namespace kube-prometheus-stack --values - kube-prometheus-stack prometheus-community/kube-prometheus-stack << EOF
+helm install --version 14.9.0 --namespace kube-prometheus-stack --values - kube-prometheus-stack prometheus-community/kube-prometheus-stack << EOF
 defaultRules:
   rules:
     etcd: false
     kubernetesSystem: false
     kubeScheduler: false
 additionalPrometheusRulesMap:
-# Flux rule: https://toolkit.fluxcd.io/guides/monitoring/
+  # Flux rule: https://toolkit.fluxcd.io/guides/monitoring/
   rule-name:
     groups:
     - name: GitOpsToolkit
@@ -580,7 +580,7 @@ and modify the
 
 ```bash
 helm repo add kyverno https://kyverno.github.io/kyverno/
-helm install --version v1.3.4 --namespace kyverno --create-namespace --values - kyverno kyverno/kyverno << EOF
+helm install --version v1.3.5 --namespace kyverno --create-namespace --values - kyverno kyverno/kyverno << EOF
 hostNetwork: true
 EOF
 ```
@@ -592,7 +592,7 @@ and modify the
 
 ```bash
 helm repo add policy-reporter https://fjogeleit.github.io/policy-reporter
-helm install --version 1.1.0 --namespace policy-reporter --create-namespace --values - policy-reporter policy-reporter/policy-reporter << EOF
+helm install --version 1.2.0 --namespace policy-reporter --create-namespace --values - policy-reporter policy-reporter/policy-reporter << EOF
 ui:
   enabled: true
   ingress:
@@ -813,7 +813,7 @@ and modify the
 
 ```shell
 helm repo add newrelic https://helm-charts.newrelic.com
-helm install --version 2.6.0 --namespace nri-bundle --create-namespace --values - nri-bundle newrelic/nri-bundle << EOF
+helm install --version 2.8.1 --namespace nri-bundle --create-namespace --values - nri-bundle newrelic/nri-bundle << EOF
 prometheus:
   enabled: true
 kubeEvents:

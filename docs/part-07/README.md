@@ -271,7 +271,7 @@ Install `kube-ops-view`
 and modify the
 [default values](https://github.com/helm/charts/blob/master/stable/kube-ops-view/values.yaml).
 
-```shell
+```bash
 helm repo add stable https://charts.helm.sh/stable
 helm install --version 1.2.4 --namespace kube-ops-view --create-namespace --values - kube-ops-view stable/kube-ops-view << EOF
 ingress:

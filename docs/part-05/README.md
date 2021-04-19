@@ -22,6 +22,8 @@ auth:
   managementUser: admin
   managementPassword: ${MY_PASSWORD}
 proxyAddressForwarding: true
+# https://stackoverflow.com/questions/51616770/keycloak-restricting-user-management-to-certain-groups-while-enabling-manage-us
+extraStartupArgs: "-Dkeycloak.profile.feature.admin_fine_grained_authz=enabled"
 service:
   type: ClusterIP
 ingress:
@@ -45,19 +47,45 @@ keycloakConfigCli:
   configuration:
     myrealm.yaml: |
       realm: myrealm
+      enabled: true
       displayName: My Realm
       rememberMe: true
+      userManagedAccessAllowed: true
       smtpServer:
         from: myrealm-keycloak@${CLUSTER_FQDN}
         fromDisplayName: Keycloak
         host: mailhog.mailhog.svc.cluster.local
         port: 1025
       clients:
-        - clientId: myclient
-          name: myclient
-          description: "My Client"
-          rootUrl: \${authBaseUrl}
-          secret: ${KEYCLOAK_OIDC_CLIENT_SECRET}
+      - clientId: myclient
+        name: myclient
+        description: "My Client"
+        secret: ${KEYCLOAK_OIDC_CLIENT_SECRET}
+        redirectUris:
+        - "https://keycloak.${CLUSTER_FQDN}/*"
+      identityProviders:
+      # https://ultimatesecurity.pro/post/okta-oidc/
+      - alias: keycloak-oidc-okta
+        displayName: "Okta"
+        providerId: keycloak-oidc
+        trustEmail: true
+        config:
+          clientId: ${OKTA_CLIENT_ID}
+          clientSecret: ${OKTA_CLIENT_SECRET}
+          tokenUrl: "${OKTA_ISSUER}/oauth2/default/v1/token"
+          authorizationUrl: "${OKTA_ISSUER}/oauth2/default/v1/authorize"
+          defaultScope: "openid profile email"
+          syncMode: IMPORT
+      - alias: dex
+        displayName: "Dex"
+        providerId: keycloak-oidc
+        trustEmail: true
+        config:
+          clientId: keycloak.${CLUSTER_FQDN}
+          clientSecret: ${MY_PASSWORD}
+          tokenUrl: https://dex.${CLUSTER_FQDN}/token
+          authorizationUrl: https://dex.${CLUSTER_FQDN}/auth
+          syncMode: IMPORT
       users:
       - username: myuser1
         email: myuser1@${CLUSTER_FQDN}
@@ -83,6 +111,9 @@ keycloakConfigCli:
         credentials:
         - type: password
           value: ${MY_PASSWORD}
+      groups:
+      - name: group-users
+      - name: group-admins
 EOF
 ```
 
@@ -95,7 +126,7 @@ and modify the
 
 ```bash
 helm repo add dex https://charts.dexidp.io
-helm install --version 0.0.7 --namespace dex --create-namespace --values - dex dex/dex << EOF
+helm install --version 0.1.2 --namespace dex --create-namespace --values - dex dex/dex << EOF
 ingress:
   enabled: true
   annotations:
@@ -104,6 +135,7 @@ ingress:
     - host: dex.${CLUSTER_FQDN}
       paths:
         - path: /
+          pathType: ImplementationSpecific
   tls:
     - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
       hosts:
@@ -159,6 +191,11 @@ config:
       redirectURIs:
         - https://kiali.${CLUSTER_FQDN}/
       name: Kiali
+      secret: ${MY_PASSWORD}
+    - id: keycloak.${CLUSTER_FQDN}
+      redirectURIs:
+        - https://keycloak.${CLUSTER_FQDN}/auth/realms/myrealm/broker/dex/endpoint
+      name: Keycloak
       secret: ${MY_PASSWORD}
     - id: oauth2-proxy.${CLUSTER_FQDN}
       redirectURIs:
@@ -243,6 +280,25 @@ ingress:
     - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
       hosts:
         - gangway.${CLUSTER_FQDN}
+EOF
+```
+
+## openunison
+
+Install `openunison`
+[helm chart](https://artifacthub.io/packages/helm/tremolo/openunison-k8s-login-oidc)
+and modify the
+[default values](https://github.com/OpenUnison/helm-charts/blob/master/openunison-k8s-login-oidc/values.yaml).
+
+```shell
+helm repo add tremolo https://nexus.tremolo.io/repository/helm/
+helm install --version 1.0.2 --namespace openunison --create-namespace --values - openunison-k8s-oidc tremolo/openunison-k8s-oidc << EOF
+network:
+  openunison_host: "openunison.${CLUSTER_FQDN}"
+  dashboard_host: "openunison.${CLUSTER_FQDN}"
+...
+...
+...
 EOF
 ```
 

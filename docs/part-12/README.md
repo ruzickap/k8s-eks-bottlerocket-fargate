@@ -15,7 +15,7 @@ and modify the
 
 ```shell
 helm repo add argo https://argoproj.github.io/argo-helm
-helm install --version 2.17.5 --namespace argocd --create-namespace --values - argocd argo/argo-cd << EOF
+helm install --version 3.1.1 --namespace argocd --create-namespace --values - argocd argo/argo-cd << EOF
 controller:
   metrics:
     enabled: true

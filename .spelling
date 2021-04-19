@@ -73,11 +73,14 @@ nameservers
 nri-bundle
 OAuth
 oauth2-proxy
+openunison
+out.txt
 phpMyAdmin
 podinfo
 Polaris
 promtail
 ReadWriteMany
+restic
 Route53
 ServiceAccount
 serviceaccounts

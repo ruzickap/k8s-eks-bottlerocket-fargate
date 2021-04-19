@@ -8,10 +8,7 @@ Get details about AWS environment where is the EKS cluster and store it into
 variables:
 
 ```bash
-EKS_VPC_ID=$(aws eks describe-cluster --name "${CLUSTER_NAME}" --query "cluster.resourcesVpcConfig.vpcId" --output text)
-EKS_VPC_CIDR=$(aws ec2 describe-vpcs --vpc-ids "${EKS_VPC_ID}" --query "Vpcs[].CidrBlock" --output text)
 RDS_DB_USERNAME="root"
-RDS_DB_PASSWORD="${MY_PASSWORD}"
 ```
 
 ### RDS
@@ -204,10 +201,26 @@ Outputs:
         Fn::Sub: "${AWS::StackName}-RdsMasterPassword"
 EOF
 
-eval aws cloudformation deploy --capabilities CAPABILITY_NAMED_IAM --stack-name "${CLUSTER_NAME}-rds" --parameter-overrides "ClusterName=${CLUSTER_NAME} KmsKeyId=${EKS_KMS_KEY_ID} RdsMasterPassword=${RDS_DB_PASSWORD} RdsMasterUsername=${RDS_DB_USERNAME} VpcIPCidr=${EKS_VPC_CIDR}" --template-file "tmp/${CLUSTER_FQDN}/cf_rds.yml" --tags "${TAGS}"
+eval aws cloudformation deploy --capabilities CAPABILITY_NAMED_IAM --stack-name "${CLUSTER_NAME}-rds" --parameter-overrides "ClusterName=${CLUSTER_NAME} KmsKeyId=${EKS_KMS_KEY_ID} RdsMasterPassword=${MY_PASSWORD} RdsMasterUsername=${RDS_DB_USERNAME} VpcIPCidr=${EKS_VPC_CIDR}" --template-file "tmp/${CLUSTER_FQDN}/cf_rds.yml" --tags "${TAGS}"
 
 RDS_DB_HOST=$(aws rds describe-db-instances --query "DBInstances[?DBInstanceIdentifier==\`${CLUSTER_NAME}db\`].[Endpoint.Address]" --output text)
 ```
+
+Initialize database:
+
+```bash
+kubectl run --env MYSQL_PWD=${MY_PASSWORD} --image=mysql:8.0 --restart=Never mysql-client-drupal -- \
+  mysql -h "${RDS_DB_HOST}" -u "${RDS_DB_USERNAME}" -e "
+    CREATE USER \"drupal\"@\"%\" IDENTIFIED BY \"${MY_PASSWORD}\";
+    CREATE USER \"drupal2\"@\"%\" IDENTIFIED BY \"${MY_PASSWORD}\";
+    CREATE DATABASE drupal;
+    CREATE DATABASE drupal2;
+    GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, CREATE TEMPORARY TABLES ON drupal.* TO \"drupal\"@\"%\";
+    GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, CREATE TEMPORARY TABLES ON drupal.* TO \"drupal2\"@\"localhost\";
+  "
+```
+
+### phpMyAdmin
 
 Install [phpMyAdmin](https://www.phpmyadmin.net/) using Helm Chart
 
@@ -218,9 +231,6 @@ and modify the
 
 ```bash
 helm install --version 8.2.4 --namespace phpmyadmin --create-namespace --values - phpmyadmin bitnami/phpmyadmin << EOF
-db:
-  allowArbitraryServer: false
-  host: ${RDS_DB_HOST}
 ingress:
   enabled: true
   hostname: phpmyadmin.${CLUSTER_FQDN}
@@ -235,184 +245,45 @@ metrics:
   enabled: true
   serviceMonitor:
     enabled: true
+db:
+  allowArbitraryServer: false
+  host: ${RDS_DB_HOST}
+  enableSsl: true
+  ssl:
+    caCertificate: |-
+$(curl -s "https://s3.amazonaws.com/rds-downloads/rds-ca-2019-root.pem" | sed  "s/^/      /" )
 EOF
-```
-
-### EFS
-
-The [Amazon EFS CSI Driver](https://github.com/kubernetes-sigs/aws-efs-csi-driver)
-supports ReadWriteMany PVC.
-
-Apply CloudFormation template to create Amazon EFS.
-The template below is inspired by: [https://github.com/so008mo/inkubator-play/blob/64a150dbdc35b9ade48ff21b9ae6ba2710d18b5d/roles/eks/files/amazon-eks-efs.yaml](https://github.com/so008mo/inkubator-play/blob/64a150dbdc35b9ade48ff21b9ae6ba2710d18b5d/roles/eks/files/amazon-eks-efs.yaml)
-
-```bash
-cat > "tmp/${CLUSTER_FQDN}/cf_efs.yml" << \EOF
-AWSTemplateFormatVersion: 2010-09-09
-Description: Create EFS, mount points, security groups for EKS
-Parameters:
-  ClusterName:
-    Description: "K8s Cluster name. Ex: kube1"
-    Type: String
-  KmsKeyId:
-    Description: The ID of the AWS KMS customer master key (CMK) to be used to protect the encrypted file system
-    Type: String
-  VpcIPCidr:
-    Description: "Enter VPC CIDR that hosts the EKS cluster. Ex: 10.0.0.0/16"
-    Type: String
-Resources:
-  MountTargetSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      VpcId:
-        Fn::ImportValue:
-          Fn::Sub: "eksctl-${ClusterName}-cluster::VPC"
-      GroupName: !Sub "${ClusterName}-efs-sg-groupname"
-      GroupDescription: Security group for mount target
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: "2049"
-          ToPort: "2049"
-          CidrIp:
-            Ref: VpcIPCidr
-      Tags:
-        - Key: Name
-          Value: !Sub "${ClusterName}-efs-sg-tagname"
-  FileSystem:
-    Type: AWS::EFS::FileSystem
-    Properties:
-      Encrypted: true
-      FileSystemTags:
-      - Key: Name
-        Value: !Sub "${ClusterName}-efs"
-      KmsKeyId: !Ref KmsKeyId
-  MountTargetAZ1:
-    Type: AWS::EFS::MountTarget
-    Properties:
-      FileSystemId:
-        Ref: FileSystem
-      SubnetId:
-        Fn::Select:
-        - 0
-        - Fn::Split:
-          - ","
-          - Fn::ImportValue: !Sub "eksctl-${ClusterName}-cluster::SubnetsPrivate"
-      SecurityGroups:
-      - Ref: MountTargetSecurityGroup
-  MountTargetAZ2:
-    Type: AWS::EFS::MountTarget
-    Properties:
-      FileSystemId:
-        Ref: FileSystem
-      SubnetId:
-        Fn::Select:
-        - 1
-        - Fn::Split:
-          - ","
-          - Fn::ImportValue: !Sub "eksctl-${ClusterName}-cluster::SubnetsPrivate"
-      SecurityGroups:
-      - Ref: MountTargetSecurityGroup
-  AccessPointDrupal:
-    Type: AWS::EFS::AccessPoint
-    Properties:
-      FileSystemId: !Ref FileSystem
-      # Set proper uid/gid: https://github.com/bitnami/bitnami-docker-drupal/blob/02f7e41c88eee96feb90c8b7845ee7aeb5927c38/9/debian-10/Dockerfile#L49
-      PosixUser:
-        Uid: "1001"
-        Gid: "1001"
-      RootDirectory:
-        CreationInfo:
-          OwnerGid: "1001"
-          OwnerUid: "1001"
-          Permissions: "0775"
-        Path: "/drupal"
-      AccessPointTags:
-        - Key: Name
-          Value: !Sub "${ClusterName}-drupal-efs-ap"
-  AccessPointDrupal2:
-    Type: AWS::EFS::AccessPoint
-    Properties:
-      FileSystemId: !Ref FileSystem
-      # Set proper uid/gid: https://github.com/bitnami/bitnami-docker-drupal/blob/02f7e41c88eee96feb90c8b7845ee7aeb5927c38/9/debian-10/Dockerfile#L49
-      PosixUser:
-        Uid: "1001"
-        Gid: "1001"
-      RootDirectory:
-        CreationInfo:
-          OwnerGid: "1001"
-          OwnerUid: "1001"
-          Permissions: "0775"
-        Path: "/drupal2"
-      AccessPointTags:
-        - Key: Name
-          Value: !Sub "${ClusterName}-drupal2-efs-ap"
-Outputs:
-  FileSystemId:
-    Description: Id of Elastic File System
-    Value:
-      Ref: FileSystem
-    Export:
-      Name:
-        Fn::Sub: "${AWS::StackName}-FileSystemId"
-  AccessPointDrupal:
-    Description: EFS AccessPoint ID for Drupal
-    Value:
-      Ref: AccessPointDrupal
-    Export:
-      Name:
-        Fn::Sub: "${AWS::StackName}-AccessPointDrupal"
-  AccessPointDrupal2:
-    Description: EFS AccessPoint2 ID for Drupal2
-    Value:
-      Ref: AccessPointDrupal2
-    Export:
-      Name:
-        Fn::Sub: "${AWS::StackName}-AccessPointDrupal2"
-EOF
-
-eval aws cloudformation deploy --stack-name "${CLUSTER_NAME}-efs" --parameter-overrides "ClusterName=${CLUSTER_NAME} KmsKeyId=${EKS_KMS_KEY_ID} VpcIPCidr=${EKS_VPC_CIDR}" --template-file "tmp/${CLUSTER_FQDN}/cf_efs.yml" --tags "${TAGS}"
-
-EFS_FS_ID=$(aws efs describe-file-systems --query "FileSystems[?Name==\`${CLUSTER_NAME}-efs\`].[FileSystemId]" --output text)
-EFS_AP_DRUPAL_ID=$(aws efs describe-access-points --query "AccessPoints[?(FileSystemId==\`${EFS_FS_ID}\` && RootDirectory.Path==\`/drupal\`)].[AccessPointId]" --output text)
-EFS_AP_DRUPAL2_ID=$(aws efs describe-access-points --query "AccessPoints[?(FileSystemId==\`${EFS_FS_ID}\` && RootDirectory.Path==\`/drupal2\`)].[AccessPointId]" --output text)
 ```
 
 ### Install Drupal
 
+Get the `FileSystemId` from EFS:
+
+```bash
+EFS_AP_DRUPAL_ID=$(aws efs describe-access-points --query "AccessPoints[?(FileSystemId==\`${EFS_FS_ID}\` && RootDirectory.Path==\`/drupal\`)].[AccessPointId]" --output text)
+```
+
 Create ReadWriteMany persistent volume like described [here](https://github.com/kubernetes-sigs/aws-efs-csi-driver/blob/master/examples/kubernetes/multiple_pods/README.md):
 
 ```bash
+kubectl create namespace drupal
 kubectl apply -f - << EOF
 apiVersion: v1
 kind: PersistentVolume
 metadata:
   name: efs-drupal-pv
 spec:
+  storageClassName: efs-static-sc
   capacity:
     storage: 1Gi
   volumeMode: Filesystem
   accessModes:
     - ReadWriteMany
-  persistentVolumeReclaimPolicy: Retain
-  storageClassName: efs
+  persistentVolumeReclaimPolicy: Delete
   csi:
     driver: efs.csi.aws.com
     volumeHandle: ${EFS_FS_ID}::${EFS_AP_DRUPAL_ID}
-EOF
-```
-
-Create `drupal` database inside MariaDB:
-
-```bash
-kubectl create namespace drupal
-kubectl run -n drupal --env MYSQL_PWD=${RDS_DB_PASSWORD} --image=mysql:8.0 --restart=Never mysql-client-drupal -- \
-  mysql -h "${RDS_DB_HOST}" -u "${RDS_DB_USERNAME}" -e "CREATE DATABASE drupal"
-```
-
-Create `drupal` namespace and PVC:
-
-```bash
-kubectl apply -f - << EOF
+---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -421,7 +292,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteMany
-  storageClassName: efs
+  storageClassName: efs-static-sc
   volumeName: efs-drupal-pv
   resources:
     requests:
@@ -435,22 +306,21 @@ and modify the
 [default values](https://github.com/bitnami/charts/blob/master/bitnami/drupal/values.yaml).
 
 ```bash
-DRUPAL_USERNAME="admin"
-DRUPAL_PASSWORD="${MY_PASSWORD}"
-
 helm repo add bitnami https://charts.bitnami.com/bitnami
-helm install --version 10.2.9 --namespace drupal --values - drupal bitnami/drupal << EOF
+helm install --version 10.2.10 --namespace drupal --values - drupal bitnami/drupal << EOF
 replicaCount: 2
-drupalUsername: ${DRUPAL_USERNAME}
-drupalPassword: ${DRUPAL_PASSWORD}
+drupalUsername: admin
+drupalPassword: ${MY_PASSWORD}
 drupalEmail: ${MY_EMAIL}
 externalDatabase:
   host: ${RDS_DB_HOST}
-  user: ${RDS_DB_USERNAME}
-  password: ${RDS_DB_PASSWORD}
+  user: drupal
+  password: ${MY_PASSWORD}
   database: drupal
 smtpHost: mailhog.mailhog.svc.cluster.local
 smtpPort: 1025
+smtpUser: "x"
+smtpPassword: "x"
 mariadb:
   enabled: false
 service:
@@ -467,50 +337,45 @@ ingress:
         - drupal.${CLUSTER_FQDN}
 persistence:
   enabled: true
-  storageClass: efs
-  accessMode: ReadWriteMany
-  size: 1Gi
+  # EFS dynamic provisioning can not be used due to UID/GID issue when EFS assign
+  # randomly GID to the NFS share and then Drupal can not write to it
+  # (chown to such directory is not working - prohibited by AWS)
+  # storageClass: efs-dynamic-sc
+  # accessMode: ReadWriteMany
+  # size: 1Gi
   existingClaim: drupal-efs-pvc
 EOF
 ```
 
 ### Install Drupal2
 
+Get the `FileSystemId` from EFS:
+
+```bash
+EFS_AP_DRUPAL2_ID=$(aws efs describe-access-points --query "AccessPoints[?(FileSystemId==\`${EFS_FS_ID}\` && RootDirectory.Path==\`/drupal2\`)].[AccessPointId]" --output text)
+```
+
 Create ReadWriteMany persistent volume like described [here](https://github.com/kubernetes-sigs/aws-efs-csi-driver/blob/master/examples/kubernetes/multiple_pods/README.md):
 
 ```bash
+kubectl create namespace drupal2
 kubectl apply -f - << EOF
 apiVersion: v1
 kind: PersistentVolume
 metadata:
   name: efs-drupal2-pv
 spec:
+  storageClassName: efs-static-sc
   capacity:
     storage: 1Gi
   volumeMode: Filesystem
   accessModes:
     - ReadWriteMany
-  persistentVolumeReclaimPolicy: Retain
-  storageClassName: efs
+  persistentVolumeReclaimPolicy: Delete
   csi:
     driver: efs.csi.aws.com
     volumeHandle: ${EFS_FS_ID}::${EFS_AP_DRUPAL2_ID}
-EOF
-```
-
-Create `drupal2` database inside MariaDB:
-
-```bash
-kubectl create namespace drupal2
-kubectl label namespace drupal2 istio-injection=enabled kiali.io/member-of=kiali --overwrite
-kubectl run -n drupal2 --env MYSQL_PWD=${RDS_DB_PASSWORD} --image=mysql:8 --restart=Never mysql-client-drupal2 -- /bin/bash -c "
-  sleep 5 && mysql -h \"${RDS_DB_HOST}\" -u \"${RDS_DB_USERNAME}\" -e \"CREATE DATABASE drupal2\""
-```
-
-Create `drupal2` namespace and PVC:
-
-```bash
-kubectl apply -f - << EOF
+---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -519,7 +384,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteMany
-  storageClassName: efs
+  storageClassName: efs-static-sc
   volumeName: efs-drupal2-pv
   resources:
     requests:
@@ -527,40 +392,38 @@ spec:
 EOF
 ```
 
-Install `drupal`
-[helm chart](https://artifacthub.io/packages/helm/bitnami/drupal)
-and modify the
-[default values](https://github.com/bitnami/charts/blob/master/bitnami/drupal/values.yaml).
+Enable Istio for namespace `drupal2`:
 
 ```bash
-DRUPAL2_USERNAME="admin"
-DRUPAL2_PASSWORD="${MY_PASSWORD}"
+kubectl label namespace drupal2 istio-injection=enabled kiali.io/member-of=kiali --overwrite
+```
 
-helm repo add bitnami https://charts.bitnami.com/bitnami
-helm install --version 10.2.9 --namespace drupal2 --values - drupal2 bitnami/drupal << EOF
+Install `drupal2`:
+
+```bash
+helm install --version 10.2.10 --namespace drupal2 --values - drupal2 bitnami/drupal << EOF
 replicaCount: 2
-drupalUsername: ${DRUPAL2_USERNAME}
-drupalPassword: ${DRUPAL2_PASSWORD}
+drupalUsername: admin
+drupalPassword: ${MY_PASSWORD}
 drupalEmail: ${MY_EMAIL}
 commonLabels:
   app: "{{ .Release.Name }}"
   version: "{{ .Chart.AppVersion }}"
 externalDatabase:
   host: ${RDS_DB_HOST}
-  user: ${RDS_DB_USERNAME}
-  password: ${RDS_DB_PASSWORD}
+  user: drupal2
+  password: ${MY_PASSWORD}
   database: drupal2
 smtpHost: mailhog.mailhog.svc.cluster.local
 smtpPort: 1025
+smtpUser: "x"
+smtpPassword: "x"
 mariadb:
   enabled: false
 service:
   type: ClusterIP
 persistence:
   enabled: true
-  storageClass: efs
-  accessMode: ReadWriteMany
-  size: 1Gi
   existingClaim: drupal2-efs-pvc
 EOF
 ```

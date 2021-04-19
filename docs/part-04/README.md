@@ -14,7 +14,7 @@ Service account `external-dns` was created by `eksctl`.
 
 ```bash
 helm repo add jetstack https://charts.jetstack.io
-helm install --version v1.3.0 --namespace cert-manager --wait --wait-for-jobs --values - cert-manager jetstack/cert-manager << EOF
+helm install --version v1.3.1 --namespace cert-manager --wait --wait-for-jobs --values - cert-manager jetstack/cert-manager << EOF
 installCRDs: true
 serviceAccount:
   create: false
@@ -170,7 +170,7 @@ Service account `external-dns` was created by `eksctl`.
 
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
-helm install --version 4.10.0 --namespace external-dns --values - external-dns bitnami/external-dns << EOF
+helm install --version 4.11.0 --namespace external-dns --values - external-dns bitnami/external-dns << EOF
 sources:
   - ingress
   - istio-gateway
@@ -233,10 +233,10 @@ and modify the
 
 Details: [Kubernetes Event Notifications to a Slack Channel](https://www.powerupcloud.com/kubernetes-event-notifications-to-a-slack-channel-part-v/)
 
-```bash
+```shell
 helm install --version 3.2.3 --namespace kubewatch --create-namespace --values - kubewatch bitnami/kubewatch << EOF
 slack:
-  enabled: false
+  enabled: true
   channel: "#${SLACK_CHANNEL}"
   token: ${SLACK_BOT_API_TOKEN}
 smtp:
@@ -258,7 +258,7 @@ EOF
 Create `ClusterRole` and `ClusterRoleBinding` to allow `kubewatch` to access
 necessary resources:
 
-```bash
+```shell
 kubectl apply -f - << EOF
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRole
