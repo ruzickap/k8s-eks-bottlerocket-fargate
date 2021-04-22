@@ -1,3 +1,4 @@
 checks:
   exclude:
     - "dangling-service"
+    - "non-existent-service-account"

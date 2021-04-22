@@ -39,6 +39,8 @@ export MY_GITHUB_ORG_NAME="ruzickap-org"
 export MY_GITHUB_USERNAME="ruzickap"
 # AWS Region
 export AWS_DEFAULT_REGION="eu-central-1"
+AWS_ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output text)"
+export AWS_ACCOUNT_ID
 export SLACK_CHANNEL="mylabs"
 # Tags used to tag the AWS resources
 export TAGS="Owner=${MY_EMAIL} Environment=Dev Tribe=Cloud_Native Squad=Cloud_Container_Platform"
@@ -574,7 +576,7 @@ iam:
         name: ebs-csi-controller
         namespace: kube-system
       attachPolicy:
-        Version: "2012-10-17"
+        Version: 2012-10-17
         Statement:
         - Effect: Allow
           Action:
@@ -608,7 +610,7 @@ iam:
         name: grafana
         namespace: kube-prometheus-stack
       attachPolicy:
-        Version: "2012-10-17"
+        Version: 2012-10-17
         Statement:
         - Sid: AllowReadingMetricsFromCloudWatch
           Effect: Allow
@@ -646,7 +648,7 @@ iam:
         name: efs-csi-controller-sa
         namespace: kube-system
       attachPolicy:
-        Version: "2012-10-17"
+        Version: 2012-10-17
         Statement:
         - Effect: Allow
           Action:
