@@ -258,7 +258,6 @@ grafana:
             path: /var/lib/grafana/dashboards/default
   dashboards:
     default:
-      # https://grafana.com/grafana/dashboards/8685
       k8s-cluster-summary:
         gnetId: 8685
         revision: 1
@@ -374,6 +373,48 @@ grafana:
         gnetId: 623
         revision: 4
         datasource: CloudWatch
+      CPU_Utilization_Details:
+        url: https://raw.githubusercontent.com/percona/grafana-dashboards/1316f80e834f9a3617e196b41617299c13d62421/dashboards/CPU_Utilization_Details.json
+        datasource: Prometheus
+      Disk_Details:
+        url: https://raw.githubusercontent.com/percona/grafana-dashboards/1316f80e834f9a3617e196b41617299c13d62421/dashboards/Disk_Details.json
+        datasource: Prometheus
+      Memory_Details:
+        url: https://raw.githubusercontent.com/percona/grafana-dashboards/1316f80e834f9a3617e196b41617299c13d62421/dashboards/Memory_Details.json
+        datasource: Prometheus
+      MySQL_Command_Handler_Counters_Compare:
+        url: https://raw.githubusercontent.com/percona/grafana-dashboards/1316f80e834f9a3617e196b41617299c13d62421/dashboards/MySQL_Command_Handler_Counters_Compare.json
+        datasource: Prometheus
+      MySQL_InnoDB_Compression_Details:
+        url: https://raw.githubusercontent.com/percona/grafana-dashboards/1316f80e834f9a3617e196b41617299c13d62421/dashboards/MySQL_InnoDB_Compression_Details.json
+        datasource: Prometheus
+      MySQL_InnoDB_Details:
+        url: https://raw.githubusercontent.com/percona/grafana-dashboards/1316f80e834f9a3617e196b41617299c13d62421/dashboards/MySQL_InnoDB_Details.json
+        datasource: Prometheus
+      MySQL_Instance_Summary:
+        url: https://raw.githubusercontent.com/percona/grafana-dashboards/1316f80e834f9a3617e196b41617299c13d62421/dashboards/MySQL_Instance_Summary.json
+        datasource: Prometheus
+      MySQL_Instances_Compare:
+        url: https://raw.githubusercontent.com/percona/grafana-dashboards/1316f80e834f9a3617e196b41617299c13d62421/dashboards/MySQL_Instances_Compare.json
+        datasource: Prometheus
+      MySQL_Instances_Overview:
+        url: https://raw.githubusercontent.com/percona/grafana-dashboards/1316f80e834f9a3617e196b41617299c13d62421/dashboards/MySQL_Instances_Overview.json
+        datasource: Prometheus
+      MySQL_MyISAM_Aria_Details:
+        url: https://raw.githubusercontent.com/percona/grafana-dashboards/1316f80e834f9a3617e196b41617299c13d62421/dashboards/MySQL_MyISAM_Aria_Details.json
+        datasource: Prometheus
+      Network_Details:
+        url: https://raw.githubusercontent.com/percona/grafana-dashboards/1316f80e834f9a3617e196b41617299c13d62421/dashboards/Network_Details.json
+        datasource: Prometheus
+      Nodes_Compare:
+        url: https://raw.githubusercontent.com/percona/grafana-dashboards/1316f80e834f9a3617e196b41617299c13d62421/dashboards/Nodes_Compare.json
+        datasource: Prometheus
+      Nodes_Overview:
+        url: https://raw.githubusercontent.com/percona/grafana-dashboards/1316f80e834f9a3617e196b41617299c13d62421/dashboards/Nodes_Overview.json
+        datasource: Prometheus
+      Prometheus_Exporters_Overview:
+        url: https://raw.githubusercontent.com/percona/grafana-dashboards/1316f80e834f9a3617e196b41617299c13d62421/dashboards/Prometheus_Exporters_Overview.json
+        datasource: Prometheus
   grafana.ini:
     server:
       root_url: https://grafana.${CLUSTER_FQDN}

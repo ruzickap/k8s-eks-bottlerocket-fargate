@@ -13,13 +13,13 @@ RDS_DB_USERNAME="root"
 
 ### RDS
 
-Apply CloudFormation template to create Amazon RDS MariaDB database.
+Apply CloudFormation template to create Amazon RDS MySQL database.
 The template below is inspired by: [https://github.com/aquasecurity/marketplaces/blob/master/aws/cloudformation/AquaRDS.yaml](https://github.com/aquasecurity/marketplaces/blob/master/aws/cloudformation/AquaRDS.yaml)
 
 ```bash
 cat > "tmp/${CLUSTER_FQDN}/cf_rds.yml" << \EOF
 AWSTemplateFormatVersion: 2010-09-09
-Description: This AWS CloudFormation template installs the AWS RDS MariaDB database.
+Description: This AWS CloudFormation template installs the AWS RDS MySQL database.
 Parameters:
   ClusterName:
     Default: "kube1"
@@ -131,8 +131,9 @@ Resources:
       EnableCloudwatchLogsExports:
         - general
         - slowquery
-      Engine: mariadb
-      EngineVersion: 10.5
+      EnableIAMDatabaseAuthentication: true
+      Engine: mysql
+      EngineVersion: 8.0.23
       KmsKeyId: !Ref KmsKeyId
       MasterUsername: !Ref RdsMasterUsername
       MasterUserPassword: !Ref RdsMasterPassword
@@ -176,25 +177,25 @@ Resources:
       CidrIp: !Ref "VpcIPCidr"
 Outputs:
   RdsInstanceEndpoint:
-    Description: MariaDB endpoint
+    Description: MySQL endpoint
     Value: !GetAtt RdsInstance.Endpoint.Address
     Export:
       Name:
         Fn::Sub: "${AWS::StackName}-RdsInstanceEndpoint"
   RdsInstancePort:
-    Description: MariaDB port
+    Description: MySQL port
     Value: !GetAtt RdsInstance.Endpoint.Port
     Export:
       Name:
         Fn::Sub: "${AWS::StackName}-RdsInstancePort"
   RdsInstanceUser:
-    Description: Username for the MariaDB instance
+    Description: Username for the MySQL instance
     Value: !Ref RdsMasterUsername
     Export:
       Name:
         Fn::Sub: "${AWS::StackName}-RdsInstanceUser"
   RdsMasterPassword:
-    Description: Password for the MariaDB instance
+    Description: Password for the MySQL instance
     Value: !Ref RdsMasterPassword
     Export:
       Name:
@@ -204,6 +205,7 @@ EOF
 eval aws cloudformation deploy --capabilities CAPABILITY_NAMED_IAM --stack-name "${CLUSTER_NAME}-rds" --parameter-overrides "ClusterName=${CLUSTER_NAME} KmsKeyId=${EKS_KMS_KEY_ID} RdsMasterPassword=${MY_PASSWORD} RdsMasterUsername=${RDS_DB_USERNAME} VpcIPCidr=${EKS_VPC_CIDR}" --template-file "tmp/${CLUSTER_FQDN}/cf_rds.yml" --tags "${TAGS}"
 
 RDS_DB_HOST=$(aws rds describe-db-instances --query "DBInstances[?DBInstanceIdentifier==\`${CLUSTER_NAME}db\`].[Endpoint.Address]" --output text)
+RDS_DB_RESOURCE_ID=$(aws rds describe-db-instances --query "DBInstances[?DBInstanceIdentifier==\`${CLUSTER_NAME}db\`].DbiResourceId" --output text)
 ```
 
 Initialize database:
@@ -211,18 +213,44 @@ Initialize database:
 ```bash
 kubectl run --env MYSQL_PWD=${MY_PASSWORD} --image=mysql:8.0 --restart=Never mysql-client-drupal -- \
   mysql -h "${RDS_DB_HOST}" -u "${RDS_DB_USERNAME}" -e "
+    CREATE USER \"exporter\"@\"%\" IDENTIFIED BY \"${MY_PASSWORD}\" WITH MAX_USER_CONNECTIONS 3;
     CREATE USER \"drupal\"@\"%\" IDENTIFIED BY \"${MY_PASSWORD}\";
     CREATE USER \"drupal2\"@\"%\" IDENTIFIED BY \"${MY_PASSWORD}\";
+    CREATE USER \"iamtest\"@\"%\" IDENTIFIED WITH AWSAuthenticationPlugin AS \"RDS\";
     CREATE DATABASE drupal;
     CREATE DATABASE drupal2;
+    CREATE DATABASE iamtest;
+    GRANT PROCESS, REPLICATION CLIENT, SELECT ON *.* TO \"exporter\"@\"%\";
     GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, CREATE TEMPORARY TABLES ON drupal.* TO \"drupal\"@\"%\";
-    GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, CREATE TEMPORARY TABLES ON drupal.* TO \"drupal2\"@\"localhost\";
+    GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, CREATE TEMPORARY TABLES ON drupal.* TO \"drupal2\"@\"%\";
+    GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, CREATE TEMPORARY TABLES ON iamtest.* TO \"iamtest\"@\"%\" REQUIRE SSL;
   "
+```
+
+### Prometheus MySQL Exporter
+
+Install [Prometheus MySQL Exporter](https://github.com/prometheus/mysqld_exporter)
+using Helm Chart.
+
+Install `prometheus-mysql-exporter`
+[helm chart](https://artifacthub.io/packages/helm/prometheus-community/prometheus-mysql-exporter)
+and modify the
+[default values](https://github.com/prometheus-community/helm-charts/blob/main/charts/prometheus-mysql-exporter/values.yaml).
+
+```bash
+helm install --version 1.1.0 --namespace prometheus-mysql-exporter --create-namespace --values - prometheus-mysql-exporter prometheus-community/prometheus-mysql-exporter << EOF
+serviceMonitor:
+  enabled: true
+mysql:
+  host: "${RDS_DB_HOST}"
+  pass: "${MY_PASSWORD}"
+  user: "exporter"
+EOF
 ```
 
 ### phpMyAdmin
 
-Install [phpMyAdmin](https://www.phpmyadmin.net/) using Helm Chart
+Install [phpMyAdmin](https://www.phpmyadmin.net/) using Helm Chart.
 
 Install `phpmyadmin`
 [helm chart](https://artifacthub.io/packages/helm/bitnami/phpmyadmin)
@@ -253,6 +281,86 @@ db:
     caCertificate: |-
 $(curl -s "https://s3.amazonaws.com/rds-downloads/rds-ca-2019-root.pem" | sed  "s/^/      /" )
 EOF
+```
+
+### Connect to the DB using IAM role
+
+Try to connect to the MySQL database from Kubernetes pod using IAM role:
+
+* [How do I allow users to authenticate to an Amazon RDS MySQL DB instance using their IAM credentials?](https://aws.amazon.com/premiumsupport/knowledge-center/users-connect-rds-iam/)
+* [AWS/EKS: Support for IAM authentication](https://github.com/prometheus-community/postgres_exporter/issues/326)
+
+Create Service Account `rds-sa` for accessing the MySQL RDS DB :
+
+```bash
+sed -i "/  serviceAccounts:/a \
+\ \ \ \ - metadata: \n\
+        name: rds-sa \n\
+        namespace: default \n\
+      attachPolicy: \n\
+        Version: 2012-10-17 \n\
+        Statement: \n\
+          Effect: Allow \n\
+          Action: \n\
+            - rds-db:connect \n\
+          Resource: \n\
+            - arn:aws:rds-db:${AWS_DEFAULT_REGION}:${AWS_ACCOUNT_ID}:dbuser:${RDS_DB_RESOURCE_ID}/iamtest
+" "tmp/${CLUSTER_FQDN}/eksctl.yaml"
+
+eksctl create iamserviceaccount --config-file "tmp/${CLUSTER_FQDN}/eksctl.yaml" --approve
+```
+
+```bash
+kubectl apply -f - << EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mysql-iam-test
+spec:
+  serviceAccountName: rds-sa
+  containers:
+  - name: ubuntu
+    image: ubuntu:latest
+    securityContext:
+      runAsUser: 1000
+      runAsGroup: 3000
+      readOnlyRootFilesystem: true
+    command:
+      - /bin/bash
+      - -c
+      - |
+        set -x
+        apt update
+        apt install -y unzip less mysql-client wget telnet &> /dev/null
+        wget -q "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -O "awscliv2.zip"
+        unzip awscliv2.zip > /dev/null
+        ./aws/install
+        aws sts get-caller-identity
+        wget -q https://s3.amazonaws.com/rds-downloads/rds-ca-2019-root.pem
+        TOKEN="\$(aws rds generate-db-auth-token --hostname ${RDS_DB_HOST} --port 3306 --region eu-central-1 --username iamtest)"
+        mysql -h "${RDS_DB_HOST}" -u "iamtest" --password="\${TOKEN}" --enable-cleartext-plugin --ssl-ca=rds-ca-2019-root.pem -e "show databases;"
+    resources:
+      requests:
+        memory: "64Mi"
+        cpu: "250m"
+      limits:
+        memory: "128Mi"
+        cpu: "500m"
+  restartPolicy: Never
+EOF
+sleep 20
+```
+
+Check the logs:
+
+```bash
+kubectl logs mysql-iam-test --tail=5
+kubectl delete pod mysql-iam-test
+```
+
+Output:
+
+```text
 ```
 
 ### Install Drupal
