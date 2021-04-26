@@ -117,7 +117,7 @@ Install [eksctl](https://eksctl.io/):
 ```bash
 if [[ ! -x /usr/local/bin/eksctl ]]; then
   # https://github.com/weaveworks/eksctl/releases
-  curl -s -L "https://github.com/weaveworks/eksctl/releases/download/0.42.0/eksctl_$(uname)_amd64.tar.gz" | sudo tar xz -C /usr/local/bin/
+  curl -s -L "https://github.com/weaveworks/eksctl/releases/download/0.46.0/eksctl_$(uname)_amd64.tar.gz" | sudo tar xz -C /usr/local/bin/
 fi
 ```
 
@@ -575,27 +575,8 @@ iam:
     - metadata:
         name: ebs-csi-controller
         namespace: kube-system
-      attachPolicy:
-        Version: 2012-10-17
-        Statement:
-        - Effect: Allow
-          Action:
-          - ec2:AttachVolume
-          - ec2:CreateSnapshot
-          - ec2:CreateTags
-          - ec2:CreateVolume
-          - ec2:DeleteSnapshot
-          - ec2:DeleteTags
-          - ec2:DeleteVolume
-          - ec2:DescribeAvailabilityZones
-          - ec2:DescribeInstances
-          - ec2:DescribeSnapshots
-          - ec2:DescribeTags
-          - ec2:DescribeVolumes
-          - ec2:DescribeVolumesModifications
-          - ec2:DetachVolume
-          - ec2:ModifyVolume
-          Resource: "*"
+      wellKnownPolicies:
+        ebsCSIController: true
     - metadata:
         name: harbor
         namespace: harbor
