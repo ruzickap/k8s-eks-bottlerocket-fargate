@@ -15,7 +15,7 @@ and modify the
 
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
-helm install --version 2.4.3 --namespace keycloak --create-namespace --values - keycloak bitnami/keycloak << EOF
+helm install --version 2.4.6 --namespace keycloak --create-namespace --values - keycloak bitnami/keycloak << EOF
 auth:
   adminUser: admin
   adminPassword: ${MY_PASSWORD}

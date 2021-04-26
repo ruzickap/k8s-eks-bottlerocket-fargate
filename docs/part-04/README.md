@@ -170,7 +170,7 @@ Service account `external-dns` was created by `eksctl`.
 
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
-helm install --version 4.11.0 --namespace external-dns --values - external-dns bitnami/external-dns << EOF
+helm install --version 4.11.1 --namespace external-dns --values - external-dns bitnami/external-dns << EOF
 sources:
   - ingress
   - istio-gateway
