@@ -196,7 +196,7 @@ and modify the
 
 ```bash
 helm repo add kiali https://kiali.org/helm-charts
-helm install --version 1.33.0 --namespace kiali-operator --create-namespace kiali-operator kiali/kiali-operator
+helm install --version 1.33.1 --namespace kiali-operator --create-namespace kiali-operator kiali/kiali-operator
 ```
 
 Install Kiali CR:

@@ -9,7 +9,7 @@ and modify the
 
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
-helm install --version 5.8.4 --namespace kube-system --values - metrics-server bitnami/metrics-server << EOF
+helm install --version 5.8.5 --namespace kube-system --values - metrics-server bitnami/metrics-server << EOF
 apiService:
   create: true
 # Needed for calico
@@ -26,7 +26,7 @@ and modify the
 
 ```bash
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm install --version 14.9.0 --namespace kube-prometheus-stack --values - kube-prometheus-stack prometheus-community/kube-prometheus-stack << EOF
+helm install --version 15.2.0 --namespace kube-prometheus-stack --values - kube-prometheus-stack prometheus-community/kube-prometheus-stack << EOF
 defaultRules:
   rules:
     etcd: false
@@ -201,6 +201,8 @@ alertmanager:
       nginx.ingress.kubernetes.io/auth-signin: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/start?rd=\$scheme://\$host\$request_uri
     hosts:
       - alertmanager.${CLUSTER_FQDN}
+    paths: ["/"]
+    pathType: ImplementationSpecific
     tls:
       - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
         hosts:
@@ -225,11 +227,14 @@ grafana:
       nginx.ingress.kubernetes.io/auth-signin: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/start?rd=\$scheme://\$host\$request_uri
     hosts:
       - grafana.${CLUSTER_FQDN}
+    paths: ["/"]
+    pathType: ImplementationSpecific
     tls:
       - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
         hosts:
           - grafana.${CLUSTER_FQDN}
   plugins:
+    - digiapulssi-breadcrumb-panel
     - grafana-piechart-panel
   datasources:
     datasources.yaml:
@@ -445,6 +450,8 @@ prometheus:
     annotations:
       nginx.ingress.kubernetes.io/auth-url: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/auth
       nginx.ingress.kubernetes.io/auth-signin: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/start?rd=\$scheme://\$host\$request_uri
+    paths: ["/"]
+    pathType: ImplementationSpecific
     hosts:
       - prometheus.${CLUSTER_FQDN}
     tls:
@@ -633,7 +640,7 @@ and modify the
 
 ```bash
 helm repo add policy-reporter https://fjogeleit.github.io/policy-reporter
-helm install --version 1.2.0 --namespace policy-reporter --create-namespace --values - policy-reporter policy-reporter/policy-reporter << EOF
+helm install --version 1.3.0 --namespace policy-reporter --create-namespace --values - policy-reporter policy-reporter/policy-reporter << EOF
 ui:
   enabled: true
   ingress:

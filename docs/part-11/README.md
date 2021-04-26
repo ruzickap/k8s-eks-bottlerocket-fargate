@@ -9,7 +9,7 @@ and modify the
 
 ```bash
 helm repo add vmware-tanzu https://vmware-tanzu.github.io/helm-charts
-helm install --version 2.17.2 --namespace velero --create-namespace --values - velero vmware-tanzu/velero << EOF
+helm install --version 2.19.1 --namespace velero --create-namespace --values - velero vmware-tanzu/velero << EOF
 initContainers:
   - name: velero-plugin-for-aws
     image: velero/velero-plugin-for-aws:v1.2.0
@@ -38,12 +38,10 @@ configuration:
     config:
       region: ${AWS_DEFAULT_REGION}
   features: EnableCSI
-# IRSA not working due to bug: https://github.com/vmware-tanzu/velero/issues/2198
 serviceAccount:
   server:
     create: false
     name: velero
-# This should be removed in favor of IRSA (see above)
 credentials:
   useSecret: false
 deployRestic: true

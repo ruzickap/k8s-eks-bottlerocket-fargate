@@ -223,7 +223,7 @@ kubectl run --env MYSQL_PWD=${MY_PASSWORD} --image=mysql:8.0 --restart=Never mys
     GRANT PROCESS, REPLICATION CLIENT, SELECT ON *.* TO \"exporter\"@\"%\";
     GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, CREATE TEMPORARY TABLES ON drupal.* TO \"drupal\"@\"%\";
     GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, CREATE TEMPORARY TABLES ON drupal.* TO \"drupal2\"@\"%\";
-    GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, CREATE TEMPORARY TABLES ON iamtest.* TO \"iamtest\"@\"%\" REQUIRE SSL;
+    GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, CREATE TEMPORARY TABLES ON iamtest.* TO \"iamtest\"@\"%\"REQUIRE SSL;
   "
 ```
 
@@ -415,7 +415,7 @@ and modify the
 
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
-helm install --version 10.2.10 --namespace drupal --values - drupal bitnami/drupal << EOF
+helm install --version 10.2.12 --namespace drupal --values - drupal bitnami/drupal << EOF
 replicaCount: 2
 drupalUsername: admin
 drupalPassword: ${MY_PASSWORD}
@@ -509,7 +509,7 @@ kubectl label namespace drupal2 istio-injection=enabled kiali.io/member-of=kiali
 Install `drupal2`:
 
 ```bash
-helm install --version 10.2.10 --namespace drupal2 --values - drupal2 bitnami/drupal << EOF
+helm install --version 10.2.12 --namespace drupal2 --values - drupal2 bitnami/drupal << EOF
 replicaCount: 2
 drupalUsername: admin
 drupalPassword: ${MY_PASSWORD}
