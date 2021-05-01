@@ -128,9 +128,9 @@ Resources:
       DBInstanceClass: !Ref RdsInstanceClass
       DBSubnetGroupName: !Ref RdsInstanceSubnetGroup
       CopyTagsToSnapshot: true
-      EnableCloudwatchLogsExports:
-        - general
-        - slowquery
+      # EnableCloudwatchLogsExports:
+      #   - general
+      #   - slowquery
       EnableIAMDatabaseAuthentication: true
       Engine: mysql
       EngineVersion: 8.0.23
