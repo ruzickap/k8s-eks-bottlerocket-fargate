@@ -47,7 +47,7 @@ sed \
 > "/tmp/README-${README_NAME}.sh"
 
 if [ "$#" -eq 0 ]; then
-  # shellcheck disable=SC1090
+  # shellcheck disable=SC1090,SC1091
   source "${HOME}/Documents/secrets/secret_variables"
   # shellcheck disable=SC1090
   source "/tmp/README-${README_NAME}.sh"
