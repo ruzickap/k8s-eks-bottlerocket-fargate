@@ -236,6 +236,15 @@ ingress:
     - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
       hosts:
         - octant.${CLUSTER_FQDN}
+clusterRole:
+  additionalRules:
+  - apiGroups:
+    - "*"
+    resources: ["*"]
+    verbs:
+    - get
+    - list
+    - watch
 EOF
 ```
 
