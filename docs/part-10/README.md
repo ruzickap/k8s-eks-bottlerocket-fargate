@@ -174,7 +174,7 @@ into `library` project and all should be automatically scanned.
 Set retention for all log groups which belongs to the cluster to 1 day:
 
 ```bash
-for LOG_GROUP in $(aws logs describe-log-groups | jq -r ".logGroups[] | select(.logGroupName|test(\"/${CLUSTER_NAME}/|/${CLUSTER_FQDN}/\")) .logGroupName"); do
+for LOG_GROUP in $(aws logs describe-log-groups | jq -r ".logGroups[] | select(.logGroupName|test(\"/${CLUSTER_NAME}\")) .logGroupName"); do
   aws logs put-retention-policy --log-group-name "${LOG_GROUP}" --retention-in-days 1
 done
 ```

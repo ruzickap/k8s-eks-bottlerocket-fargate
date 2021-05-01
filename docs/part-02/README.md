@@ -3,14 +3,14 @@
 Attach the policy to the [pod execution role](https://docs.aws.amazon.com/eks/latest/userguide/pod-execution-role.html)
 of your EKS on Fargate cluster:
 
-```bash
+```shell
 FARGATE_POD_EXECUTION_ROLE_ARN=$(eksctl get iamidentitymapping --cluster="${CLUSTER_NAME}" -o json | jq -r ".[] | select (.rolearn | contains(\"FargatePodExecutionRole\")) .rolearn")
 aws iam attach-role-policy --policy-arn "${CLOUDWATCH_POLICY_ARN}" --role-name "${FARGATE_POD_EXECUTION_ROLE_ARN#*/}"
 ```
 
 Create the dedicated `aws-observability` namespace and the ConfigMap for Fluent Bit:
 
-```bash
+```shell
 kubectl apply -f - << EOF
 kind: Namespace
 apiVersion: v1
@@ -38,6 +38,35 @@ EOF
 
 All the Fargate pods should now send the log to CloudWatch...
 
+## aws-load-balancer-controller
+
+Install `aws-load-balancer-controller`
+[helm chart](https://artifacthub.io/packages/helm/aws/aws-load-balancer-controller)
+and modify the
+[default values](https://github.com/aws/eks-charts/blob/master/stable/aws-load-balancer-controller/values.yaml).
+
+```bash
+helm repo add eks https://aws.github.io/eks-charts
+helm install --version 1.1.6 --namespace kube-system --values - aws-load-balancer-controller eks/aws-load-balancer-controller << EOF
+clusterName: ${CLUSTER_NAME}
+serviceAccount:
+  create: false
+  name: aws-load-balancer-controller
+enableShield: false
+enableWaf: false
+enableWafv2: false
+defaultTags:
+$(echo "${TAGS}" | sed "s/ /\\n  /g; s/^/  /g; s/=/: /g")
+EOF
+```
+
+It seems like there are some issues with ALB and cert-manager / Istio:
+
+* [https://github.com/kubernetes-sigs/aws-load-balancer-controller/issues/1084](https://github.com/kubernetes-sigs/aws-load-balancer-controller/issues/1084)
+* [https://github.com/kubernetes-sigs/aws-load-balancer-controller/issues/1143](https://github.com/kubernetes-sigs/aws-load-balancer-controller/issues/1143)
+
+I'll use NLB as main "Load Balancer type" in AWS.
+
 ## aws-for-fluent-bit
 
 Install `aws-for-fluent-bit`
@@ -45,8 +74,7 @@ Install `aws-for-fluent-bit`
 and modify the
 [default values](https://github.com/aws/eks-charts/blob/master/stable/aws-for-fluent-bit/values.yaml).
 
-```bash
-helm repo add eks https://aws.github.io/eks-charts
+```shell
 helm install --version 0.1.7 --namespace kube-system --values - aws-for-fluent-bit eks/aws-for-fluent-bit << EOF
 cloudWatch:
   region: ${AWS_DEFAULT_REGION}
@@ -70,7 +98,7 @@ Install `aws-cloudwatch-metrics`
 and modify the
 [default values](https://github.com/aws/eks-charts/blob/master/stable/aws-cloudwatch-metrics/values.yaml).
 
-```bash
+```shell
 helm install --version 0.0.4 --namespace amazon-cloudwatch --create-namespace --values - aws-cloudwatch-metrics eks/aws-cloudwatch-metrics << EOF
 clusterName: ${CLUSTER_FQDN}
 EOF
@@ -338,34 +366,6 @@ driver: ebs.csi.aws.com
 deletionPolicy: Retain
 EOF
 ```
-
-## aws-load-balancer-controller
-
-Install `aws-load-balancer-controller`
-[helm chart](https://artifacthub.io/packages/helm/aws/aws-load-balancer-controller)
-and modify the
-[default values](https://github.com/aws/eks-charts/blob/master/stable/aws-load-balancer-controller/values.yaml).
-
-```bash
-helm install --version 1.1.6 --namespace kube-system --values - aws-load-balancer-controller eks/aws-load-balancer-controller << EOF
-clusterName: ${CLUSTER_NAME}
-serviceAccount:
-  create: false
-  name: aws-load-balancer-controller
-enableShield: false
-enableWaf: false
-enableWafv2: false
-defaultTags:
-$(echo "${TAGS}" | sed "s/ /\\n  /g; s/^/  /g; s/=/: /g")
-EOF
-```
-
-It seems like there are some issues with ALB and cert-manager / Istio:
-
-* [https://github.com/kubernetes-sigs/aws-load-balancer-controller/issues/1084](https://github.com/kubernetes-sigs/aws-load-balancer-controller/issues/1084)
-* [https://github.com/kubernetes-sigs/aws-load-balancer-controller/issues/1143](https://github.com/kubernetes-sigs/aws-load-balancer-controller/issues/1143)
-
-I'll use NLB as main "Load Balancer type" in AWS.
 
 ## Test Amazon EKS pod limits
 

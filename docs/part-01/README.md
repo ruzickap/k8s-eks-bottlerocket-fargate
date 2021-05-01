@@ -671,7 +671,7 @@ managedNodeGroups:
     iam:
       withAddonPolicies:
         autoScaler: true
-        cloudWatch: true
+        # cloudWatch: true
         ebs: true
         efs: true
     # aws ec2 describe-images --owners amazon --filters "Name=name,Values=bottlerocket-aws-k8s-1.19*x86_64*" --region eu-central-1 --query "sort_by(Images, &CreationDate)"
@@ -689,9 +689,9 @@ fargateProfiles:
     tags: *tags
 secretsEncryption:
   keyARN: ${EKS_KMS_KEY_ARN}
-cloudWatch:
-  clusterLogging:
-    enableTypes: ["audit", "authenticator", "controllerManager"]
+# cloudWatch:
+#   clusterLogging:
+#     enableTypes: ["audit", "authenticator", "controllerManager"]
 EOF
 
 eksctl create cluster --config-file "tmp/${CLUSTER_FQDN}/eksctl.yaml" --kubeconfig "${KUBECONFIG}" --without-nodegroup

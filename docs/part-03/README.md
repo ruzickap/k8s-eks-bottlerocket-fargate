@@ -236,6 +236,8 @@ grafana:
   plugins:
     - digiapulssi-breadcrumb-panel
     - grafana-piechart-panel
+    # Needed for MySQL Instances Overview -> Table Openings details
+    - grafana-polystat-panel
   datasources:
     datasources.yaml:
       apiVersion: 1
