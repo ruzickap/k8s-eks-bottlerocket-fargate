@@ -2,12 +2,6 @@
 
 ## Keycloak
 
-Set the OIDC client secret:
-
-```bash
-KEYCLOAK_OIDC_CLIENT_SECRET=$(uuid)
-```
-
 Install `keycloak`
 [helm chart](https://artifacthub.io/packages/helm/bitnami/keycloak)
 and modify the
@@ -57,12 +51,23 @@ keycloakConfigCli:
         host: mailhog.mailhog.svc.cluster.local
         port: 1025
       clients:
-      - clientId: myclient
-        name: myclient
-        description: "My Client"
-        secret: ${KEYCLOAK_OIDC_CLIENT_SECRET}
+      # https://oauth2-proxy.github.io/oauth2-proxy/docs/configuration/oauth_provider/#keycloak-auth-provider
+      - clientId: oauth2-proxy-keycloak.${CLUSTER_FQDN}
+        name: oauth2-proxy-keycloak.${CLUSTER_FQDN}
+        description: "OAuth2 Proxy for Keycloak"
+        secret: ${MY_PASSWORD}
         redirectUris:
-        - "https://keycloak.${CLUSTER_FQDN}/*"
+        - "https://oauth2-proxy-keycloak.${CLUSTER_FQDN}/oauth2/callback"
+        protocolMappers:
+        - name: groupMapper
+          protocol: openid-connect
+          protocolMapper: oidc-group-membership-mapper
+          config:
+            userinfo.token.claim: "true"
+            id.token.claim: "true"
+            access.token.claim: "true"
+            claim.name: groups
+            full.path: "true"
       identityProviders:
       # https://ultimatesecurity.pro/post/okta-oidc/
       - alias: keycloak-oidc-okta
@@ -86,12 +91,21 @@ keycloakConfigCli:
           tokenUrl: https://dex.${CLUSTER_FQDN}/token
           authorizationUrl: https://dex.${CLUSTER_FQDN}/auth
           syncMode: IMPORT
+      - alias: github
+        displayName: "Github"
+        providerId: github
+        trustEmail: true
+        config:
+          clientId: ${MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_ID[${CLUSTER_NAME}]}
+          clientSecret: ${MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_SECRET[${CLUSTER_NAME}]}
       users:
       - username: myuser1
         email: myuser1@${CLUSTER_FQDN}
         enabled: true
         firstName: My Firstname 1
         lastName: My Lastname 1
+        groups:
+          - group-admins
         credentials:
         - type: password
           value: ${MY_PASSWORD}
@@ -100,6 +114,8 @@ keycloakConfigCli:
         enabled: true
         firstName: My Firstname 2
         lastName: My Lastname 2
+        groups:
+          - group-admins
         credentials:
         - type: password
           value: ${MY_PASSWORD}
@@ -108,12 +124,65 @@ keycloakConfigCli:
         enabled: true
         firstName: My Firstname 3
         lastName: My Lastname 3
+        groups:
+          - group-users
+        credentials:
+        - type: password
+          value: ${MY_PASSWORD}
+      - username: myuser4
+        email: myuser4@${CLUSTER_FQDN}
+        enabled: true
+        firstName: My Firstname 4
+        lastName: My Lastname 4
+        groups:
+          - group-users
+          - group-test
         credentials:
         - type: password
           value: ${MY_PASSWORD}
       groups:
       - name: group-users
       - name: group-admins
+      - name: group-test
+EOF
+```
+
+## oauth2-proxy - Keycloak
+
+Install `oauth2-proxy`
+[helm chart](https://artifacthub.io/packages/helm/k8s-at-home/oauth2-proxy)
+and modify the
+[default values](https://github.com/k8s-at-home/charts/blob/master/charts/stable/oauth2-proxy/values.yaml).
+
+```bash
+helm repo add k8s-at-home https://k8s-at-home.com/charts/
+helm install --version 5.0.3 --namespace oauth2-proxy-keycloak --create-namespace --values - oauth2-proxy k8s-at-home/oauth2-proxy << EOF
+config:
+  clientID: oauth2-proxy-keycloak.${CLUSTER_FQDN}
+  clientSecret: "${MY_PASSWORD}"
+  cookieSecret: "$(openssl rand -base64 32 | head -c 32 | base64 )"
+  configFile: |-
+    email_domains = [ "*" ]
+    upstreams = [ "file:///dev/null" ]
+    whitelist_domains = ".${CLUSTER_FQDN}"
+    cookie_domains = ".${CLUSTER_FQDN}"
+    provider = "keycloak"
+    login_url = "https://keycloak.${CLUSTER_FQDN}/auth/realms/myrealm/protocol/openid-connect/auth"
+    redeem_url = "https://keycloak.${CLUSTER_FQDN}/auth/realms/myrealm/protocol/openid-connect/token"
+    profile_url = "https://keycloak.${CLUSTER_FQDN}/auth/realms/myrealm/protocol/openid-connect/userinfo"
+    validate_url = "https://keycloak.${CLUSTER_FQDN}/auth/realms/myrealm/protocol/openid-connect/userinfo"
+    # allowed_groups = "/group-admins,/group-test"
+    scope = "openid email profile"
+    ssl_insecure_skip_verify = "true"
+    insecure_oidc_skip_issuer_verification = "true"
+ingress:
+  enabled: true
+  hosts:
+    - oauth2-proxy-keycloak.${CLUSTER_FQDN}
+  tls:
+    - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
+      hosts:
+        - oauth2-proxy-keycloak.${CLUSTER_FQDN}
 EOF
 ```
 
@@ -153,8 +222,8 @@ config:
       id: github
       name: GitHub
       config:
-        clientID: ${MY_GITHUB_ORG_OAUTH_CLIENT_ID[${CLUSTER_NAME}]}
-        clientSecret: ${MY_GITHUB_ORG_OAUTH_CLIENT_SECRET[${CLUSTER_NAME}]}
+        clientID: ${MY_GITHUB_ORG_OAUTH_DEX_CLIENT_ID[${CLUSTER_NAME}]}
+        clientSecret: ${MY_GITHUB_ORG_OAUTH_DEX_CLIENT_SECRET[${CLUSTER_NAME}]}
         redirectURI: https://dex.${CLUSTER_FQDN}/callback
         orgs:
           - name: ${MY_GITHUB_ORG_NAME}
@@ -223,9 +292,7 @@ and modify the
 [default values](https://github.com/k8s-at-home/charts/blob/master/charts/stable/oauth2-proxy/values.yaml).
 
 ```bash
-helm repo add k8s-at-home https://k8s-at-home.com/charts/
 helm install --version 5.0.3 --namespace oauth2-proxy --create-namespace --values - oauth2-proxy k8s-at-home/oauth2-proxy << EOF
-# https://github.com/helm/charts/blob/master/stable/oauth2-proxy/values.yaml
 config:
   clientID: oauth2-proxy.${CLUSTER_FQDN}
   clientSecret: "${MY_PASSWORD}"

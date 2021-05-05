@@ -11,25 +11,28 @@ and modify the
 
 ```bash
 helm repo add sp https://stefanprodan.github.io/podinfo
-helm install --version 5.2.0 --namespace default --values - podinfo sp/podinfo << EOF
+helm install --version 5.2.0 --namespace podinfo-keycloak --create-namespace --values - podinfo sp/podinfo << EOF
 serviceMonitor:
   enabled: true
 ingress:
   enabled: true
+  annotations:
+    nginx.ingress.kubernetes.io/auth-url: https://oauth2-proxy-keycloak.${CLUSTER_FQDN}/oauth2/auth
+    nginx.ingress.kubernetes.io/auth-signin: https://oauth2-proxy-keycloak.${CLUSTER_FQDN}/oauth2/start?rd=\$scheme://\$host\$request_uri
   path: /
   hosts:
-    - podinfo.${CLUSTER_FQDN}
+    - podinfo-keycloak.${CLUSTER_FQDN}
   tls:
     - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
       hosts:
-        - podinfo.${CLUSTER_FQDN}
+        - podinfo-keycloak.${CLUSTER_FQDN}
 EOF
 ```
 
 Install `podinfo` secured by `oauth2`:
 
 ```bash
-helm install --version 5.2.0 --namespace default --values - podinfo-oauth sp/podinfo << EOF
+helm install --version 5.2.0 --namespace podinfo-dex --create-namespace --values - podinfo sp/podinfo << EOF
 # https://github.com/stefanprodan/podinfo/blob/master/charts/podinfo/values.yaml
 ui:
   message: "Running behind SSO"
@@ -42,11 +45,11 @@ ingress:
     nginx.ingress.kubernetes.io/auth-signin: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/start?rd=\$scheme://\$host\$request_uri
   path: /
   hosts:
-    - podinfo-oauth.${CLUSTER_FQDN}
+    - podinfo-dex.${CLUSTER_FQDN}
   tls:
     - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
       hosts:
-        - podinfo-oauth.${CLUSTER_FQDN}
+        - podinfo-dex.${CLUSTER_FQDN}
 EOF
 ```
 

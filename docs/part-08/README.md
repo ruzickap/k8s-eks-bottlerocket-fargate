@@ -472,15 +472,22 @@ EOF
 
 Generate test certificate:
 
-```shell
+```bash
+kubectl create namespace podinfo-vault
 kubectl apply -f - << EOF
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: vault-certificate
-  namespace: default
+  name: podinfo-vault-certificate
+  namespace: podinfo-vault
 spec:
-  secretName: vault-certificate-tls
+  secretName: podinfo-vault-certificate-tls
+  duration: 250h
+  # Minimum of renewBefore should be 240h otherwise ingress-nginx will start complaining (https://github.com/kubernetes/ingress-nginx/blob/1b76ad70ca237fdd2a6ee1017cd16fda1908df90/internal/ingress/controller/controller.go#L1225)
+  renewBefore: 240h
+  subject:
+    organizations:
+    - MyLabs
   issuerRef:
     name: vault-issuer
     kind: ClusterIssuer
@@ -491,6 +498,14 @@ spec:
 EOF
 ```
 
+Check the certificates:
+
+```shell
+kubectl get secrets -n podinfo-vault podinfo-vault-certificate-tls --output=jsonpath="{.data.ca\\.crt}"| base64 --decode | openssl x509 -text -noout
+kubectl get secrets -n podinfo-vault podinfo-vault-certificate-tls --output=jsonpath="{.data.tls\\.crt}" | base64 --decode | openssl x509 -text -noout
+kubectl get secrets -n podinfo-vault podinfo-vault-certificate-tls --output=jsonpath="{.data.tls\\.key}" | base64 --decode | openssl rsa -check
+```
+
 ## podinfo with vault certificate
 
 Install `podinfo`
@@ -499,7 +514,7 @@ and modify the
 [default values](https://github.com/stefanprodan/podinfo/blob/master/charts/podinfo/values.yaml).
 
 ```bash
-helm install --version 5.2.0 --namespace default --values - podinfo-vault-test-crt sp/podinfo << EOF
+helm install --version 5.2.0 --namespace podinfo-vault --values - podinfo sp/podinfo << EOF
 ui:
   message: "Vault Certificate"
 serviceMonitor:
@@ -507,13 +522,60 @@ serviceMonitor:
 ingress:
   enabled: true
   path: /
-  annotations:
-    cert-manager.io/cluster-issuer: vault-issuer
   hosts:
     - podinfo.vault-test-crt.${CLUSTER_FQDN}
   tls:
-    - secretName: podinfo-vault-test-crt-ingress-cert
+    - secretName: podinfo-vault-certificate-tls
       hosts:
         - podinfo.vault-test-crt.${CLUSTER_FQDN}
 EOF
+```
+
+Wait for the DNS to be resolvable and service accessible:
+
+```shell
+# Wait for DNS vault.${CLUSTER_FQDN} to be ready...
+while [[ -z "$(dig +nocmd +noall +answer +ttlid a "podinfo.vault-test-crt.${CLUSTER_FQDN}")" ]]; do
+  date
+  sleep 5
+done
+```
+
+Check the certificate:
+
+```shell
+openssl s_client -connect "podinfo.vault-test-crt.${CLUSTER_FQDN}:443" < /dev/null 2>/dev/null | sed "/Server certificate/,/-----END CERTIFICATE-----/d"
+```
+
+Output:
+
+```text
+CONNECTED(00000003)
+---
+Certificate chain
+ 0 s:CN = *.vault-test-crt.kube1.k8s.mylabs.dev
+   i:CN = kube1.k8s.mylabs.dev
+---
+subject=CN = *.vault-test-crt.kube1.k8s.mylabs.dev
+
+issuer=CN = kube1.k8s.mylabs.dev
+
+---
+No client certificate CA names sent
+Peer signing digest: SHA256
+Peer signature type: RSA-PSS
+Server Temp Key: X25519, 253 bits
+---
+SSL handshake has read 1499 bytes and written 415 bytes
+Verification error: unable to verify the first certificate
+---
+New, TLSv1.3, Cipher is TLS_AES_256_GCM_SHA384
+Server public key is 2048 bit
+Secure Renegotiation IS NOT supported
+Compression: NONE
+Expansion: NONE
+No ALPN negotiated
+Early data was not sent
+Verify return code: 21 (unable to verify the first certificate)
+---
 ```
