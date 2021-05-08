@@ -9,7 +9,7 @@ and modify the
 
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
-helm install --version 2.4.6 --namespace keycloak --create-namespace --values - keycloak bitnami/keycloak << EOF
+helm install --version 2.4.8 --namespace keycloak --create-namespace --values - keycloak bitnami/keycloak << EOF
 auth:
   adminUser: admin
   adminPassword: ${MY_PASSWORD}
@@ -195,7 +195,7 @@ and modify the
 
 ```bash
 helm repo add dex https://charts.dexidp.io
-helm install --version 0.1.2 --namespace dex --create-namespace --values - dex dex/dex << EOF
+helm install --version 0.3.0 --namespace dex --create-namespace --values - dex dex/dex << EOF
 ingress:
   enabled: true
   annotations:

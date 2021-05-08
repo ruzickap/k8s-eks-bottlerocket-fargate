@@ -3,6 +3,32 @@
 ![Clean-up](https://raw.githubusercontent.com/aws-samples/eks-workshop/65b766c494a5b4f5420b2912d8373c4957163541/static/images/cleanup.svg?sanitize=true
 "Clean-up")
 
+Install necessary software:
+
+```bash
+if [[ -x /usr/bin/apt-get ]]; then
+  apt update -qq
+  DEBIAN_FRONTEND=noninteractive apt-get install -y -qq awscli curl gnupg2 jq sudo > /dev/null
+fi
+```
+
+Install [kubectl](https://github.com/kubernetes/kubectl) binary:
+
+```bash
+if [[ ! -x /usr/local/bin/kubectl ]]; then
+  sudo curl -s -Lo /usr/local/bin/kubectl "https://storage.googleapis.com/kubernetes-release/release/v1.20.6/bin/$(uname | sed "s/./\L&/g" )/amd64/kubectl"
+  sudo chmod a+x /usr/local/bin/kubectl
+fi
+```
+
+Install [eksctl](https://eksctl.io/):
+
+```bash
+if [[ ! -x /usr/local/bin/eksctl ]]; then
+  curl -s -L "https://github.com/weaveworks/eksctl/releases/download/0.48.0/eksctl_$(uname)_amd64.tar.gz" | sudo tar xz -C /usr/local/bin/
+fi
+```
+
 Set necessary variables:
 
 ```bash

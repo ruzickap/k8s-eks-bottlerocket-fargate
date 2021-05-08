@@ -1,5 +1,13 @@
 # AWS
 
+Add EKS helm repository:
+
+```bash
+helm repo add eks https://aws.github.io/eks-charts
+```
+
+## Fargate
+
 Attach the policy to the [pod execution role](https://docs.aws.amazon.com/eks/latest/userguide/pod-execution-role.html)
 of your EKS on Fargate cluster:
 
@@ -45,8 +53,7 @@ Install `aws-load-balancer-controller`
 and modify the
 [default values](https://github.com/aws/eks-charts/blob/master/stable/aws-load-balancer-controller/values.yaml).
 
-```bash
-helm repo add eks https://aws.github.io/eks-charts
+```shell
 helm install --version 1.1.6 --namespace kube-system --values - aws-load-balancer-controller eks/aws-load-balancer-controller << EOF
 clusterName: ${CLUSTER_NAME}
 serviceAccount:
@@ -261,7 +268,7 @@ and modify the
 
 ```bash
 helm repo add aws-efs-csi-driver https://kubernetes-sigs.github.io/aws-efs-csi-driver/
-helm install --version 1.2.2 --namespace kube-system --values - aws-efs-csi-driver aws-efs-csi-driver/aws-efs-csi-driver << EOF
+helm install --version 1.2.4 --namespace kube-system --values - aws-efs-csi-driver aws-efs-csi-driver/aws-efs-csi-driver << EOF
 serviceAccount:
   controller:
     create: false
@@ -297,7 +304,7 @@ The ServiceAccount `ebs-csi-controller` was created by `eksctl`.
 
 ```bash
 helm repo add aws-ebs-csi-driver https://kubernetes-sigs.github.io/aws-ebs-csi-driver
-helm install --version 0.10.2 --namespace kube-system --values - aws-ebs-csi-driver aws-ebs-csi-driver/aws-ebs-csi-driver << EOF
+helm install --version 1.0.0 --namespace kube-system --values - aws-ebs-csi-driver aws-ebs-csi-driver/aws-ebs-csi-driver << EOF
 enableVolumeScheduling: true
 enableVolumeResizing: true
 enableVolumeSnapshot: true
@@ -312,30 +319,19 @@ serviceAccount:
   node:
     create: false
     name: ebs-csi-controller
+storageClasses:
+- name: gp3
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "true"
+  parameters:
+    type: "gp3"
+    encrypted: "true"
 EOF
 ```
 
-Create new `gp3` storage class using `aws-ebs-csi-driver`:
+Unset `gp2` as default StorageClass annotation:
 
 ```bash
-kubectl apply -f - << EOF
-kind: StorageClass
-apiVersion: storage.k8s.io/v1
-metadata:
-  name: gp3
-provisioner: ebs.csi.aws.com
-parameters:
-  type: gp3
-  encrypted: "true"
-reclaimPolicy: Delete
-allowVolumeExpansion: true
-EOF
-```
-
-Set `gp3` as default StorageClass:
-
-```bash
-kubectl patch storageclass gp3 -p "{\"metadata\": {\"annotations\":{\"storageclass.kubernetes.io/is-default-class\":\"true\"}}}"
 kubectl patch storageclass gp2 -p "{\"metadata\": {\"annotations\":{\"storageclass.kubernetes.io/is-default-class\":\"false\"}}}"
 ```
 

@@ -132,7 +132,16 @@ server:
         path = "/vault/data"
       }
 EOF
-sleep 80
+```
+
+Wait for Vault to be ready:
+
+```bash
+# Wait for DNS vault.${CLUSTER_FQDN} to be ready...
+while [[ -z "$(dig +nocmd +noall +answer +ttlid a "vault.${CLUSTER_FQDN}")" ]]; do
+  date
+  sleep 5
+done
 ```
 
 Check the status of the vault server - it should be sealed and uninitialized:
@@ -267,12 +276,6 @@ Configure GitHub + Dex OIDC authentication:
 vault auth enable github
 vault write auth/github/config organization="${MY_GITHUB_ORG_NAME}"
 vault write auth/github/map/teams/cluster-admin value=my-admin-policy
-
-# Wait for DNS vault.${CLUSTER_FQDN} to be ready...
-while [[ -z "$(dig +nocmd +noall +answer +ttlid a "vault.${CLUSTER_FQDN}")" ]]; do
-  date
-  sleep 5
-done
 
 curl -s "${LETSENCRYPT_CERTIFICATE}" -o "tmp/${CLUSTER_FQDN}/letsencrypt.pem"
 vault auth enable oidc

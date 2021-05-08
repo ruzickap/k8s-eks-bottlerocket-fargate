@@ -238,7 +238,7 @@ and modify the
 [default values](https://github.com/prometheus-community/helm-charts/blob/main/charts/prometheus-mysql-exporter/values.yaml).
 
 ```bash
-helm install --version 1.1.0 --namespace prometheus-mysql-exporter --create-namespace --values - prometheus-mysql-exporter prometheus-community/prometheus-mysql-exporter << EOF
+helm install --version 1.2.0 --namespace prometheus-mysql-exporter --create-namespace --values - prometheus-mysql-exporter prometheus-community/prometheus-mysql-exporter << EOF
 serviceMonitor:
   enabled: true
 mysql:
@@ -293,6 +293,8 @@ Try to connect to the MySQL database from Kubernetes pod using IAM role:
 Create Service Account `rds-sa` for accessing the MySQL RDS DB :
 
 ```bash
+AWS_ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output text)"
+
 sed -i "/  serviceAccounts:/a \
 \ \ \ \ - metadata: \n\
         name: rds-sa \n\
@@ -415,7 +417,7 @@ and modify the
 
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
-helm install --version 10.2.12 --namespace drupal --values - drupal bitnami/drupal << EOF
+helm install --version 10.2.15 --namespace drupal --values - drupal bitnami/drupal << EOF
 replicaCount: 2
 drupalUsername: admin
 drupalPassword: ${MY_PASSWORD}
