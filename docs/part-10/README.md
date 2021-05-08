@@ -11,7 +11,7 @@ Install `harbor`
 and modify the
 [default values](https://github.com/goharbor/harbor-helm/blob/master/values.yaml).
 
-```bash
+```shell
 HARBOR_ADMIN_PASSWORD="${MY_PASSWORD}"
 
 helm repo add harbor https://helm.goharbor.io
@@ -57,7 +57,7 @@ EOF
 
 Create ServiceMonitor to allow Prometheus to get metric data:
 
-```bash
+```shell
 kubectl apply -f - << EOF
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
@@ -80,7 +80,7 @@ EOF
 
 Configure OIDC for Harbor:
 
-```bash
+```shell
 curl -sk -u "admin:${HARBOR_ADMIN_PASSWORD}" -X PUT "https://harbor.${CLUSTER_FQDN}/api/v2.0/configurations" -H "Content-Type: application/json" -d \
 "{
   \"auth_mode\": \"oidc_auth\",
@@ -101,7 +101,7 @@ curl -sk -u "admin:${HARBOR_ADMIN_PASSWORD}" -X PUT "https://harbor.${CLUSTER_FQ
 Enable automated vulnerability scan after each "image push" to the project:
 `library`:
 
-```bash
+```shell
 PROJECT_ID=$(curl -sk -u "admin:${HARBOR_ADMIN_PASSWORD}" -X GET "https://harbor.${CLUSTER_FQDN}/api/v2.0/projects?name=library" | jq ".[].project_id")
 curl -sk -u "admin:${HARBOR_ADMIN_PASSWORD}" -X PUT "https://harbor.${CLUSTER_FQDN}/api/v2.0/projects/${PROJECT_ID}" -H  "Content-Type: application/json" -d \
 "{
@@ -113,7 +113,7 @@ curl -sk -u "admin:${HARBOR_ADMIN_PASSWORD}" -X PUT "https://harbor.${CLUSTER_FQ
 
 Create new Registry Endpoint:
 
-```bash
+```shell
 curl -sk -X POST -H "Content-Type: application/json" -u "admin:${HARBOR_ADMIN_PASSWORD}" "https://harbor.${CLUSTER_FQDN}/api/v2.0/registries" -d \
 "{
   \"name\": \"Docker Hub\",
@@ -133,7 +133,7 @@ because I'm going to replicate everything into `library` project which has
 
 Create new Replication Rule and initiate replication:
 
-```bash
+```shell
 COUNTER=0
 for DOCKER_HUB_REPOSITORY in istio/examples-bookinfo-details-v1 istio/examples-bookinfo-ratings-v1; do
   COUNTER=$((COUNTER+1))

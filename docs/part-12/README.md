@@ -98,6 +98,12 @@ kubectl get pods -n argocd -l app.kubernetes.io/name=argocd-server -o name | cut
 
 ## Flux
 
+Handy repositories:
+
+* [Helm Users! What Flux 2 Can Do For You](https://github.com/kingdonb/kccnceu2021)
+* [flux2-multi-tenancy](https://github.com/fluxcd/flux2-multi-tenancy)
+* [https://github.com/relu/flux-demo](https://github.com/relu/flux-demo)
+
 Make sure you have the `GITHUB_TOKEN` configured properly.
 
 Install Flux on a Kubernetes cluster and configure it to manage itself from

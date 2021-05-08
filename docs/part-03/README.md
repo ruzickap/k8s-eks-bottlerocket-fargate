@@ -9,11 +9,34 @@ and modify the
 
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
-helm install --version 5.8.5 --namespace kube-system --values - metrics-server bitnami/metrics-server << EOF
+helm install --version 5.8.7 --namespace kube-system --values - metrics-server bitnami/metrics-server << EOF
 apiService:
   create: true
 # Needed for calico
 hostNetwork: true
+EOF
+```
+
+## prometheus-adapter
+
+Installs the Prometheus Adapter for the Custom Metrics API.
+Custom metrics are used in Kubernetes by Horizontal Pod Autoscaler to scale
+workloads based upon your own metric pulled from an external metrics provider
+like Prometheus.
+It can also replace the [metrics server](https://github.com/kubernetes-incubator/metrics-server)
+on clusters that already run Prometheus and collect the appropriate metrics.
+
+Install `prometheus-adapter`
+[helm chart](https://artifacthub.io/packages/helm/prometheus-community/prometheus-adapter)
+and modify the
+[default values](https://github.com/prometheus-community/helm-charts/blob/main/charts/prometheus-adapter/values.yaml):
+
+```shell
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm install --version 2.12.2 --namespace prometheus-adapter --values - prometheus-adapter prometheus-community/prometheus-adapter << EOF
+# Needed for calico
+hostNetwork:
+  enabled: true
 EOF
 ```
 
@@ -26,7 +49,7 @@ and modify the
 
 ```bash
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm install --version 15.2.0 --namespace kube-prometheus-stack --values - kube-prometheus-stack prometheus-community/kube-prometheus-stack << EOF
+helm install --version 15.4.4 --namespace kube-prometheus-stack --values - kube-prometheus-stack prometheus-community/kube-prometheus-stack << EOF
 defaultRules:
   rules:
     etcd: false
@@ -573,7 +596,7 @@ Install `loki`
 and modify the
 [default values](https://github.com/grafana/helm-charts/blob/main/charts/loki/values.yaml).
 
-```bash
+```shell
 helm repo add grafana https://grafana.github.io/helm-charts
 helm install --version 2.5.0 --namespace loki --create-namespace --values - loki grafana/loki << EOF
 serviceMonitor:
@@ -588,7 +611,7 @@ Install `loki`
 and modify the
 [default values](https://github.com/grafana/helm-charts/blob/main/charts/promtail/values.yaml).
 
-```bash
+```shell
 helm install --version 3.5.0 --namespace promtail --create-namespace --values - promtail grafana/promtail << EOF
 serviceMonitor:
   enabled: true
@@ -628,7 +651,7 @@ Install `kyverno`
 and modify the
 [default values](https://github.com/kyverno/kyverno/blob/main/charts/kyverno/values.yaml).
 
-```bash
+```shell
 helm repo add kyverno https://kyverno.github.io/kyverno/
 helm install --version v1.3.5 --namespace kyverno --create-namespace --values - kyverno kyverno/kyverno << EOF
 hostNetwork: true
@@ -640,9 +663,9 @@ Install `policy-reporter`
 and modify the
 [default values](https://github.com/fjogeleit/policy-reporter/blob/main/charts/policy-reporter/values.yaml).
 
-```bash
+```shell
 helm repo add policy-reporter https://fjogeleit.github.io/policy-reporter
-helm install --version 1.3.0 --namespace policy-reporter --create-namespace --values - policy-reporter policy-reporter/policy-reporter << EOF
+helm install --version 1.4.0 --namespace policy-reporter --create-namespace --values - policy-reporter policy-reporter/policy-reporter << EOF
 ui:
   enabled: true
   ingress:
@@ -674,7 +697,7 @@ EOF
 
 Install kyverno policies:
 
-```bash
+```shell
 mkdir "tmp/${CLUSTER_FQDN}/kyverno-policies"
 cat > "tmp/${CLUSTER_FQDN}/kyverno-policies/kustomization.yaml" << EOF
 resources:
@@ -817,7 +840,7 @@ Output:
 
 Create ClusterPolicy to check if `team_name` label is present in namespaces:
 
-```bash
+```shell
 kubectl apply -f - << \EOF
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
@@ -843,7 +866,7 @@ EOF
 
 See the results:
 
-```bash
+```shell
 kubectl get clusterpolicyreport
 ```
 

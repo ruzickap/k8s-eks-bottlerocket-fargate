@@ -34,8 +34,6 @@ Install `podinfo` secured by `oauth2`:
 ```bash
 helm install --version 5.2.0 --namespace podinfo-dex --create-namespace --values - podinfo sp/podinfo << EOF
 # https://github.com/stefanprodan/podinfo/blob/master/charts/podinfo/values.yaml
-ui:
-  message: "Running behind SSO"
 serviceMonitor:
   enabled: true
 ingress:
@@ -78,7 +76,7 @@ EOF
 
 Install [kuard](https://github.com/kubernetes-up-and-running/kuard):
 
-```bash
+```shell
 kubectl run kuard --image=gcr.io/kuar-demo/kuard-amd64:v0.10.0-green --port=8080 --expose=true --labels="app=kuard,version=v0.10.0"
 
 kubectl apply -f - << EOF
@@ -114,7 +112,7 @@ Install `polaris`
 and modify the
 [default values](https://github.com/FairwindsOps/charts/blob/master/stable/polaris/values.yaml).
 
-```bash
+```shell
 helm repo add fairwinds-stable https://charts.fairwinds.com/stable
 helm install --version 3.1.1 --namespace polaris --create-namespace --values - polaris fairwinds-stable/polaris << EOF
 dashboard:
@@ -136,7 +134,7 @@ EOF
 
 Kubei installation is done through the K8s manifest (not helm chart).
 
-```bash
+```shell
 kubectl apply -f https://raw.githubusercontent.com/Portshift/kubei/master/deploy/kubei.yaml
 
 kubectl apply -f - << EOF
@@ -169,7 +167,7 @@ EOF
 
 Install [kube-bench](https://github.com/aquasecurity/kube-bench) according the [https://github.com/aquasecurity/kube-bench/blob/main/docs/asff.md](https://github.com/aquasecurity/kube-bench/blob/main/docs/asff.md):
 
-```bash
+```shell
 curl -s https://raw.githubusercontent.com/aquasecurity/kube-bench/main/job-eks.yaml | \
   sed "s@image: .*@image: aquasec/kube-bench:latest@" | \
   kubectl apply -f -
@@ -182,7 +180,7 @@ Install `kubernetes-dashboard`
 and modify the
 [default values](https://github.com/kubernetes/dashboard/blob/master/aio/deploy/helm-chart/kubernetes-dashboard/values.yaml).
 
-```bash
+```shell
 helm repo add kubernetes-dashboard https://kubernetes.github.io/dashboard/
 helm install --version 4.0.3 --namespace kubernetes-dashboard --create-namespace --values - kubernetes-dashboard kubernetes-dashboard/kubernetes-dashboard << EOF
 extraArgs:
@@ -214,13 +212,13 @@ EOF
 Create `clusterrolebinding` to allow the kubernetes-dashboard to access
 the K8s API:
 
-```bash
+```shell
 kubectl create clusterrolebinding kubernetes-dashboard-admin --clusterrole=cluster-admin --serviceaccount=kubernetes-dashboard:kubernetes-dashboard-admin
 ```
 
 ## Octant
 
-```bash
+```shell
 helm repo add octant-dashboard https://aleveille.github.io/octant-dashboard-turnkey/repo
 helm install --version 0.18.0 --namespace octant --create-namespace --values - octant octant-dashboard/octant << EOF
 # https://github.com/aleveille/octant-dashboard-turnkey/blob/master/helm/values.yaml
@@ -258,7 +256,7 @@ Install `kubeview`
 and modify the
 [default values](https://github.com/benc-uk/kubeview/blob/master/charts/kubeview/values.yaml).
 
-```bash
+```shell
 helm repo add kubeview https://benc-uk.github.io/kubeview/charts
 helm install --version 0.1.20 --namespace kubeview --create-namespace --values - kubeview kubeview/kubeview << EOF
 ingress:
@@ -283,7 +281,7 @@ Install `kube-ops-view`
 and modify the
 [default values](https://github.com/helm/charts/blob/master/stable/kube-ops-view/values.yaml).
 
-```bash
+```shell
 helm repo add stable https://charts.helm.sh/stable
 helm install --version 1.2.4 --namespace kube-ops-view --create-namespace --values - kube-ops-view stable/kube-ops-view << EOF
 ingress:

@@ -97,7 +97,7 @@ EOF
 Download `istioctl`:
 
 ```bash
-ISTIO_VERSION="1.9.2"
+ISTIO_VERSION="1.9.4"
 
 if [[ ! -f /usr/local/bin/istioctl ]]; then
   if [[ $(uname) == "Darwin" ]]; then
@@ -196,7 +196,7 @@ and modify the
 
 ```bash
 helm repo add kiali https://kiali.org/helm-charts
-helm install --version 1.33.1 --namespace kiali-operator --create-namespace kiali-operator kiali/kiali-operator
+helm install --version 1.34.0 --namespace kiali-operator --create-namespace kiali-operator kiali/kiali-operator
 ```
 
 Install Kiali CR:
@@ -223,7 +223,6 @@ spec:
       username_claim: email
   deployment:
     accessible_namespaces: ["**"]
-    image_version: operator_version
     namespace: kiali
     override_ingress_yaml:
       spec:

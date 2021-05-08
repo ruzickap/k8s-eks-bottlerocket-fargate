@@ -127,7 +127,7 @@ Annotate the wildcard certificate secret. It will allow `kubed` to distribute
 it to all namespaces.
 
 ```bash
-kubectl wait --namespace cert-manager --for=condition=Ready --timeout=15m certificate "ingress-cert-${LETSENCRYPT_ENVIRONMENT}"
+kubectl wait --namespace cert-manager --for=condition=Ready --timeout=20m certificate "ingress-cert-${LETSENCRYPT_ENVIRONMENT}"
 kubectl annotate secret "ingress-cert-${LETSENCRYPT_ENVIRONMENT}" -n cert-manager kubed.appscode.com/sync=""
 ```
 
@@ -140,7 +140,7 @@ and modify the
 
 ```bash
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-helm install --version 3.29.0 --namespace ingress-nginx --create-namespace --wait --wait-for-jobs --values - ingress-nginx ingress-nginx/ingress-nginx << EOF
+helm install --version 3.30.0 --namespace ingress-nginx --create-namespace --wait --wait-for-jobs --values - ingress-nginx ingress-nginx/ingress-nginx << EOF
 controller:
   # Needed for calico
   hostNetwork: true
@@ -203,7 +203,7 @@ Service account `external-dns` was created by `eksctl`.
 
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
-helm install --version 4.11.1 --namespace external-dns --values - external-dns bitnami/external-dns << EOF
+helm install --version 5.0.0 --namespace external-dns --values - external-dns bitnami/external-dns << EOF
 sources:
   - ingress
   - istio-gateway

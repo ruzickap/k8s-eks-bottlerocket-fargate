@@ -35,6 +35,7 @@ eksctl
 external-dns
 external-snapshotter
 Fargate
+flux2-multi-tenancy
 GitOps
 gpg-agent
 Grafana
@@ -79,6 +80,7 @@ out.txt
 phpMyAdmin
 podinfo
 Polaris
+prometheus-adapter
 promtail
 ReadWriteMany
 restic
