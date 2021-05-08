@@ -3,6 +3,7 @@ Ansible
 AppRole
 ArgoCD
 auth
+autoscaler
 Autoscaler
 aws-cloudwatch-metrics
 aws-ebs-csi-driver
