@@ -722,7 +722,7 @@ secretsEncryption:
 #     enableTypes: ["audit", "authenticator", "controllerManager"]
 EOF
 
-if ! eksctl get clusters --name=${CLUSTER_NAME} &> /dev/null ; then
+if ! eksctl get clusters --name="${CLUSTER_NAME}" &> /dev/null ; then
   eksctl create cluster --config-file "tmp/${CLUSTER_FQDN}/eksctl.yaml" --kubeconfig "${KUBECONFIG}" --without-nodegroup
   # kubectl delete daemonset -n kube-system aws-node
   # kubectl apply -f https://docs.projectcalico.org/manifests/calico-vxlan.yaml

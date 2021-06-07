@@ -14,7 +14,7 @@ Service account `external-dns` was created by `eksctl`.
 
 ```bash
 helm repo add jetstack https://charts.jetstack.io
-helm install --version v1.3.1 --namespace cert-manager --wait --wait-for-jobs --values - cert-manager jetstack/cert-manager << EOF
+helm upgrade --install --version v1.3.1 --namespace cert-manager --wait --wait-for-jobs --values - cert-manager jetstack/cert-manager << EOF
 installCRDs: true
 serviceAccount:
   create: false
@@ -26,10 +26,10 @@ securityContext:
 prometheus:
   servicemonitor:
     enabled: true
-webhook:
-  # Needed for calico
-  securePort: 10251
-  hostNetwork: true
+# webhook:
+#   # Needed for calico
+#   securePort: 10251
+#   hostNetwork: true
 EOF
 ```
 
@@ -116,7 +116,7 @@ and modify the
 
 ```bash
 helm repo add appscode https://charts.appscode.com/stable/
-helm install --version v0.12.0 --namespace kubed --create-namespace --values - kubed appscode/kubed << EOF
+helm upgrade --install --version v0.12.0 --namespace kubed --create-namespace --values - kubed appscode/kubed << EOF
 imagePullPolicy: Always
 config:
   clusterName: ${CLUSTER_FQDN}
@@ -128,7 +128,7 @@ it to all namespaces.
 
 ```bash
 kubectl wait --namespace cert-manager --for=condition=Ready --timeout=20m certificate "ingress-cert-${LETSENCRYPT_ENVIRONMENT}"
-kubectl annotate secret "ingress-cert-${LETSENCRYPT_ENVIRONMENT}" -n cert-manager kubed.appscode.com/sync=""
+kubectl annotate secret "ingress-cert-${LETSENCRYPT_ENVIRONMENT}" -n cert-manager --overwrite kubed.appscode.com/sync=""
 ```
 
 ## ingress-nginx
@@ -140,7 +140,7 @@ and modify the
 
 ```bash
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-helm install --version 3.30.0 --namespace ingress-nginx --create-namespace --wait --wait-for-jobs --values - ingress-nginx ingress-nginx/ingress-nginx << EOF
+helm upgrade --install --version 3.32.0 --namespace ingress-nginx --create-namespace --wait --wait-for-jobs --values - ingress-nginx ingress-nginx/ingress-nginx << EOF
 controller:
   # Needed for calico
   hostNetwork: true
@@ -203,7 +203,7 @@ Service account `external-dns` was created by `eksctl`.
 
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
-helm install --version 5.0.0 --namespace external-dns --values - external-dns bitnami/external-dns << EOF
+helm upgrade --install --version 5.0.3 --namespace external-dns --values - external-dns bitnami/external-dns << EOF
 sources:
   - ingress
   - istio-gateway
@@ -241,7 +241,7 @@ and modify the
 
 ```bash
 helm repo add codecentric https://codecentric.github.io/helm-charts
-helm install --version 4.1.0 --namespace mailhog --create-namespace --values - mailhog codecentric/mailhog << EOF
+helm upgrade --install --version 4.1.0 --namespace mailhog --create-namespace --values - mailhog codecentric/mailhog << EOF
 ingress:
   enabled: true
   annotations:
@@ -267,7 +267,7 @@ and modify the
 Details: [Kubernetes Event Notifications to a Slack Channel](https://www.powerupcloud.com/kubernetes-event-notifications-to-a-slack-channel-part-v/)
 
 ```shell
-helm install --version 3.2.3 --namespace kubewatch --create-namespace --values - kubewatch bitnami/kubewatch << EOF
+helm upgrade --install --version 3.2.6 --namespace kubewatch --create-namespace --values - kubewatch bitnami/kubewatch << EOF
 slack:
   enabled: true
   channel: "#${SLACK_CHANNEL}"
@@ -326,7 +326,7 @@ EOF
 ## Calico commands
 
 ```bash
-calicoctl ipam show --show-block
+# calicoctl ipam show --show-block
 ```
 
 Output:

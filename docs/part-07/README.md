@@ -11,7 +11,7 @@ and modify the
 
 ```bash
 helm repo add sp https://stefanprodan.github.io/podinfo
-helm install --version 5.2.0 --namespace podinfo-keycloak --create-namespace --values - podinfo sp/podinfo << EOF
+helm upgrade --install --version 5.2.1 --namespace podinfo-keycloak --create-namespace --values - podinfo sp/podinfo << EOF
 serviceMonitor:
   enabled: true
 ingress:
@@ -32,7 +32,7 @@ EOF
 Install `podinfo` secured by `oauth2`:
 
 ```bash
-helm install --version 5.2.0 --namespace podinfo-dex --create-namespace --values - podinfo sp/podinfo << EOF
+helm upgrade --install --version 5.2.1 --namespace podinfo-dex --create-namespace --values - podinfo sp/podinfo << EOF
 # https://github.com/stefanprodan/podinfo/blob/master/charts/podinfo/values.yaml
 serviceMonitor:
   enabled: true
@@ -54,7 +54,7 @@ EOF
 Install `podinfo` and use Application Load Balancer:
 
 ```shell
-helm install --version 5.2.0 --namespace default --values - podinfo-alb sp/podinfo << EOF
+helm upgrade --install --version 5.2.1 --namespace default --values - podinfo-alb sp/podinfo << EOF
 ui:
   message: "Running using Application Load Balancer"
 service:
@@ -114,7 +114,7 @@ and modify the
 
 ```shell
 helm repo add fairwinds-stable https://charts.fairwinds.com/stable
-helm install --version 3.1.1 --namespace polaris --create-namespace --values - polaris fairwinds-stable/polaris << EOF
+helm upgrade --install --version 4.0.3 --namespace polaris --create-namespace --values - polaris fairwinds-stable/polaris << EOF
 dashboard:
   ingress:
     enabled: true
@@ -182,7 +182,7 @@ and modify the
 
 ```shell
 helm repo add kubernetes-dashboard https://kubernetes.github.io/dashboard/
-helm install --version 4.0.3 --namespace kubernetes-dashboard --create-namespace --values - kubernetes-dashboard kubernetes-dashboard/kubernetes-dashboard << EOF
+helm upgrade --install --version 4.2.0 --namespace kubernetes-dashboard --create-namespace --values - kubernetes-dashboard kubernetes-dashboard/kubernetes-dashboard << EOF
 extraArgs:
   - --enable-skip-login
   - --enable-insecure-login
@@ -220,7 +220,7 @@ kubectl create clusterrolebinding kubernetes-dashboard-admin --clusterrole=clust
 
 ```shell
 helm repo add octant-dashboard https://aleveille.github.io/octant-dashboard-turnkey/repo
-helm install --version 0.18.0 --namespace octant --create-namespace --values - octant octant-dashboard/octant << EOF
+helm upgrade --install --version 0.18.0 --namespace octant --create-namespace --values - octant octant-dashboard/octant << EOF
 # https://github.com/aleveille/octant-dashboard-turnkey/blob/master/helm/values.yaml
 plugins:
   install:
@@ -258,7 +258,7 @@ and modify the
 
 ```shell
 helm repo add kubeview https://benc-uk.github.io/kubeview/charts
-helm install --version 0.1.20 --namespace kubeview --create-namespace --values - kubeview kubeview/kubeview << EOF
+helm upgrade --install --version 0.1.20 --namespace kubeview --create-namespace --values - kubeview kubeview/kubeview << EOF
 ingress:
   enabled: true
   annotations:
@@ -283,7 +283,7 @@ and modify the
 
 ```shell
 helm repo add stable https://charts.helm.sh/stable
-helm install --version 1.2.4 --namespace kube-ops-view --create-namespace --values - kube-ops-view stable/kube-ops-view << EOF
+helm upgrade --install --version 1.2.4 --namespace kube-ops-view --create-namespace --values - kube-ops-view stable/kube-ops-view << EOF
 ingress:
   enabled: true
   hostname: kube-ops-view.${CLUSTER_FQDN}
@@ -297,4 +297,63 @@ ingress:
 rbac:
   create: true
 EOF
+```
+
+## S3 upload test
+
+The namespace `s3-test` and the `s3-test` service account was created by eksctl.
+
+Test S3 access, upload and delete operations:
+
+```shell
+kubectl apply -f - << EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  name: s3-test
+  namespace: s3-test
+spec:
+  serviceAccountName: s3-test
+  containers:
+  - name: aws-cli
+    image: amazon/aws-cli
+    securityContext:
+      runAsUser: 1000
+      runAsGroup: 3000
+    command:
+      - /bin/bash
+      - -c
+      - |
+        set -x
+        export HOME=/tmp
+        aws s3 ls --region ${AWS_DEFAULT_REGION} s3://${CLUSTER_FQDN}/
+        aws s3 cp --region ${AWS_DEFAULT_REGION} /etc/hostname s3://${CLUSTER_FQDN}/
+        aws s3 ls --region ${AWS_DEFAULT_REGION} s3://${CLUSTER_FQDN}/
+        aws s3 rm s3://${CLUSTER_FQDN}/hostname
+    resources:
+      requests:
+        memory: "64Mi"
+        cpu: "250m"
+      limits:
+        memory: "128Mi"
+        cpu: "500m"
+  restartPolicy: Never
+EOF
+
+kubectl wait --namespace s3-test --for=condition=Ready pod s3-test && sleep 5
+kubectl logs -n s3-test s3-test
+kubectl delete pod -n s3-test s3-test
+```
+
+Output:
+
+```text
++ aws s3 ls --region eu-central-1 s3://kube1.k8s.mylabs.dev/
++ aws s3 cp --region eu-central-1 /etc/hostname s3://kube1.k8s.mylabs.dev/
+upload: ../etc/hostname to s3://kube1.k8s.mylabs.dev/hostname
++ aws s3 ls --region eu-central-1 s3://kube1.k8s.mylabs.dev/
+2021-06-01 19:05:02          8 hostname
++ aws s3 rm s3://kube1.k8s.mylabs.dev/hostname
+delete: s3://kube1.k8s.mylabs.dev/hostname
+pod "s3-test" deleted
 ```

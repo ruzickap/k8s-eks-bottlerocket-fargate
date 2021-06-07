@@ -9,7 +9,7 @@ and modify the
 
 ```bash
 helm repo add vmware-tanzu https://vmware-tanzu.github.io/helm-charts
-helm install --version 2.20.0 --namespace velero --create-namespace --values - velero vmware-tanzu/velero << EOF
+helm upgrade --install --version 2.21.1 --namespace velero --create-namespace --values - velero vmware-tanzu/velero << EOF
 initContainers:
   - name: velero-plugin-for-aws
     image: velero/velero-plugin-for-aws:v1.2.0
@@ -257,7 +257,7 @@ Metadata:
   Generate Name:  velero-data-vault-0-
   Generation:     1
   Managed Fields:
-    API Version:  snapshot.storage.k8s.io/v1beta1
+    API Version:  snapshot.storage.k8s.io/v1
     Fields Type:  FieldsV1
     fieldsV1:
       f:metadata:
@@ -274,7 +274,7 @@ Metadata:
     Manager:      velero-plugin-for-csi
     Operation:    Update
     Time:         2021-03-20T09:33:17Z
-    API Version:  snapshot.storage.k8s.io/v1beta1
+    API Version:  snapshot.storage.k8s.io/v1
     Fields Type:  FieldsV1
     fieldsV1:
       f:metadata:
@@ -339,7 +339,7 @@ Metadata:
     snapshot.storage.kubernetes.io/volumesnapshotcontent-bound-protection
   Generation:  1
   Managed Fields:
-    API Version:  snapshot.storage.k8s.io/v1beta1
+    API Version:  snapshot.storage.k8s.io/v1
     Fields Type:  FieldsV1
     fieldsV1:
       f:metadata:
@@ -365,7 +365,7 @@ Metadata:
     Manager:      snapshot-controller
     Operation:    Update
     Time:         2021-03-20T09:33:17Z
-    API Version:  snapshot.storage.k8s.io/v1beta1
+    API Version:  snapshot.storage.k8s.io/v1
     Fields Type:  FieldsV1
     fieldsV1:
       f:metadata:
@@ -375,7 +375,7 @@ Metadata:
     Manager:      velero-plugin-for-csi
     Operation:    Update
     Time:         2021-03-20T09:33:22Z
-    API Version:  snapshot.storage.k8s.io/v1beta1
+    API Version:  snapshot.storage.k8s.io/v1
     Fields Type:  FieldsV1
     fieldsV1:
       f:status:
@@ -397,7 +397,7 @@ Spec:
     Volume Handle:             vol-011280587cf55688f
   Volume Snapshot Class Name:  csi-ebs-snapclass
   Volume Snapshot Ref:
-    API Version:       snapshot.storage.k8s.io/v1beta1
+    API Version:       snapshot.storage.k8s.io/v1
     Kind:              VolumeSnapshot
     Name:              velero-data-vault-0-x6zwp
     Namespace:         vault

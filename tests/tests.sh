@@ -84,7 +84,7 @@ fi
 
 echo -e "\n*** Install MetalLB"
 helm repo add bitnami https://charts.bitnami.com/bitnami
-helm install --version 2.3.1 --namespace metallb --create-namespace --values - metallb bitnami/metallb << EOF
+helm upgrade --install --version 2.3.1 --namespace metallb --create-namespace --values - metallb bitnami/metallb << EOF
 configInline:
   address-pools:
     - name: default
@@ -143,8 +143,8 @@ sed docs/part-{02..08}/README.md \
   -e "s/.*eksctl /# &/" \
   -e "/kubectl delete CSIDriver efs.csi.aws.com/d" \
   -e "s/^kubectl patch storageclass gp3/# &/" \
-  -e "s/^vault /# &/ ; s/.*\$(vault /# &/ ; s/^kubectl exec -n vault vault-0/# &/ ; s/.*VAULT_ROOT_TOKEN/# &/" \
-  -e "s/+ttlid a \"vault.\${CLUSTER_FQDN}\"/+ttlid a google.com/" \
+  -e "s/vault auth list/echo github/ ; s/^vault /# &/ ; s/.*\$(vault /# &/ ; s/.*kubectl exec -n vault vault-0/# &/ ; s/.*VAULT_ROOT_TOKEN/# &/" \
+  -e "s/+ttlid a \".*\${CLUSTER_FQDN}\"/+ttlid a google.com/" \
   -e "s/hostNetwork: true/# &/" \
   -e '/^# Create ClusterIssuer for production/i \
 apiVersion: cert-manager.io/v1 \

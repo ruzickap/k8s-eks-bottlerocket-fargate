@@ -11,7 +11,7 @@ and modify the
 
 ```bash
 helm repo add jaegertracing https://jaegertracing.github.io/helm-charts
-helm install --version 2.21.0 --namespace jaeger-operator --create-namespace --values - jaeger-operator jaegertracing/jaeger-operator << EOF
+helm upgrade --install --version 2.21.2 --namespace jaeger-operator --create-namespace --values - jaeger-operator jaegertracing/jaeger-operator << EOF
 rbac:
   clusterRole: true
 EOF
@@ -20,7 +20,7 @@ EOF
 Allow Jaeger to install Jaeger into `jaeger-controlplane`:
 
 ```bash
-kubectl create namespace jaeger-system
+kubectl get namespace jaeger-system &> /dev/null || kubectl create namespace jaeger-system
 # https://github.com/jaegertracing/jaeger-operator/blob/master/deploy/cluster_role_binding.yaml
 kubectl apply -f - << EOF
 kind: RoleBinding
@@ -97,7 +97,7 @@ EOF
 Download `istioctl`:
 
 ```bash
-ISTIO_VERSION="1.9.4"
+ISTIO_VERSION="1.10.0"
 
 if [[ ! -f /usr/local/bin/istioctl ]]; then
   if [[ $(uname) == "Darwin" ]]; then
@@ -115,16 +115,16 @@ and modify the
 [default values](https://github.com/istio/istio/blob/master/manifests/charts/istio-operator/values.yaml).
 
 ```bash
-git clone --quiet https://github.com/istio/istio.git "tmp/${CLUSTER_FQDN}/istio"
+test -d "tmp/${CLUSTER_FQDN}/istio" || git clone --quiet https://github.com/istio/istio.git "tmp/${CLUSTER_FQDN}/istio"
 git -C "tmp/${CLUSTER_FQDN}/istio" checkout --quiet "${ISTIO_VERSION}"
 
-helm install istio-operator "tmp/${CLUSTER_FQDN}/istio/manifests/charts/istio-operator"
+helm upgrade --install istio-operator "tmp/${CLUSTER_FQDN}/istio/manifests/charts/istio-operator"
 ```
 
 Create Istio using the operator:
 
 ```bash
-kubectl create namespace istio-system
+kubectl get namespace istio-system &> /dev/null || kubectl create namespace istio-system
 kubectl apply -f - << EOF
 apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
@@ -196,15 +196,15 @@ and modify the
 
 ```bash
 helm repo add kiali https://kiali.org/helm-charts
-helm install --version 1.34.0 --namespace kiali-operator --create-namespace kiali-operator kiali/kiali-operator
+helm upgrade --install --version 1.35.0 --namespace kiali-operator --create-namespace kiali-operator kiali/kiali-operator
 ```
 
 Install Kiali CR:
 
 ```bash
 # https://github.com/kiali/kiali-operator/blob/master/deploy/kiali/kiali_cr.yaml
-kubectl create namespace kiali
-kubectl create secret generic kiali --from-literal="oidc-secret=${MY_PASSWORD}" -n kiali
+kubectl get namespace kiali &> /dev/null || kubectl create namespace kiali
+kubectl get secret -n kiali kiali || kubectl create secret generic kiali --from-literal="oidc-secret=${MY_PASSWORD}" -n kiali
 kubectl apply -f - << EOF
 apiVersion: kiali.io/v1alpha1
 kind: Kiali
@@ -265,7 +265,7 @@ and modify the
 
 ```bash
 helm repo add autoscaler https://kubernetes.github.io/autoscaler
-helm install --version 9.9.2 --namespace kube-system --values - cluster-autoscaler autoscaler/cluster-autoscaler << EOF
+helm upgrade --install --version 9.9.2 --namespace kube-system --values - cluster-autoscaler autoscaler/cluster-autoscaler << EOF
 autoDiscovery:
   clusterName: ${CLUSTER_NAME}
 awsRegion: ${AWS_DEFAULT_REGION}
@@ -420,6 +420,4 @@ decrease the number of nodes:
 kubectl delete deployment pasue-deployment
 sleep 800
 kubectl get nodes -L node.kubernetes.io/instance-type -L topology.kubernetes.io/zone
-
-exit
 ```
