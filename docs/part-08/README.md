@@ -5,13 +5,15 @@
 Install `clusterctl`:
 
 ```shell
-CLUSTERAPI_VERSION="0.3.15"
+set -x
+
+CLUSTERAPI_VERSION="0.3.17"
 if [[ ! -f /usr/local/bin/clusterctl ]]; then
   curl -s -L "https://github.com/kubernetes-sigs/cluster-api/releases/download/v${CLUSTERAPI_VERSION}/clusterctl-$(uname | sed "s/./\L&/g" )-amd64" -o /usr/local/bin/clusterctl
   chmod +x /usr/local/bin/clusterctl
 fi
 
-CLUSTERAWSADM_VERSION="0.6.5"
+CLUSTERAWSADM_VERSION="0.6.6"
 if [[ ! -f /usr/local/bin/clusterawsadm ]]; then
   curl -s -L "https://github.com/kubernetes-sigs/cluster-api-provider-aws/releases/download/v${CLUSTERAWSADM_VERSION}/clusterawsadm-$(uname | sed "s/./\L&/g" )-amd64" -o /usr/local/bin/clusterawsadm
   chmod +x /usr/local/bin/clusterawsadm
@@ -23,36 +25,199 @@ variables and uses them to create a CloudFormation stack in your AWS account
 with the correct IAM resources:
 
 ```shell
-cat > "tmp/${CLUSTER_FQDN}/eks.config" << EOF
+OIDC_PROVIDER_URL=$(aws eks describe-cluster --name "${CLUSTER_NAME}" --query "cluster.identity.oidc.issuer" --output text)
+export OIDC_PROVIDER_URL
+
+cat > "tmp/${CLUSTER_FQDN}/awsiamconfiguration.yaml" << EOF
 apiVersion: bootstrap.aws.infrastructure.cluster.x-k8s.io/v1alpha1
 kind: AWSIAMConfiguration
 spec:
-  bootstrapUser:
-    enable: true
   eks:
     enable: true
-    iamRoleCreation: false
+    iamRoleCreation: true
     defaultControlPlaneRole:
-        disable: false
+      disable: false
+    managedMachinePool:
+      disable: false
 EOF
 
-clusterawsadm bootstrap iam create-cloudformation-stack --config "tmp/${CLUSTER_FQDN}/eks.config"
+clusterawsadm bootstrap iam create-cloudformation-stack --config "tmp/${CLUSTER_FQDN}/awsiamconfiguration.yaml"
 ```
 
-Create the Base64 encoded credentials using `clusterawsadm`.
-This command uses your environment variables and encodes
-them in a value to be stored in a Kubernetes Secret.
+Output:
 
-```shell
-AWS_B64ENCODED_CREDENTIALS=$(clusterawsadm bootstrap credentials encode-as-profile)
-export AWS_B64ENCODED_CREDENTIALS
+```text
+Attempting to create AWS CloudFormation stack cluster-api-provider-aws-sigs-k8s-io
+
+Following resources are in the stack:
+
+Resource                  |Type                                                                                |Status
+AWS::IAM::InstanceProfile |control-plane.cluster-api-provider-aws.sigs.k8s.io                                  |CREATE_COMPLETE
+AWS::IAM::InstanceProfile |controllers.cluster-api-provider-aws.sigs.k8s.io                                    |CREATE_COMPLETE
+AWS::IAM::InstanceProfile |nodes.cluster-api-provider-aws.sigs.k8s.io                                          |CREATE_COMPLETE
+AWS::IAM::ManagedPolicy   |arn:aws:iam::729560437327:policy/control-plane.cluster-api-provider-aws.sigs.k8s.io |CREATE_COMPLETE
+AWS::IAM::ManagedPolicy   |arn:aws:iam::729560437327:policy/nodes.cluster-api-provider-aws.sigs.k8s.io         |CREATE_COMPLETE
+AWS::IAM::ManagedPolicy   |arn:aws:iam::729560437327:policy/controllers.cluster-api-provider-aws.sigs.k8s.io   |CREATE_COMPLETE
+AWS::IAM::Role            |control-plane.cluster-api-provider-aws.sigs.k8s.io                                  |CREATE_COMPLETE
+AWS::IAM::Role            |controllers.cluster-api-provider-aws.sigs.k8s.io                                    |CREATE_COMPLETE
+AWS::IAM::Role            |eks-controlplane.cluster-api-provider-aws.sigs.k8s.io                               |CREATE_COMPLETE
+AWS::IAM::Role            |eks-nodegroup.cluster-api-provider-aws.sigs.k8s.io                                  |CREATE_COMPLETE
+AWS::IAM::Role            |nodes.cluster-api-provider-aws.sigs.k8s.io                                          |CREATE_COMPLETE
 ```
 
 Initialize the management cluster:
 
 ```shell
+export AWS_REGION="${AWS_DEFAULT_REGION}"
+AWS_B64ENCODED_CREDENTIALS="$(clusterawsadm bootstrap credentials encode-as-profile)"
+export AWS_B64ENCODED_CREDENTIALS
 export EXP_EKS=true
-clusterctl init --infrastructure=aws --control-plane=aws-eks --bootstrap=aws-eks
+export EXP_EKS_IAM=true
+# https://cluster-api-aws.sigs.k8s.io/topics/machinepools.html
+export EXP_MACHINE_POOL=true
+# https://blog.scottlowe.org/2021/03/02/deploying-a-cni-automatically-with-a-clusterresourceset/
+export EXP_CLUSTER_RESOURCE_SET=true
+kubectl get namespace capi-system &> /dev/null || clusterctl init -v 4 --infrastructure=aws --control-plane="aws-eks:v${CLUSTERAWSADM_VERSION}" --bootstrap="aws-eks:v${CLUSTERAWSADM_VERSION}" --core="cluster-api:v${CLUSTERAPI_VERSION}"
+
+# Fix https://github.com/kubernetes-sigs/cluster-api-provider-aws/issues/2358
+kubectl apply -f - << EOF
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: capa-eks-control-plane-system-capa-eks-control-plane-manager-role
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cluster.x-k8s.io
+  resources:
+  - clusters
+  - clusters/status
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - controlplane.cluster.x-k8s.io
+  resources:
+  - awsmanagedcontrolplanes
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - controlplane.cluster.x-k8s.io
+  resources:
+  - awsmanagedcontrolplanes/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - get
+  - list
+  - patch
+  - watch
+- apiGroups:
+  - infrastructure.cluster.x-k8s.io
+  resources:
+  - awsclustercontrolleridentities
+  - awsclusterroleidentities
+  - awsclusterstaticidentities
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - infrastructure.cluster.x-k8s.io
+  resources:
+  - awsmachinepools
+  - awsmachinepools/status
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - infrastructure.cluster.x-k8s.io
+  resources:
+  - awsmachines
+  - awsmachines/status
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - infrastructure.cluster.x-k8s.io
+  resources:
+  - awsmanagedclusters
+  - awsmanagedclusters/status
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - infrastructure.cluster.x-k8s.io
+  resources:
+  - awsmanagedmachinepools
+  - awsmanagedmachinepools/status
+  verbs:
+  - get
+  - list
+  - watch
+EOF
+```
+
+Output:
+
+```text
+WARNING: `encode-as-profile` should only be used for bootstrapping.
+
+Installing the clusterctl inventory CRD
+Fetching providers
+Skipping installing cert-manager as it is already installed
+Installing Provider="cluster-api" Version="v0.3.17" TargetNamespace="capi-system"
+Creating shared objects Provider="cluster-api" Version="v0.3.17"
+Creating instance objects Provider="cluster-api" Version="v0.3.17" TargetNamespace="capi-system"
+Creating inventory entry Provider="cluster-api" Version="v0.3.17" TargetNamespace="capi-system"
+Installing Provider="bootstrap-aws-eks" Version="v0.6.6" TargetNamespace="capa-eks-bootstrap-system"
+Creating shared objects Provider="bootstrap-aws-eks" Version="v0.6.6"
+Creating instance objects Provider="bootstrap-aws-eks" Version="v0.6.6" TargetNamespace="capa-eks-bootstrap-system"
+Creating inventory entry Provider="bootstrap-aws-eks" Version="v0.6.6" TargetNamespace="capa-eks-bootstrap-system"
+Installing Provider="control-plane-aws-eks" Version="v0.6.6" TargetNamespace="capa-eks-control-plane-system"
+Creating shared objects Provider="control-plane-aws-eks" Version="v0.6.6"
+Creating instance objects Provider="control-plane-aws-eks" Version="v0.6.6" TargetNamespace="capa-eks-control-plane-system"
+Creating inventory entry Provider="control-plane-aws-eks" Version="v0.6.6" TargetNamespace="capa-eks-control-plane-system"
+Installing Provider="infrastructure-aws" Version="v0.6.6" TargetNamespace="capa-system"
+Creating shared objects Provider="infrastructure-aws" Version="v0.6.6"
+Creating instance objects Provider="infrastructure-aws" Version="v0.6.6" TargetNamespace="capa-system"
+Creating inventory entry Provider="infrastructure-aws" Version="v0.6.6" TargetNamespace="capa-system"
+
+Your management cluster has been initialized successfully!
+
+You can now create your first workload cluster by running the following:
+
+  clusterctl config cluster [name] --kubernetes-version [version] | kubectl apply -f -
+
+Warning: resource clusterroles/capa-eks-control-plane-system-capa-eks-control-plane-manager-role is missing the kubectl.kubernetes.io/last-applied-configuration annotation which is required by kubectl apply. kubectl apply should only be used on resources created declaratively by either kubectl create --save-config or kubectl apply. The missing annotation will be patched automatically.
 ```
 
 Create cluster:
@@ -60,18 +225,164 @@ Create cluster:
 ```shell
 AWS_SSH_KEY_NAME=eksctl-${CLUSTER_NAME}-nodegroup-ng01-$(ssh-keygen -f ~/.ssh/id_rsa.pub -e -m PKCS8 | openssl pkey -pubin -outform DER | openssl md5 -c)
 export AWS_SSH_KEY_NAME
-export KUBERNETES_VERSION=v1.18.0
-export WORKER_MACHINE_COUNT=1
-export AWS_NODE_MACHINE_TYPE=t2.medium
 
-clusterctl config cluster managed-test --flavor eks > "tmp/${CLUSTER_FQDN}/capi-eks.yaml"
-kubectl apply -f "tmp/${CLUSTER_FQDN}/capi-eks.yaml"
+kubectl get namespace tenants &> /dev/null || kubectl create namespace tenants
+kubectl apply -f - << EOF
+apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
+kind: AWSManagedControlPlane
+metadata:
+  name: ${CLUSTER_NAME}1
+  namespace: tenants
+spec:
+  additionalTags:
+$(echo "${TAGS}" | sed "s/ /\\n    /g; s/^/    /g; s/=/: /g")
+  eksClusterName: ${CLUSTER_NAME}1
+  associateOIDCProvider: true
+  region: "${AWS_DEFAULT_REGION}"
+  sshKeyName: "${AWS_SSH_KEY_NAME}"
+  # https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html
+  version: "v1.20.4"
+  # Not working: https://github.com/kubernetes-sigs/cluster-api-provider-aws/issues/2409
+  iamAuthenticatorConfig:
+    mapRoles:
+    - username: "admin"
+      rolearn: "${AWS_CONSOLE_ADMIN_ROLE_ARN}"
+      groups:
+      - "system:masters"
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+kind: AWSManagedCluster
+metadata:
+  name: ${CLUSTER_NAME}1
+  namespace: tenants
+---
+apiVersion: cluster.x-k8s.io/v1alpha3
+kind: Cluster
+metadata:
+  name: ${CLUSTER_NAME}1
+  namespace: tenants
+  labels:
+    type: tenant
+spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks:
+      - 192.168.0.0/16
+  controlPlaneRef:
+    apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
+    kind: AWSManagedControlPlane
+    name: ${CLUSTER_NAME}1
+  infrastructureRef:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+    kind: AWSManagedCluster
+    name: ${CLUSTER_NAME}1
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+kind: AWSManagedMachinePool
+metadata:
+  name: ${CLUSTER_NAME}1-pool-0
+  namespace: tenants
+spec:
+  amiType: AL2_x86_64
+  diskSize: 10
+  instanceType: t2.small
+  eksNodegroupName: kube11-ng
+  scaling:
+    minSize: 1
+    maxSize: 3
+---
+apiVersion: exp.cluster.x-k8s.io/v1alpha3
+kind: MachinePool
+metadata:
+  name: ${CLUSTER_NAME}1-pool-0
+  namespace: tenants
+spec:
+  clusterName: ${CLUSTER_NAME}1
+  replicas: 2
+  template:
+    spec:
+      bootstrap:
+        dataSecretName: ""
+      clusterName: ${CLUSTER_NAME}1
+      infrastructureRef:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+        kind: AWSManagedMachinePool
+        name: ${CLUSTER_NAME}1-pool-0
+EOF
+
+kubectl wait --for=condition=Ready --timeout=30m -n tenants machinepool "${CLUSTER_NAME}1-pool-0"
 ```
 
 Get cluster details:
 
 ```shell
-kubectl get AWSManagedControlPlane,AWSMachine,AWSMachineTemplate,EKSConfig,EKSConfigTemplate
+kubectl get cluster,awsmanagedcontrolplane,machinepool,awsmanagedmachinepool,clusterresourceset -n tenants
+```
+
+Output:
+
+```text
+NAME                              PHASE
+cluster.cluster.x-k8s.io/kube11   Provisioned
+
+NAME                                                          CLUSTER   READY   VPC                     BASTION IP
+awsmanagedcontrolplane.controlplane.cluster.x-k8s.io/kube11   kube11    true    vpc-08aaa8fe61f860f65
+
+NAME                                             REPLICAS   PHASE     VERSION
+machinepool.exp.cluster.x-k8s.io/kube11-pool-0   2          Running
+
+NAME                                                                  READY   REPLICAS
+awsmanagedmachinepool.infrastructure.cluster.x-k8s.io/kube11-pool-0   true    2
+```
+
+Get the cluster details:
+
+```shell
+clusterctl describe cluster --show-conditions all -n tenants "${CLUSTER_NAME}1"
+```
+
+```text
+NAME                                                READY  SEVERITY  REASON   SINCE  MESSAGE
+/kube11                                             True                      3m10s
+├─ClusterInfrastructure - AWSManagedCluster/kube11
+└─ControlPlane - AWSManagedControlPlane/kube11      True                      3m8s
+              ├─ClusterSecurityGroupsReady          True                      14m
+              ├─EKSAddonsConfigured                 True                      3m9s
+              ├─EKSControlPlaneCreating             False  Info      created  3m10s
+              ├─EKSControlPlaneReady                True                      3m9s
+              ├─IAMAuthenticatorConfigured          True                      3m8s
+              ├─IAMControlPlaneRolesReady           True                      14m
+              ├─InternetGatewayReady                True                      16m
+              ├─NatGatewaysReady                    True                      14m
+              ├─RouteTablesReady                    True                      14m
+              ├─SubnetsReady                        True                      16m
+              └─VpcReady                            True                      16m
+```
+
+Get kubeconfig for the new EKS cluster:
+
+```shell
+clusterctl get kubeconfig "${CLUSTER_NAME}1" -n tenants > "tmp/${CLUSTER_FQDN}/kubeconfig-${CLUSTER_NAME}1.conf"
+```
+
+Display node details about new cluster `kube11`:
+
+```shell
+kubectl --kubeconfig="tmp/${CLUSTER_FQDN}/kubeconfig-${CLUSTER_NAME}1.conf" get nodes -L node.kubernetes.io/instance-type -L topology.kubernetes.io/zone
+```
+
+Output:
+
+```text
+NAME                                           STATUS   ROLES    AGE    VERSION              INSTANCE-TYPE   ZONE
+ip-10-0-219-81.eu-central-1.compute.internal   Ready    <none>   104s   v1.20.4-eks-6b7464   t2.small        eu-central-1c
+ip-10-0-73-114.eu-central-1.compute.internal   Ready    <none>   86s    v1.20.4-eks-6b7464   t2.small        eu-central-1a
+```
+
+Delete new EKS cluster:
+
+```shell
+kubectl delete Cluster,AWSManagedControlPlane,MachinePool,AWSManagedMachinePool,ClusterResourceSet -n tenants --all
 ```
 
 ## HashiCorp Vault
@@ -79,10 +390,12 @@ kubectl get AWSManagedControlPlane,AWSMachine,AWSMachineTemplate,EKSConfig,EKSCo
 Create a secret with your EKS access key/secret:
 
 ```bash
-kubectl create namespace vault
-kubectl create secret generic -n vault eks-creds \
-  --from-literal=AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID?}" \
-  --from-literal=AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY?}"
+if ! kubectl get namespace vault &> /dev/null ; then
+  kubectl create namespace vault
+  kubectl create secret generic -n vault eks-creds \
+    --from-literal=AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID?}" \
+    --from-literal=AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY?}"
+fi
 ```
 
 Install `vault`
@@ -92,7 +405,7 @@ and modify the
 
 ```bash
 helm repo add hashicorp https://helm.releases.hashicorp.com
-helm install --version 0.11.0 --namespace vault --wait --wait-for-jobs --values - vault hashicorp/vault << EOF
+helm upgrade --install --version 0.12.0 --namespace vault --wait --wait-for-jobs --values - vault hashicorp/vault << EOF
 injector:
   metrics:
     enabled: false
@@ -138,7 +451,7 @@ Wait for Vault to be ready:
 
 ```bash
 # Wait for DNS vault.${CLUSTER_FQDN} to be ready...
-while [[ -z "$(dig +nocmd +noall +answer +ttlid a "vault.${CLUSTER_FQDN}")" ]]; do
+while [[ -z "$(dig +nocmd +noall +answer +ttlid a "vault.${CLUSTER_FQDN}")" ]] || [[ -z "$(dig +nocmd +noall +answer +ttlid a "dex.${CLUSTER_FQDN}")" ]]; do
   date
   sleep 5
 done
@@ -170,7 +483,7 @@ HA Enabled               false
 Initialize the vault server:
 
 ```bash
-kubectl exec -n vault vault-0 -- vault operator init -format=json | tee "tmp/${CLUSTER_FQDN}/vault_cluster-keys.json"
+test -f "tmp/${CLUSTER_FQDN}/vault_cluster-keys.json" || ( kubectl exec -n vault vault-0 -- vault operator init -format=json | tee "tmp/${CLUSTER_FQDN}/vault_cluster-keys.json" )
 ```
 
 Output:
@@ -273,23 +586,25 @@ vault policy write my-admin-policy "tmp/${CLUSTER_FQDN}/my-admin-policy.hcl"
 Configure GitHub + Dex OIDC authentication:
 
 ```bash
-vault auth enable github
-vault write auth/github/config organization="${MY_GITHUB_ORG_NAME}"
-vault write auth/github/map/teams/cluster-admin value=my-admin-policy
+if ! vault auth list | grep -q github ; then
+  vault auth enable github
+  vault write auth/github/config organization="${MY_GITHUB_ORG_NAME}"
+  vault write auth/github/map/teams/cluster-admin value=my-admin-policy
 
-curl -s "${LETSENCRYPT_CERTIFICATE}" -o "tmp/${CLUSTER_FQDN}/letsencrypt.pem"
-vault auth enable oidc
-vault write auth/oidc/config \
-  oidc_discovery_ca_pem="@tmp/${CLUSTER_FQDN}/letsencrypt.pem" \
-  oidc_discovery_url="https://dex.${CLUSTER_FQDN}" \
-  oidc_client_id="vault.${CLUSTER_FQDN}" \
-  oidc_client_secret="${MY_PASSWORD}" \
-  default_role="my-oidc-role"
-vault write auth/oidc/role/my-oidc-role \
-  bound_audiences="vault.${CLUSTER_FQDN}" \
-  allowed_redirect_uris="https://vault.${CLUSTER_FQDN}/ui/vault/auth/oidc/oidc/callback,http://localhost:8250/oidc/callback" \
-  user_claim="sub" \
-  policies="my-admin-policy"
+  curl -s "${LETSENCRYPT_CERTIFICATE}" -o "tmp/${CLUSTER_FQDN}/letsencrypt.pem"
+  vault auth enable oidc
+  vault write auth/oidc/config \
+    oidc_discovery_ca_pem="@tmp/${CLUSTER_FQDN}/letsencrypt.pem" \
+    oidc_discovery_url="https://dex.${CLUSTER_FQDN}" \
+    oidc_client_id="vault.${CLUSTER_FQDN}" \
+    oidc_client_secret="${MY_PASSWORD}" \
+    default_role="my-oidc-role"
+  vault write auth/oidc/role/my-oidc-role \
+    bound_audiences="vault.${CLUSTER_FQDN}" \
+    allowed_redirect_uris="https://vault.${CLUSTER_FQDN}/ui/vault/auth/oidc/oidc/callback,http://localhost:8250/oidc/callback" \
+    user_claim="sub" \
+    policies="my-admin-policy"
+fi
 ```
 
 You should be now able to login using OIDC (Dex):
@@ -313,20 +628,20 @@ I used these guides to set it up:
 
 Configure PKI secrets engine:
 
-```bash
+```shell
 vault secrets enable -path="${VAULT_CLUSTER_FQDN}-pki" pki
 ```
 
 Tune the `${VAULT_CLUSTER_FQDN}-pki` secrets engine to issue certificates with
 a maximum time-to-live (TTL) of 87600 hours:
 
-```bash
+```shell
 vault secrets tune -max-lease-ttl=87600h "${VAULT_CLUSTER_FQDN}-pki"
 ```
 
 Generate the `root` certificate and save the certificate in `CA_cert.crt`:
 
-```bash
+```shell
 vault write -field=certificate "${VAULT_CLUSTER_FQDN}-pki/root/generate/internal" \
   common_name="${CLUSTER_FQDN}" country="CZ" organization="PA" \
   alt_names="${CLUSTER_FQDN},*.${CLUSTER_FQDN}" \
@@ -336,7 +651,7 @@ vault write -field=certificate "${VAULT_CLUSTER_FQDN}-pki/root/generate/internal
 Configure the PKI secrets engine certificate issuing and certificate revocation
 list (CRL) endpoints to use the Vault service in the `vault` namespace:
 
-```bash
+```shell
 vault write "${VAULT_CLUSTER_FQDN}-pki/config/urls" \
   issuing_certificates="https://vault.${CLUSTER_FQDN}/v1/pki/ca" \
   crl_distribution_points="https://vault.${CLUSTER_FQDN}/v1/pki/crl"
@@ -346,21 +661,21 @@ vault write "${VAULT_CLUSTER_FQDN}-pki/config/urls" \
 
 Enable the `pki` secrets engine at the `${VAULT_CLUSTER_FQDN}-pki_int` path:
 
-```bash
+```shell
 vault secrets enable -path="${VAULT_CLUSTER_FQDN}-pki_int" pki
 ```
 
 Tune the `${VAULT_CLUSTER_FQDN}-pki_int` secrets engine to issue certificates
 with a maximum time-to-live (TTL) of 43800 hours:
 
-```bash
+```shell
 vault secrets tune -max-lease-ttl=43800h "${VAULT_CLUSTER_FQDN}-pki_int"
 ```
 
 Execute the following command to generate an intermediate and save the
 CSR as `pki_intermediate.csr`:
 
-```bash
+```shell
 vault write -format=json "${VAULT_CLUSTER_FQDN}-pki_int/intermediate/generate/internal" \
   common_name="${CLUSTER_FQDN}" country="CZ" organization="PA2" \
   alt_names="${CLUSTER_FQDN},*.${CLUSTER_FQDN}" \
@@ -370,7 +685,7 @@ vault write -format=json "${VAULT_CLUSTER_FQDN}-pki_int/intermediate/generate/in
 Sign the intermediate certificate with the root certificate and save the
 generated certificate as `intermediate.cert.pem`:
 
-```bash
+```shell
 vault write -format=json "${VAULT_CLUSTER_FQDN}-pki/root/sign-intermediate" csr="@tmp/${CLUSTER_FQDN}/pki_intermediate.csr" \
   format=pem_bundle ttl="43800h" \
   | jq -r ".data.certificate" > "tmp/${CLUSTER_FQDN}/intermediate.cert.pem"
@@ -379,7 +694,7 @@ vault write -format=json "${VAULT_CLUSTER_FQDN}-pki/root/sign-intermediate" csr=
 Once the CSR is signed and the root CA returns a certificate, it can be
 imported back into Vault:
 
-```bash
+```shell
 vault write "${VAULT_CLUSTER_FQDN}-pki_int/intermediate/set-signed" certificate="@tmp/${CLUSTER_FQDN}/intermediate.cert.pem"
 ```
 
@@ -393,13 +708,13 @@ to simulate "external vault access".
 
 Enable the AppRole auth method:
 
-```bash
+```shell
 vault auth enable approle
 ```
 
 Create a policy that enables read access to the PKI secrets engine paths:
 
-```bash
+```shell
 cat > "tmp/${CLUSTER_FQDN}/pki_int_policy.hcl" << EOF
 path "${VAULT_CLUSTER_FQDN}-pki_int*"                                              { capabilities = ["read", "list"] }
 path "${VAULT_CLUSTER_FQDN}-pki_int/roles/cert-manager-role-${VAULT_CLUSTER_FQDN}" { capabilities = ["create", "update"] }
@@ -411,14 +726,14 @@ vault policy write "cert-manager-policy-${VAULT_CLUSTER_FQDN}" "tmp/${CLUSTER_FQ
 
 Create a named role:
 
-```bash
+```shell
 vault write "auth/approle/role/cert-manager-role-${VAULT_CLUSTER_FQDN}" policies="cert-manager-policy-${VAULT_CLUSTER_FQDN}"
 ```
 
 Configure a role that enables the creation of certificates for domain with any
 subdomains:
 
-```bash
+```shell
 vault write "${VAULT_CLUSTER_FQDN}-pki_int/roles/cert-manager-role-${VAULT_CLUSTER_FQDN}" \
   allowed_domains="${CLUSTER_FQDN}" \
   allow_subdomains=true \
@@ -428,14 +743,14 @@ vault write "${VAULT_CLUSTER_FQDN}-pki_int/roles/cert-manager-role-${VAULT_CLUST
 
 Get `secretId` and `roleId`:
 
-```bash
+```shell
 VAULT_CERT_MANAGER_ROLE_ID=$(vault read "auth/approle/role/cert-manager-role-${VAULT_CLUSTER_FQDN}/role-id" --format=json | jq -r ".data.role_id")
 VAULT_CERT_MANAGER_SECRET_ID=$(vault write -f "auth/approle/role/cert-manager-role-${VAULT_CLUSTER_FQDN}/secret-id" --format=json | jq -r ".data.secret_id")
 ```
 
 Create K8s secret with `secretId`:
 
-```bash
+```shell
 kubectl apply -f - << EOF
 apiVersion: v1
 kind: Secret
@@ -451,7 +766,7 @@ EOF
 Create an Issuer, named vault-issuer, that defines Vault as a certificate
 issuer:
 
-```bash
+```shell
 kubectl apply -f - << EOF
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
@@ -475,8 +790,8 @@ EOF
 
 Generate test certificate:
 
-```bash
-kubectl create namespace podinfo-vault
+```shell
+kubectl get namespace podinfo-vault &> /dev/null || kubectl create namespace podinfo-vault
 kubectl apply -f - << EOF
 apiVersion: cert-manager.io/v1
 kind: Certificate
@@ -516,8 +831,8 @@ Install `podinfo`
 and modify the
 [default values](https://github.com/stefanprodan/podinfo/blob/master/charts/podinfo/values.yaml).
 
-```bash
-helm install --version 5.2.0 --namespace podinfo-vault --values - podinfo sp/podinfo << EOF
+```shell
+helm upgrade --install --version 5.2.1 --namespace podinfo-vault --values - podinfo sp/podinfo << EOF
 ui:
   message: "Vault Certificate"
 serviceMonitor:

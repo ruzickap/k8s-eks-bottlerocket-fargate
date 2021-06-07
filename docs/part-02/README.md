@@ -54,7 +54,7 @@ and modify the
 [default values](https://github.com/aws/eks-charts/blob/master/stable/aws-load-balancer-controller/values.yaml).
 
 ```shell
-helm install --version 1.1.6 --namespace kube-system --values - aws-load-balancer-controller eks/aws-load-balancer-controller << EOF
+helm upgrade --install --version 1.2.0 --namespace kube-system --values - aws-load-balancer-controller eks/aws-load-balancer-controller << EOF
 clusterName: ${CLUSTER_NAME}
 serviceAccount:
   create: false
@@ -82,7 +82,7 @@ and modify the
 [default values](https://github.com/aws/eks-charts/blob/master/stable/aws-for-fluent-bit/values.yaml).
 
 ```shell
-helm install --version 0.1.7 --namespace kube-system --values - aws-for-fluent-bit eks/aws-for-fluent-bit << EOF
+helm upgrade --install --version 0.1.11 --namespace kube-system --values - aws-for-fluent-bit eks/aws-for-fluent-bit << EOF
 cloudWatch:
   region: ${AWS_DEFAULT_REGION}
   logGroupName: /aws/eks/${CLUSTER_FQDN}/logs
@@ -106,7 +106,7 @@ and modify the
 [default values](https://github.com/aws/eks-charts/blob/master/stable/aws-cloudwatch-metrics/values.yaml).
 
 ```shell
-helm install --version 0.0.4 --namespace amazon-cloudwatch --create-namespace --values - aws-cloudwatch-metrics eks/aws-cloudwatch-metrics << EOF
+helm upgrade --install --version 0.0.5 --namespace amazon-cloudwatch --create-namespace --values - aws-cloudwatch-metrics eks/aws-cloudwatch-metrics << EOF
 clusterName: ${CLUSTER_FQDN}
 EOF
 ```
@@ -268,9 +268,9 @@ and modify the
 
 ```bash
 helm repo add aws-efs-csi-driver https://kubernetes-sigs.github.io/aws-efs-csi-driver/
-helm install --version 1.2.4 --namespace kube-system --values - aws-efs-csi-driver aws-efs-csi-driver/aws-efs-csi-driver << EOF
-serviceAccount:
-  controller:
+helm upgrade --install --version 2.0.1 --namespace kube-system --values - aws-efs-csi-driver aws-efs-csi-driver/aws-efs-csi-driver << EOF
+controller:
+  serviceAccount:
     create: false
 storageClasses:
 - name: efs-dynamic-sc
@@ -304,7 +304,7 @@ The ServiceAccount `ebs-csi-controller` was created by `eksctl`.
 
 ```bash
 helm repo add aws-ebs-csi-driver https://kubernetes-sigs.github.io/aws-ebs-csi-driver
-helm install --version 1.0.0 --namespace kube-system --values - aws-ebs-csi-driver aws-ebs-csi-driver/aws-ebs-csi-driver << EOF
+helm upgrade --install --version 1.2.1 --namespace kube-system --values - aws-ebs-csi-driver aws-ebs-csi-driver/aws-ebs-csi-driver << EOF
 enableVolumeScheduling: true
 enableVolumeResizing: true
 enableVolumeSnapshot: true
@@ -351,7 +351,7 @@ Create the Volume Snapshot Class:
 
 ```bash
 kubectl apply -f - << EOF
-apiVersion: snapshot.storage.k8s.io/v1beta1
+apiVersion: snapshot.storage.k8s.io/v1
 kind: VolumeSnapshotClass
 metadata:
   name: csi-ebs-snapclass

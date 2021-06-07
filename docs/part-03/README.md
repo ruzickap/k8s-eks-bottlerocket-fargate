@@ -9,11 +9,11 @@ and modify the
 
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
-helm install --version 5.8.7 --namespace kube-system --values - metrics-server bitnami/metrics-server << EOF
+helm upgrade --install --version 5.8.9 --namespace kube-system --values - metrics-server bitnami/metrics-server << EOF
 apiService:
   create: true
 # Needed for calico
-hostNetwork: true
+# hostNetwork: true
 EOF
 ```
 
@@ -33,10 +33,10 @@ and modify the
 
 ```shell
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm install --version 2.12.2 --namespace prometheus-adapter --values - prometheus-adapter prometheus-community/prometheus-adapter << EOF
+helm upgrade --install --version 2.13.0 --namespace prometheus-adapter --values - prometheus-adapter prometheus-community/prometheus-adapter << EOF
 # Needed for calico
-hostNetwork:
-  enabled: true
+# hostNetwork:
+#   enabled: true
 EOF
 ```
 
@@ -49,7 +49,7 @@ and modify the
 
 ```bash
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm install --version 15.4.4 --namespace kube-prometheus-stack --values - kube-prometheus-stack prometheus-community/kube-prometheus-stack << EOF
+helm upgrade --install --version 16.1.2 --namespace kube-prometheus-stack --values - kube-prometheus-stack prometheus-community/kube-prometheus-stack << EOF
 defaultRules:
   rules:
     etcd: false
@@ -69,60 +69,60 @@ additionalPrometheusRulesMap:
         annotations:
           summary: "{{ \$labels.kind }} {{ \$labels.namespace }}/{{ \$labels.name }} reconciliation has been failing for more than ten minutes."
     # https://github.com/openstack/openstack-helm-infra/blob/master/prometheus/values_overrides/kubernetes.yaml
-    - name: calico.rules
-      rules:
-      - alert: prom_exporter_calico_unavailable
-        expr: avg_over_time(up{job="kubernetes-pods",application="calico"}[5m]) == 0
-        for: 10m
-        labels:
-          severity: warning
-        annotations:
-          description: Calico exporter is not collecting metrics or is not available for past 10 minutes
-          title: Calico exporter is not collecting metrics or is not available
-      - alert: calico_datapane_failures_high_1h
-        expr: absent(felix_int_dataplane_failures) OR increase(felix_int_dataplane_failures[1h]) > 5
-        labels:
-          severity: page
-        annotations:
-          description: "Felix instance {{ \$labels.instance }} has seen {{ \$value }} dataplane failures within the last hour"
-          summary: "A high number of dataplane failures within Felix are happening"
-      - alert: calico_datapane_address_msg_batch_size_high_5m
-        expr: absent(felix_int_dataplane_addr_msg_batch_size_sum) OR absent(felix_int_dataplane_addr_msg_batch_size_count) OR (felix_int_dataplane_addr_msg_batch_size_sum/felix_int_dataplane_addr_msg_batch_size_count) > 5
-        for: 5m
-        labels:
-          severity: page
-        annotations:
-          description: "Felix instance {{ \$labels.instance }} has seen a high value of {{ \$value }} dataplane address message batch size"
-          summary: "Felix address message batch size is higher"
-      - alert: calico_datapane_iface_msg_batch_size_high_5m
-        expr: absent(felix_int_dataplane_iface_msg_batch_size_sum) OR absent(felix_int_dataplane_iface_msg_batch_size_count) OR (felix_int_dataplane_iface_msg_batch_size_sum/felix_int_dataplane_iface_msg_batch_size_count) > 5
-        for: 5m
-        labels:
-          severity: page
-        annotations:
-          description: "Felix instance {{ \$labels.instance }} has seen a high value of {{ \$value }} dataplane interface message batch size"
-          summary: "Felix interface message batch size is higher"
-      - alert: calico_ipset_errors_high_1h
-        expr: absent(felix_ipset_errors) OR increase(felix_ipset_errors[1h]) > 5
-        labels:
-          severity: page
-        annotations:
-          description: "Felix instance {{ \$labels.instance }} has seen {{ \$value }} ipset errors within the last hour"
-          summary: "A high number of ipset errors within Felix are happening"
-      - alert: calico_iptable_save_errors_high_1h
-        expr: absent(felix_iptables_save_errors) OR increase(felix_iptables_save_errors[1h]) > 5
-        labels:
-          severity: page
-        annotations:
-          description: "Felix instance {{ \$labels.instance }} has seen {{ \$value }} iptable save errors within the last hour"
-          summary: "A high number of iptable save errors within Felix are happening"
-      - alert: calico_iptable_restore_errors_high_1h
-        expr: absent(felix_iptables_restore_errors) OR increase(felix_iptables_restore_errors[1h]) > 5
-        labels:
-          severity: page
-        annotations:
-          description: "Felix instance {{ \$labels.instance }} has seen {{ \$value }} iptable restore errors within the last hour"
-          summary: "A high number of iptable restore errors within Felix are happening"
+    # - name: calico.rules
+    #   rules:
+    #   - alert: prom_exporter_calico_unavailable
+    #     expr: avg_over_time(up{job="kubernetes-pods",application="calico"}[5m]) == 0
+    #     for: 10m
+    #     labels:
+    #       severity: warning
+    #     annotations:
+    #       description: Calico exporter is not collecting metrics or is not available for past 10 minutes
+    #       title: Calico exporter is not collecting metrics or is not available
+    #   - alert: calico_datapane_failures_high_1h
+    #     expr: absent(felix_int_dataplane_failures) OR increase(felix_int_dataplane_failures[1h]) > 5
+    #     labels:
+    #       severity: page
+    #     annotations:
+    #       description: "Felix instance {{ \$labels.instance }} has seen {{ \$value }} dataplane failures within the last hour"
+    #       summary: "A high number of dataplane failures within Felix are happening"
+    #   - alert: calico_datapane_address_msg_batch_size_high_5m
+    #     expr: absent(felix_int_dataplane_addr_msg_batch_size_sum) OR absent(felix_int_dataplane_addr_msg_batch_size_count) OR (felix_int_dataplane_addr_msg_batch_size_sum/felix_int_dataplane_addr_msg_batch_size_count) > 5
+    #     for: 5m
+    #     labels:
+    #       severity: page
+    #     annotations:
+    #       description: "Felix instance {{ \$labels.instance }} has seen a high value of {{ \$value }} dataplane address message batch size"
+    #       summary: "Felix address message batch size is higher"
+    #   - alert: calico_datapane_iface_msg_batch_size_high_5m
+    #     expr: absent(felix_int_dataplane_iface_msg_batch_size_sum) OR absent(felix_int_dataplane_iface_msg_batch_size_count) OR (felix_int_dataplane_iface_msg_batch_size_sum/felix_int_dataplane_iface_msg_batch_size_count) > 5
+    #     for: 5m
+    #     labels:
+    #       severity: page
+    #     annotations:
+    #       description: "Felix instance {{ \$labels.instance }} has seen a high value of {{ \$value }} dataplane interface message batch size"
+    #       summary: "Felix interface message batch size is higher"
+    #   - alert: calico_ipset_errors_high_1h
+    #     expr: absent(felix_ipset_errors) OR increase(felix_ipset_errors[1h]) > 5
+    #     labels:
+    #       severity: page
+    #     annotations:
+    #       description: "Felix instance {{ \$labels.instance }} has seen {{ \$value }} ipset errors within the last hour"
+    #       summary: "A high number of ipset errors within Felix are happening"
+    #   - alert: calico_iptable_save_errors_high_1h
+    #     expr: absent(felix_iptables_save_errors) OR increase(felix_iptables_save_errors[1h]) > 5
+    #     labels:
+    #       severity: page
+    #     annotations:
+    #       description: "Felix instance {{ \$labels.instance }} has seen {{ \$value }} iptable save errors within the last hour"
+    #       summary: "A high number of iptable save errors within Felix are happening"
+    #   - alert: calico_iptable_restore_errors_high_1h
+    #     expr: absent(felix_iptables_restore_errors) OR increase(felix_iptables_restore_errors[1h]) > 5
+    #     labels:
+    #       severity: page
+    #     annotations:
+    #       description: "Felix instance {{ \$labels.instance }} has seen {{ \$value }} iptable restore errors within the last hour"
+    #       summary: "A high number of iptable restore errors within Felix are happening"
 alertmanager:
   config:
     global:
@@ -367,10 +367,10 @@ grafana:
         gnetId: 13968
         revision: 1
         datasource: Prometheus
-      calico-felix-dashboard:
-        gnetId: 12175
-        revision: 5
-        datasource: Prometheus
+      # calico-felix-dashboard:
+      #   gnetId: 12175
+      #   revision: 5
+      #   datasource: Prometheus
       harbor:
         gnetId: 14075
         revision: 2
@@ -507,86 +507,86 @@ EOF
 Enable Felix Prometheus metrics:
 
 ```bash
-calicoctl patch felixConfiguration default --patch "{\"spec\":{\"prometheusMetricsEnabled\": true}}"
+# calicoctl patch felixConfiguration default --patch "{\"spec\":{\"prometheusMetricsEnabled\": true}}"
 ```
 
 Creating a service to expose Felix metrics according
 [Monitor Calico component metrics](https://docs.projectcalico.org/maintenance/monitor/monitor-component-metrics):
 
 ```bash
-kubectl apply -f - << EOF
-apiVersion: v1
-kind: Service
-metadata:
-  name: felix-metrics-svc
-  namespace: kube-system
-  labels:
-    app: calico-felix
-spec:
-  selector:
-    k8s-app: calico-node
-  ports:
-  - name: metrics-http
-    port: 9091
-    targetPort: 9091
----
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: felix-metrics-sm
-  namespace: kube-system
-  labels:
-    app: calico
-spec:
-  endpoints:
-  - interval: 10s
-    path: /metrics
-    port: metrics-http
-  namespaceSelector:
-    matchNames:
-    - kube-system
-  selector:
-    matchLabels:
-      app: calico-felix
-EOF
+# kubectl apply -f - << EOF
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: felix-metrics-svc
+#   namespace: kube-system
+#   labels:
+#     app: calico-felix
+# spec:
+#   selector:
+#     k8s-app: calico-node
+#   ports:
+#   - name: metrics-http
+#     port: 9091
+#     targetPort: 9091
+# ---
+# apiVersion: monitoring.coreos.com/v1
+# kind: ServiceMonitor
+# metadata:
+#   name: felix-metrics-sm
+#   namespace: kube-system
+#   labels:
+#     app: calico
+# spec:
+#   endpoints:
+#   - interval: 10s
+#     path: /metrics
+#     port: metrics-http
+#   namespaceSelector:
+#     matchNames:
+#     - kube-system
+#   selector:
+#     matchLabels:
+#       app: calico-felix
+# EOF
 ```
 
 Creating a service to expose kube-controllers metrics:
 
 ```bash
-kubectl apply -f - << EOF
-apiVersion: v1
-kind: Service
-metadata:
-  name: kube-controllers-metrics-svc
-  namespace: kube-system
-  labels:
-    app: calico-kube-controllers
-spec:
-  selector:
-    k8s-app: calico-kube-controllers
-  ports:
-  - name: metrics-http
-    port: 9094
-    targetPort: 9094
----
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: kube-controllers-metrics-sm
-  namespace: kube-system
-spec:
-  endpoints:
-  - interval: 10s
-    path: /metrics
-    port: metrics-http
-  namespaceSelector:
-    matchNames:
-    - kube-system
-  selector:
-    matchLabels:
-      app: calico-kube-controllers
-EOF
+# kubectl apply -f - << EOF
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: kube-controllers-metrics-svc
+#   namespace: kube-system
+#   labels:
+#     app: calico-kube-controllers
+# spec:
+#   selector:
+#     k8s-app: calico-kube-controllers
+#   ports:
+#   - name: metrics-http
+#     port: 9094
+#     targetPort: 9094
+# ---
+# apiVersion: monitoring.coreos.com/v1
+# kind: ServiceMonitor
+# metadata:
+#   name: kube-controllers-metrics-sm
+#   namespace: kube-system
+# spec:
+#   endpoints:
+#   - interval: 10s
+#     path: /metrics
+#     port: metrics-http
+#   namespaceSelector:
+#     matchNames:
+#     - kube-system
+#   selector:
+#     matchLabels:
+#       app: calico-kube-controllers
+# EOF
 ```
 
 ## loki
@@ -598,7 +598,7 @@ and modify the
 
 ```shell
 helm repo add grafana https://grafana.github.io/helm-charts
-helm install --version 2.5.0 --namespace loki --create-namespace --values - loki grafana/loki << EOF
+helm upgrade --install --version 2.5.0 --namespace loki --create-namespace --values - loki grafana/loki << EOF
 serviceMonitor:
   enabled: true
 EOF
@@ -612,7 +612,7 @@ and modify the
 [default values](https://github.com/grafana/helm-charts/blob/main/charts/promtail/values.yaml).
 
 ```shell
-helm install --version 3.5.0 --namespace promtail --create-namespace --values - promtail grafana/promtail << EOF
+helm upgrade --install --version 3.5.1 --namespace promtail --create-namespace --values - promtail grafana/promtail << EOF
 serviceMonitor:
   enabled: true
 config:
@@ -633,7 +633,7 @@ and modify the
 [default values](https://github.com/aws/aws-node-termination-handler/blob/main/config/helm/aws-node-termination-handler/values.yaml).
 
 ```bash
-helm install --version 0.15.0 --namespace kube-system --create-namespace --values - aws-node-termination-handler eks/aws-node-termination-handler << EOF
+helm upgrade --install --version 0.15.0 --namespace kube-system --create-namespace --values - aws-node-termination-handler eks/aws-node-termination-handler << EOF
 enableRebalanceMonitoring: true
 awsRegion: ${AWS_DEFAULT_REGION}
 enableSpotInterruptionDraining: true
@@ -653,8 +653,8 @@ and modify the
 
 ```shell
 helm repo add kyverno https://kyverno.github.io/kyverno/
-helm install --version v1.3.5 --namespace kyverno --create-namespace --values - kyverno kyverno/kyverno << EOF
-hostNetwork: true
+helm upgrade --install --version v1.3.6 --namespace kyverno --create-namespace --values - kyverno kyverno/kyverno << EOF
+# hostNetwork: true
 EOF
 ```
 
@@ -665,7 +665,7 @@ and modify the
 
 ```shell
 helm repo add policy-reporter https://fjogeleit.github.io/policy-reporter
-helm install --version 1.4.0 --namespace policy-reporter --create-namespace --values - policy-reporter policy-reporter/policy-reporter << EOF
+helm upgrade --install --version 1.7.1 --namespace policy-reporter --create-namespace --values - policy-reporter policy-reporter/policy-reporter << EOF
 ui:
   enabled: true
   ingress:
@@ -886,7 +886,7 @@ and modify the
 
 ```shell
 helm repo add newrelic https://helm-charts.newrelic.com
-helm install --version 2.8.1 --namespace nri-bundle --create-namespace --values - nri-bundle newrelic/nri-bundle << EOF
+helm upgrade --install --version 2.8.1 --namespace nri-bundle --create-namespace --values - nri-bundle newrelic/nri-bundle << EOF
 prometheus:
   enabled: true
 kubeEvents:
@@ -908,7 +908,7 @@ and modify the
 
 ```shell
 helm repo add splunk https://splunk.github.io/splunk-connect-for-kubernetes/
-helm install --version 1.4.7 --namespace splunk-connect --create-namespace --values - splunk-connect splunk/splunk-connect-for-kubernetes << EOF
+helm upgrade --install --version 1.4.7 --namespace splunk-connect --create-namespace --values - splunk-connect splunk/splunk-connect-for-kubernetes << EOF
 global:
   splunk:
     hec:
@@ -931,7 +931,7 @@ and modify the
 
 ```shell
 helm repo add aqua-helm https://helm.aquasec.com
-helm install --version 5.3.0 --namespace aqua --create-namespace --values - aqua aqua-helm/enforcer << EOF
+helm upgrade --install --version 5.3.0 --namespace aqua --create-namespace --values - aqua aqua-helm/enforcer << EOF
 multi_cluster: true
 imageCredentials:
   create: true
@@ -953,7 +953,7 @@ and modify the
 
 ```shell
 helm repo add sysdig https://charts.sysdig.com
-helm install --version 1.11.11 --namespace sysdig-agent --create-namespace --values - sysdig-agent sysdig/sysdig << EOF
+helm upgrade --install --version 1.11.11 --namespace sysdig-agent --create-namespace --values - sysdig-agent sysdig/sysdig << EOF
 sysdig:
   accessKey: ${SYSDIG_AGENT_ACCESSKEY}
   settings:

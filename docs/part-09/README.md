@@ -211,19 +211,19 @@ RDS_DB_RESOURCE_ID=$(aws rds describe-db-instances --query "DBInstances[?DBInsta
 Initialize database:
 
 ```bash
-kubectl run --env MYSQL_PWD=${MY_PASSWORD} --image=mysql:8.0 --restart=Never mysql-client-drupal -- \
+kubectl get pods mysql-client-drupal || kubectl run --env MYSQL_PWD=${MY_PASSWORD} --image=mysql:8.0 --restart=Never mysql-client-drupal -- \
   mysql -h "${RDS_DB_HOST}" -u "${RDS_DB_USERNAME}" -e "
     CREATE USER \"exporter\"@\"%\" IDENTIFIED BY \"${MY_PASSWORD}\" WITH MAX_USER_CONNECTIONS 3;
     CREATE USER \"drupal\"@\"%\" IDENTIFIED BY \"${MY_PASSWORD}\";
     CREATE USER \"drupal2\"@\"%\" IDENTIFIED BY \"${MY_PASSWORD}\";
-    CREATE USER \"iamtest\"@\"%\" IDENTIFIED WITH AWSAuthenticationPlugin AS \"RDS\";
+    CREATE USER \"iamtest\"@\"%\" IDENTIFIED WITH AWSAuthenticationPlugin AS \"RDS\" REQUIRE SSL;
     CREATE DATABASE drupal;
     CREATE DATABASE drupal2;
     CREATE DATABASE iamtest;
     GRANT PROCESS, REPLICATION CLIENT, SELECT ON *.* TO \"exporter\"@\"%\";
     GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, CREATE TEMPORARY TABLES ON drupal.* TO \"drupal\"@\"%\";
-    GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, CREATE TEMPORARY TABLES ON drupal.* TO \"drupal2\"@\"%\";
-    GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, CREATE TEMPORARY TABLES ON iamtest.* TO \"iamtest\"@\"%\"REQUIRE SSL;
+    GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, CREATE TEMPORARY TABLES ON drupal2.* TO \"drupal2\"@\"%\";
+    GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, CREATE TEMPORARY TABLES ON iamtest.* TO \"iamtest\"@\"%\";
   "
 ```
 
@@ -238,7 +238,7 @@ and modify the
 [default values](https://github.com/prometheus-community/helm-charts/blob/main/charts/prometheus-mysql-exporter/values.yaml).
 
 ```bash
-helm install --version 1.2.0 --namespace prometheus-mysql-exporter --create-namespace --values - prometheus-mysql-exporter prometheus-community/prometheus-mysql-exporter << EOF
+helm upgrade --install --version 1.2.0 --namespace prometheus-mysql-exporter --create-namespace --values - prometheus-mysql-exporter prometheus-community/prometheus-mysql-exporter << EOF
 serviceMonitor:
   enabled: true
 mysql:
@@ -258,7 +258,7 @@ and modify the
 [default values](https://github.com/bitnami/charts/blob/master/bitnami/phpmyadmin/values.yaml).
 
 ```bash
-helm install --version 8.2.4 --namespace phpmyadmin --create-namespace --values - phpmyadmin bitnami/phpmyadmin << EOF
+helm upgrade --install --version 8.2.7 --namespace phpmyadmin --create-namespace --values - phpmyadmin bitnami/phpmyadmin << EOF
 ingress:
   enabled: true
   hostname: phpmyadmin.${CLUSTER_FQDN}
@@ -293,8 +293,6 @@ Try to connect to the MySQL database from Kubernetes pod using IAM role:
 Create Service Account `rds-sa` for accessing the MySQL RDS DB :
 
 ```bash
-AWS_ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output text)"
-
 sed -i "/  serviceAccounts:/a \
 \ \ \ \ - metadata: \n\
         name: rds-sa \n\
@@ -323,10 +321,6 @@ spec:
   containers:
   - name: ubuntu
     image: ubuntu:latest
-    securityContext:
-      runAsUser: 1000
-      runAsGroup: 3000
-      readOnlyRootFilesystem: true
     command:
       - /bin/bash
       - -c
@@ -340,7 +334,9 @@ spec:
         aws sts get-caller-identity
         wget -q https://s3.amazonaws.com/rds-downloads/rds-ca-2019-root.pem
         TOKEN="\$(aws rds generate-db-auth-token --hostname ${RDS_DB_HOST} --port 3306 --region eu-central-1 --username iamtest)"
+        mysql -h "${RDS_DB_HOST}" -u "iamtest" --password="${MY_PASSWORD}" -e "show databases;"
         mysql -h "${RDS_DB_HOST}" -u "iamtest" --password="\${TOKEN}" --enable-cleartext-plugin --ssl-ca=rds-ca-2019-root.pem -e "show databases;"
+        mysql -h "${RDS_DB_HOST}" -u "iamtest" --password="\${TOKEN}" --enable-cleartext-plugin --ssl-ca=amazon-root-CA-1.pem --ssl-mode=REQUIRED -e "show databases;"
     resources:
       requests:
         memory: "64Mi"
@@ -357,7 +353,6 @@ Check the logs:
 
 ```bash
 kubectl logs mysql-iam-test --tail=5
-kubectl delete pod mysql-iam-test
 ```
 
 Output:
@@ -376,7 +371,7 @@ EFS_AP_DRUPAL_ID=$(aws efs describe-access-points --query "AccessPoints[?(FileSy
 Create ReadWriteMany persistent volume like described [here](https://github.com/kubernetes-sigs/aws-efs-csi-driver/blob/master/examples/kubernetes/multiple_pods/README.md):
 
 ```bash
-kubectl create namespace drupal
+kubectl get namespace drupal &> /dev/null || kubectl create namespace drupal
 kubectl apply -f - << EOF
 apiVersion: v1
 kind: PersistentVolume
@@ -417,7 +412,7 @@ and modify the
 
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
-helm install --version 10.2.15 --namespace drupal --values - drupal bitnami/drupal << EOF
+helm upgrade --install --version 10.2.23 --namespace drupal --values - drupal bitnami/drupal << EOF
 replicaCount: 2
 drupalUsername: admin
 drupalPassword: ${MY_PASSWORD}
@@ -468,7 +463,7 @@ EFS_AP_DRUPAL2_ID=$(aws efs describe-access-points --query "AccessPoints[?(FileS
 Create ReadWriteMany persistent volume like described [here](https://github.com/kubernetes-sigs/aws-efs-csi-driver/blob/master/examples/kubernetes/multiple_pods/README.md):
 
 ```bash
-kubectl create namespace drupal2
+kubectl get namespace drupal2 &> /dev/null || kubectl create namespace drupal2
 kubectl apply -f - << EOF
 apiVersion: v1
 kind: PersistentVolume
@@ -511,7 +506,7 @@ kubectl label namespace drupal2 istio-injection=enabled kiali.io/member-of=kiali
 Install `drupal2`:
 
 ```bash
-helm install --version 10.2.12 --namespace drupal2 --values - drupal2 bitnami/drupal << EOF
+helm upgrade --install --version 10.2.23 --namespace drupal2 --values - drupal2 bitnami/drupal << EOF
 replicaCount: 2
 drupalUsername: admin
 drupalPassword: ${MY_PASSWORD}

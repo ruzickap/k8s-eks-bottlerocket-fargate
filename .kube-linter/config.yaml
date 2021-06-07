@@ -1,4 +1,6 @@
 checks:
   exclude:
     - "dangling-service"
+    - "no-read-only-root-fs"
     - "non-existent-service-account"
+    - "run-as-non-root"

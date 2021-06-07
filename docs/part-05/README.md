@@ -9,7 +9,7 @@ and modify the
 
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
-helm install --version 2.4.8 --namespace keycloak --create-namespace --values - keycloak bitnami/keycloak << EOF
+helm upgrade --install --version 2.4.8 --namespace keycloak --create-namespace --values - keycloak bitnami/keycloak << EOF
 auth:
   adminUser: admin
   adminPassword: ${MY_PASSWORD}
@@ -156,7 +156,7 @@ and modify the
 
 ```bash
 helm repo add k8s-at-home https://k8s-at-home.com/charts/
-helm install --version 5.0.3 --namespace oauth2-proxy-keycloak --create-namespace --values - oauth2-proxy k8s-at-home/oauth2-proxy << EOF
+helm upgrade --install --version 5.0.5 --namespace oauth2-proxy-keycloak --create-namespace --values - oauth2-proxy k8s-at-home/oauth2-proxy << EOF
 config:
   clientID: oauth2-proxy-keycloak.${CLUSTER_FQDN}
   clientSecret: "${MY_PASSWORD}"
@@ -195,7 +195,7 @@ and modify the
 
 ```bash
 helm repo add dex https://charts.dexidp.io
-helm install --version 0.3.0 --namespace dex --create-namespace --values - dex dex/dex << EOF
+helm upgrade --install --version 0.3.3 --namespace dex --create-namespace --values - dex dex/dex << EOF
 ingress:
   enabled: true
   annotations:
@@ -292,7 +292,7 @@ and modify the
 [default values](https://github.com/k8s-at-home/charts/blob/master/charts/stable/oauth2-proxy/values.yaml).
 
 ```bash
-helm install --version 5.0.3 --namespace oauth2-proxy --create-namespace --values - oauth2-proxy k8s-at-home/oauth2-proxy << EOF
+helm upgrade --install --version 5.0.5 --namespace oauth2-proxy --create-namespace --values - oauth2-proxy k8s-at-home/oauth2-proxy << EOF
 config:
   clientID: oauth2-proxy.${CLUSTER_FQDN}
   clientSecret: "${MY_PASSWORD}"
@@ -323,7 +323,7 @@ Install gangway:
 
 ```bash
 helm repo add stable https://charts.helm.sh/stable
-helm install --version 0.4.5 --namespace gangway --create-namespace --values - gangway stable/gangway << EOF
+helm upgrade --install --version 0.4.5 --namespace gangway --create-namespace --values - gangway stable/gangway << EOF
 # https://github.com/helm/charts/blob/master/stable/gangway/values.yaml
 trustedCACert: |
 $(curl -s "${LETSENCRYPT_CERTIFICATE}" | sed  "s/^/  /" )
@@ -359,7 +359,7 @@ and modify the
 
 ```shell
 helm repo add tremolo https://nexus.tremolo.io/repository/helm/
-helm install --version 1.0.2 --namespace openunison --create-namespace --values - openunison-k8s-oidc tremolo/openunison-k8s-oidc << EOF
+helm upgrade --install --version 1.0.5 --namespace openunison --create-namespace --values - openunison-k8s-oidc tremolo/openunison-k8s-oidc << EOF
 network:
   openunison_host: "openunison.${CLUSTER_FQDN}"
   dashboard_host: "openunison.${CLUSTER_FQDN}"
@@ -377,10 +377,10 @@ configure ingress to communicate with the backend over HTTPS.
 Install kube-oidc-proxy:
 
 ```bash
-git clone --quiet https://github.com/jetstack/kube-oidc-proxy.git "tmp/${CLUSTER_FQDN}/kube-oidc-proxy"
+test -d "tmp/${CLUSTER_FQDN}/kube-oidc-proxy" || git clone --quiet https://github.com/jetstack/kube-oidc-proxy.git "tmp/${CLUSTER_FQDN}/kube-oidc-proxy"
 git -C "tmp/${CLUSTER_FQDN}/kube-oidc-proxy" checkout --quiet v0.3.0
 
-helm install --namespace kube-oidc-proxy --create-namespace --values - kube-oidc-proxy "tmp/${CLUSTER_FQDN}/kube-oidc-proxy/deploy/charts/kube-oidc-proxy" << EOF
+helm upgrade --install --namespace kube-oidc-proxy --create-namespace --values - kube-oidc-proxy "tmp/${CLUSTER_FQDN}/kube-oidc-proxy/deploy/charts/kube-oidc-proxy" << EOF
 # https://github.com/jetstack/kube-oidc-proxy/blob/master/deploy/charts/kube-oidc-proxy/values.yaml
 oidc:
   clientId: gangway.${CLUSTER_FQDN}

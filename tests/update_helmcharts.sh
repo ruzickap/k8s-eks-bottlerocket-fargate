@@ -10,7 +10,7 @@ test -d tests || ( echo -e "\n*** Run in top level of git repository\n"; exit 1 
 grep -R -h 'helm repo add' docs/part* | sort | uniq | sh -
 
 (
-for CHART in $(find docs/part* -name "*.md" -exec sed -n 's@helm install --version \([^ ]*\).* \([^ ]*/[^ ]*\).*@\1 \2@p' {} \; | sort -k 2); do
+for CHART in $(find docs/part* -name "*.md" -exec sed -n 's@helm upgrade --install --version \([^ ]*\).* \([^ ]*/[^ ]*\).*@\1 \2@p' {} \; | sort -k 2); do
   HELMCHART="${CHART##* }"
   CURRENT_DOC_HELMCHART_VERSION="${CHART% *}"
   LATEST_HELMCHART_VERSION=$(helm search repo "${HELMCHART}" --output json | jq -r ".[0].version")

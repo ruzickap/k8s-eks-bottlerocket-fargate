@@ -47,6 +47,12 @@ aws cloudformation delete-stack --stack-name "${CLUSTER_NAME}-rds"
 aws cloudformation delete-stack --stack-name "${CLUSTER_NAME}-efs"
 ```
 
+Delete all cluster created by Cluster API (if any):
+
+```bash
+kubectl delete Cluster,AWSManagedControlPlane,MachinePool,AWSManagedMachinePool,ClusterResourceSet -n tenants --all || true
+```
+
 Delete IstioOperator to release AWS Load Balancer:
 
 ```bash
@@ -169,8 +175,8 @@ aws cloudformation delete-stack --stack-name "${CLUSTER_NAME}-route53-iam-s3-ebs
 
 Remove CloudFormation created by ClusterAPI:
 
-```shell
-clusterawsadm bootstrap iam delete-cloudformation-stack
+```bash
+aws cloudformation delete-stack --stack-name "cluster-api-provider-aws-sigs-k8s-io"
 ```
 
 Remove Volumes and Snapshots related to the cluster:
