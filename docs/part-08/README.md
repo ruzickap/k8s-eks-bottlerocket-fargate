@@ -286,7 +286,7 @@ spec:
   amiType: AL2_x86_64
   diskSize: 10
   instanceType: t2.small
-  eksNodegroupName: kube11-ng
+  eksNodegroupName: ${CLUSTER_NAME}1-ng
   scaling:
     minSize: 1
     maxSize: 3
@@ -387,23 +387,12 @@ kubectl delete Cluster,AWSManagedControlPlane,MachinePool,AWSManagedMachinePool,
 
 ## HashiCorp Vault
 
-Create a secret with your EKS access key/secret:
-
-```bash
-if ! kubectl get namespace vault &> /dev/null ; then
-  kubectl create namespace vault
-  kubectl create secret generic -n vault eks-creds \
-    --from-literal=AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID?}" \
-    --from-literal=AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY?}"
-fi
-```
-
 Install `vault`
 [helm chart](https://artifacthub.io/packages/helm/hashicorp/vault)
 and modify the
 [default values](https://github.com/hashicorp/vault-helm/blob/master/values.yaml).
 
-```bash
+```shell
 helm repo add hashicorp https://helm.releases.hashicorp.com
 helm upgrade --install --version 0.12.0 --namespace vault --wait --wait-for-jobs --values - vault hashicorp/vault << EOF
 injector:
@@ -418,13 +407,6 @@ server:
       - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
         hosts:
           - vault.${CLUSTER_FQDN}
-  extraSecretEnvironmentVars:
-    - envName: AWS_ACCESS_KEY_ID
-      secretName: eks-creds
-      secretKey: AWS_ACCESS_KEY_ID
-    - envName: AWS_SECRET_ACCESS_KEY
-      secretName: eks-creds
-      secretKey: AWS_SECRET_ACCESS_KEY
   dataStorage:
     size: 1Gi
   standalone:
@@ -439,17 +421,20 @@ server:
       }
       seal "awskms" {
         region     = "${AWS_DEFAULT_REGION}"
-        kms_key_id = "${VAULT_KMS_KEY_ID}"
+        kms_key_id = "${KMS_KEY_ID}"
       }
       storage "file" {
         path = "/vault/data"
       }
+  serviceAccount:
+    create: false
+    name: vault
 EOF
 ```
 
 Wait for Vault to be ready:
 
-```bash
+```shell
 # Wait for DNS vault.${CLUSTER_FQDN} to be ready...
 while [[ -z "$(dig +nocmd +noall +answer +ttlid a "vault.${CLUSTER_FQDN}")" ]] || [[ -z "$(dig +nocmd +noall +answer +ttlid a "dex.${CLUSTER_FQDN}")" ]]; do
   date
@@ -459,7 +444,7 @@ done
 
 Check the status of the vault server - it should be sealed and uninitialized:
 
-```bash
+```shell
 kubectl exec -n vault vault-0 -- vault status || true
 ```
 
@@ -482,7 +467,7 @@ HA Enabled               false
 
 Initialize the vault server:
 
-```bash
+```shell
 test -f "tmp/${CLUSTER_FQDN}/vault_cluster-keys.json" || ( kubectl exec -n vault vault-0 -- vault operator init -format=json | tee "tmp/${CLUSTER_FQDN}/vault_cluster-keys.json" )
 ```
 
@@ -516,7 +501,7 @@ Output:
 
 The vault server should be initialized + unsealed now:
 
-```bash
+```shell
 kubectl exec -n vault vault-0 -- vault status
 ```
 
@@ -539,7 +524,7 @@ HA Enabled               false
 
 Configure vault policy + authentication:
 
-```bash
+```shell
 VAULT_ROOT_TOKEN=$(jq -r ".root_token" "tmp/${CLUSTER_FQDN}/vault_cluster-keys.json")
 export VAULT_ROOT_TOKEN
 export VAULT_ADDR="https://vault.${CLUSTER_FQDN}"
@@ -550,7 +535,7 @@ export VAULT_CLUSTER_FQDN
 
 Login to vault as root user:
 
-```bash
+```shell
 vault login "${VAULT_ROOT_TOKEN}"
 ```
 
@@ -574,7 +559,7 @@ policies             ["root"]
 
 Create admin policy:
 
-```bash
+```shell
 cat > "tmp/${CLUSTER_FQDN}/my-admin-policy.hcl" << EOF
 path "*" {
   capabilities = ["create", "read", "update", "delete", "list", "sudo"]
@@ -585,7 +570,7 @@ vault policy write my-admin-policy "tmp/${CLUSTER_FQDN}/my-admin-policy.hcl"
 
 Configure GitHub + Dex OIDC authentication:
 
-```bash
+```shell
 if ! vault auth list | grep -q github ; then
   vault auth enable github
   vault write auth/github/config organization="${MY_GITHUB_ORG_NAME}"
@@ -613,6 +598,36 @@ You should be now able to login using OIDC (Dex):
 rm ~/.vault-token
 vault login -method=oidc
 vault secrets list
+```
+
+Output:
+
+```text
+Complete the login via your OIDC provider. Launching browser to:
+
+    https://dex.kube2.k8s.mylabs.dev/auth?client_id=vault.kube2.k8s.mylabs.dev&nonce=n_vaiwZVJEVlpDheqXUyUJ&redirect_uri=http%3A%2F%2Flocalhost%3A8250%2Foidc%2Fcallback&response_type=code&scope=openid&state=st_g4NPcYQyzjYT7nnoVWsK
+
+
+Success! You are now authenticated. The token information displayed below
+is already stored in the token helper. You do NOT need to run "vault login"
+again. Future Vault requests will automatically use this token.
+
+Key                  Value
+---                  -----
+token                s.9VAADnJCWKJuXtfkSRDfNE9H
+token_accessor       BXl2rAkOfDGLbH7y1Zu0Zmw3
+token_duration       768h
+token_renewable      true
+token_policies       ["default" "my-admin-policy"]
+identity_policies    []
+policies             ["default" "my-admin-policy"]
+token_meta_role      my-oidc-role
+
+Path          Type         Accessor              Description
+----          ----         --------              -----------
+cubbyhole/    cubbyhole    cubbyhole_03a9c7e4    per-token private secret storage
+identity/     identity     identity_3b8d49bf     identity store
+sys/          system       system_654c1a4e       system endpoints used for control, policy and debugging
 ```
 
 ### Generate Root CA
@@ -896,4 +911,175 @@ No ALPN negotiated
 Early data was not sent
 Verify return code: 21 (unable to verify the first certificate)
 ---
+```
+
+## secrets-store-csi-driver
+
+* [Integrating Secrets Manager secrets with Kubernetes Secrets Store CSI Driver](https://docs.aws.amazon.com/secretsmanager/latest/userguide/integrating_csi_driver.html)
+* [How to use AWS Secrets & Configuration Provider with your Kubernetes Secrets
+  Store CSI driver](https://aws.amazon.com/blogs/security/how-to-use-aws-secrets-configuration-provider-with-kubernetes-secrets-store-csi-driver/)
+
+Install `secrets-store-csi-driver`
+[helm chart](https://github.com/kubernetes-sigs/secrets-store-csi-driver/tree/master/charts/secrets-store-csi-driver)
+and modify the
+[default values](https://github.com/kubernetes-sigs/secrets-store-csi-driver/blob/master/charts/secrets-store-csi-driver/values.yaml).
+
+```bash
+helm repo add secrets-store-csi-driver https://raw.githubusercontent.com/kubernetes-sigs/secrets-store-csi-driver/master/charts
+helm upgrade --install --version 0.0.23 --namespace kube-system --values - csi-secrets-store secrets-store-csi-driver/secrets-store-csi-driver << EOF
+syncSecret:
+  enabled: true
+enableSecretRotation: true
+rotationPollInterval: 60s
+EOF
+```
+
+Install the AWS Provider:
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/aws/secrets-store-csi-driver-provider-aws/main/deployment/aws-provider-installer.yaml
+```
+
+## kuard
+
+Create the SecretProviderClass which tells the AWS provider which secrets are
+to be mounted in the pod:
+
+```bash
+kubectl apply -f - << EOF
+apiVersion: secrets-store.csi.x-k8s.io/v1alpha1
+kind: SecretProviderClass
+metadata:
+  name: kuard-deployment-aws-secrets
+  namespace: kuard
+spec:
+  provider: aws
+  parameters:
+    objects: |
+        - objectName: "${CLUSTER_FQDN}-MySecret"
+          objectType: "secretsmanager"
+          objectAlias: MySecret
+        - objectName: "${CLUSTER_FQDN}-MySecret2"
+          objectType: "secretsmanager"
+          objectAlias: MySecret2
+  secretObjects:
+  - secretName: mysecret
+    type: Opaque
+    data:
+    - objectName: MySecret
+      key: username
+  - secretName: mysecret2
+    type: Opaque
+    data:
+    - objectName: MySecret2
+      key: username
+EOF
+```
+
+Install [kuard](https://github.com/kubernetes-up-and-running/kuard):
+
+```bash
+kubectl apply -f - << EOF
+kind: Service
+apiVersion: v1
+metadata:
+  name: kuard
+  namespace: kuard
+  labels:
+    app: kuard
+spec:
+  selector:
+    app: kuard
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kuard-deployment
+  namespace: kuard
+  labels:
+    app: kuard
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: kuard
+  template:
+    metadata:
+      labels:
+        app: kuard
+    spec:
+      serviceAccountName: kuard
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - topologyKey: "kubernetes.io/hostname"
+            labelSelector:
+              matchLabels:
+                app: kuard
+      volumes:
+      - name: secrets-store-inline
+        csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: "kuard-deployment-aws-secrets"
+      containers:
+      - name: kuard-deployment
+        image: gcr.io/kuar-demo/kuard-amd64:v0.10.0-green
+        resources:
+          requests:
+            cpu: 100m
+            memory: "64Mi"
+          limits:
+            cpu: 100m
+            memory: "64Mi"
+        ports:
+        - containerPort: 8080
+        volumeMounts:
+        - name: secrets-store-inline
+          mountPath: "/mnt/secrets-store"
+          readOnly: true
+        env:
+        - name: MYSECRET
+          valueFrom:
+            secretKeyRef:
+              name: mysecret
+              key: username
+        - name: MYSECRET2
+          valueFrom:
+            secretKeyRef:
+              name: mysecret2
+              key: username
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kuard
+  namespace: kuard
+  annotations:
+    nginx.ingress.kubernetes.io/auth-url: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/auth
+    nginx.ingress.kubernetes.io/auth-signin: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/start?rd=\$scheme://\$host\$request_uri
+  labels:
+    app: kuard
+spec:
+  rules:
+    - host: kuard.${CLUSTER_FQDN}
+      http:
+        paths:
+        - path: /
+          pathType: ImplementationSpecific
+          backend:
+            service:
+              name: kuard
+              port:
+                number: 8080
+  tls:
+    - hosts:
+        - kuard.${CLUSTER_FQDN}
+      secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
+EOF
 ```

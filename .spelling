@@ -37,6 +37,7 @@ Polaris
 ReadWriteMany
 Route53
 S3
+SecretProviderClass
 ServiceAccount
 ServiceMonitor
 Snapshotting
@@ -98,6 +99,7 @@ podinfo
 prometheus-adapter
 promtail
 restic
+secrets-store-csi-driver
 serviceaccounts
 splunk-connect
 sysdig-agent

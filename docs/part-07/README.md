@@ -72,39 +72,6 @@ ingress:
 EOF
 ```
 
-## kuard
-
-Install [kuard](https://github.com/kubernetes-up-and-running/kuard):
-
-```shell
-kubectl run kuard --image=gcr.io/kuar-demo/kuard-amd64:v0.10.0-green --port=8080 --expose=true --labels="app=kuard,version=v0.10.0"
-
-kubectl apply -f - << EOF
-apiVersion: networking.k8s.io/v1beta1
-kind: Ingress
-metadata:
-  name: kuard
-  annotations:
-    nginx.ingress.kubernetes.io/auth-url: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/auth
-    nginx.ingress.kubernetes.io/auth-signin: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/start?rd=\$scheme://\$host\$request_uri
-  labels:
-    app: kuard
-spec:
-  rules:
-    - host: kuard.${CLUSTER_FQDN}
-      http:
-        paths:
-          - backend:
-              serviceName: kuard
-              servicePort: 8080
-            path: /
-  tls:
-    - hosts:
-        - kuard.${CLUSTER_FQDN}
-      secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
-EOF
-```
-
 ## Polaris
 
 Install `polaris`
@@ -138,7 +105,7 @@ Kubei installation is done through the K8s manifest (not helm chart).
 kubectl apply -f https://raw.githubusercontent.com/Portshift/kubei/master/deploy/kubei.yaml
 
 kubectl apply -f - << EOF
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   namespace: kubei
@@ -152,10 +119,13 @@ spec:
     - host: kubei.${CLUSTER_FQDN}
       http:
         paths:
-          - backend:
-              serviceName: kubei
-              servicePort: 8080
-            path: /
+        - path: /
+          pathType: ImplementationSpecific
+          backend:
+            service:
+              name: kubei
+              port:
+                number: 8080
   tls:
     - hosts:
         - kubei.${CLUSTER_FQDN}

@@ -251,7 +251,7 @@ Outputs:
         Fn::Sub: "${AWS::StackName}-AccessPointDrupal2"
 EOF
 
-eval aws cloudformation deploy --stack-name "${CLUSTER_NAME}-efs" --parameter-overrides "ClusterName=${CLUSTER_NAME} KmsKeyId=${EKS_KMS_KEY_ID} VpcIPCidr=${EKS_VPC_CIDR}" --template-file "tmp/${CLUSTER_FQDN}/cf_efs.yml" --tags "${TAGS}"
+eval aws cloudformation deploy --stack-name "${CLUSTER_NAME}-efs" --parameter-overrides "ClusterName=${CLUSTER_NAME} KmsKeyId=${KMS_KEY_ID} VpcIPCidr=${EKS_VPC_CIDR}" --template-file "tmp/${CLUSTER_FQDN}/cf_efs.yml" --tags "${TAGS}"
 
 EFS_FS_ID=$(aws efs describe-file-systems --query "FileSystems[?Name==\`${CLUSTER_NAME}-efs\`].[FileSystemId]" --output text)
 ```
@@ -268,17 +268,20 @@ and modify the
 
 ```bash
 helm repo add aws-efs-csi-driver https://kubernetes-sigs.github.io/aws-efs-csi-driver/
-helm upgrade --install --version 2.0.1 --namespace kube-system --values - aws-efs-csi-driver aws-efs-csi-driver/aws-efs-csi-driver << EOF
+helm upgrade --install --version 2.1.0 --namespace kube-system --values - aws-efs-csi-driver aws-efs-csi-driver/aws-efs-csi-driver << EOF
 controller:
   serviceAccount:
     create: false
 storageClasses:
 - name: efs-dynamic-sc
+  mountOptions:
+  - tls
   parameters:
     provisioningMode: efs-ap
     fileSystemId: "${EFS_FS_ID}"
     directoryPerms: "700"
     basePath: "/dynamic_provisioning"
+  reclaimPolicy: Delete
 EOF
 ```
 
@@ -303,12 +306,16 @@ and modify the
 The ServiceAccount `ebs-csi-controller` was created by `eksctl`.
 
 ```bash
+
 helm repo add aws-ebs-csi-driver https://kubernetes-sigs.github.io/aws-ebs-csi-driver
-helm upgrade --install --version 1.2.1 --namespace kube-system --values - aws-ebs-csi-driver aws-ebs-csi-driver/aws-ebs-csi-driver << EOF
+helm upgrade --install --version 1.2.2 --namespace kube-system --values - aws-ebs-csi-driver aws-ebs-csi-driver/aws-ebs-csi-driver << EOF
 enableVolumeScheduling: true
 enableVolumeResizing: true
 enableVolumeSnapshot: true
 k8sTagClusterId: ${CLUSTER_FQDN}
+controller:
+  extraVolumeTags:
+  $(echo "${TAGS}" | sed "s/ /\\n    /g; s/^/  /g; s/=/: /g")
 serviceAccount:
   controller:
     create: false
