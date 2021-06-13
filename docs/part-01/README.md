@@ -39,11 +39,9 @@ export MY_GITHUB_ORG_NAME="ruzickap-org"
 export MY_GITHUB_USERNAME="ruzickap"
 # AWS Region
 export AWS_DEFAULT_REGION="eu-central-1"
-AWS_ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output text)"
-export AWS_ACCOUNT_ID
 export SLACK_CHANNEL="mylabs"
 # Tags used to tag the AWS resources
-export TAGS="Owner=${MY_EMAIL} Environment=Dev Tribe=Cloud_Native Squad=Cloud_Container_Platform"
+export TAGS="Owner=${MY_EMAIL} Environment=Dev Group=Cloud_Native Squad=Cloud_Container_Platform"
 echo -e "${MY_EMAIL} | ${LETSENCRYPT_ENVIRONMENT} | ${CLUSTER_NAME} | ${BASE_DOMAIN} | ${CLUSTER_FQDN}\n${TAGS}"
 ```
 
@@ -101,7 +99,7 @@ Install [kubectl](https://github.com/kubernetes/kubectl) binary:
 ```bash
 if [[ ! -x /usr/local/bin/kubectl ]]; then
   # https://github.com/kubernetes/kubectl/releases
-  sudo curl -s -Lo /usr/local/bin/kubectl "https://storage.googleapis.com/kubernetes-release/release/v1.20.6/bin/$(uname | sed "s/./\L&/g" )/amd64/kubectl"
+  sudo curl -s -Lo /usr/local/bin/kubectl "https://storage.googleapis.com/kubernetes-release/release/v1.21.1/bin/$(uname | sed "s/./\L&/g" )/amd64/kubectl"
   sudo chmod a+x /usr/local/bin/kubectl
 fi
 ```
@@ -111,7 +109,7 @@ Install [Helm](https://helm.sh/):
 ```bash
 if [[ ! -x /usr/local/bin/helm ]]; then
   # https://github.com/helm/helm/releases
-  curl -s https://raw.githubusercontent.com/helm/helm/master/scripts/get | bash -s -- --version v3.5.4
+  curl -s https://raw.githubusercontent.com/helm/helm/master/scripts/get | bash -s -- --version v3.6.0
 fi
 ```
 
@@ -120,7 +118,7 @@ Install [eksctl](https://eksctl.io/):
 ```bash
 if [[ ! -x /usr/local/bin/eksctl ]]; then
   # https://github.com/weaveworks/eksctl/releases
-  curl -s -L "https://github.com/weaveworks/eksctl/releases/download/0.48.0/eksctl_$(uname)_amd64.tar.gz" | sudo tar xz -C /usr/local/bin/
+  curl -s -L "https://github.com/weaveworks/eksctl/releases/download/0.53.0/eksctl_$(uname)_amd64.tar.gz" | sudo tar xz -C /usr/local/bin/
 fi
 ```
 
@@ -138,7 +136,7 @@ Install [vault](https://www.vaultproject.io/downloads):
 
 ```bash
 if [[ ! -x /usr/local/bin/vault ]]; then
-  curl -s -L "https://releases.hashicorp.com/vault/1.7.1/vault_1.7.1_$(uname | sed "s/./\L&/g")_amd64.zip" -o /tmp/vault.zip
+  curl -s -L "https://releases.hashicorp.com/vault/1.7.2/vault_1.7.2_$(uname | sed "s/./\L&/g")_amd64.zip" -o /tmp/vault.zip
   sudo unzip -q /tmp/vault.zip -d /usr/local/bin/
   rm /tmp/vault.zip
 fi
@@ -335,15 +333,15 @@ Resources:
     Type: AWS::Route53::HostedZone
     Properties:
       Name: !Ref ClusterFQDN
-  EKSKMSAlias:
+  KMSAlias:
     Type: AWS::KMS::Alias
     Properties:
       AliasName: !Sub "alias/eks-${ClusterName}"
-      TargetKeyId: !Ref EKSKMSKey
-  EKSKMSKey:
+      TargetKeyId: !Ref KMSKey
+  KMSKey:
     Type: AWS::KMS::Key
     Properties:
-      Description: !Sub "KMS key for EKS secrets encryption on ${ClusterFQDN}"
+      Description: !Sub "KMS key for secrets related to ${ClusterFQDN}"
       EnableKeyRotation: true
       PendingWindowInDays: 7
       KeyPolicy:
@@ -379,6 +377,25 @@ Resources:
           Condition:
             Bool:
               kms:GrantIsForAWSResource: true
+  EKSViewNodesAndWorkloadsPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: !Sub "${ClusterFQDN}-EKSViewNodesAndWorkloads"
+      Description: !Sub "Policy used to view workloads running in an EKS cluster created using CAPA"
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Effect: Allow
+          Action:
+          - eks:DescribeNodegroup
+          - eks:ListNodegroups
+          - eks:DescribeCluster
+          - eks:ListClusters
+          - eks:AccessKubernetesApi
+          - ssm:GetParameter
+          - eks:ListUpdates
+          - eks:ListFargateProfiles
+          Resource: "*"
   RecordSet:
     Type: AWS::Route53::RecordSet
     Properties:
@@ -414,52 +431,26 @@ Resources:
     Properties:
       AccessControl: Private
       BucketName: !Sub "${ClusterFQDN}"
-  VaultSecret:
+  SecretsManagerMySecret:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Description: "Vault Root/Recovery key"
-      KmsKeyId: !Ref VaultKMSKey
-      SecretString: "empty"
-  VaultKMSAlias:
-    Type: AWS::KMS::Alias
+      Name: !Sub "${ClusterFQDN}-MySecret"
+      Description: My Secret
+      GenerateSecretString:
+        SecretStringTemplate: "{\"username\": \"Administrator\"}"
+        GenerateStringKey: password
+        PasswordLength: 32
+      KmsKeyId: !Ref KMSKey
+  SecretsManagerMySecret2:
+    Type: AWS::SecretsManager::Secret
     Properties:
-      AliasName: !Sub "alias/eks-vault-${ClusterName}"
-      TargetKeyId: !Ref VaultKMSKey
-  VaultKMSKey:
-    Type: AWS::KMS::Key
-    Properties:
-      Description: "Vault Seal/Unseal key"
-      EnableKeyRotation: true
-      PendingWindowInDays: 7
-      KeyPolicy:
-        Version: "2012-10-17"
-        Id: vault-key-policy
-        Statement:
-          - Sid: Enable IAM User Permissions
-            Effect: Allow
-            Principal:
-              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
-            Action: kms:*
-            Resource: "*"
-  EKSViewNodesAndWorkloadsPolicy:
-    Type: AWS::IAM::ManagedPolicy
-    Properties:
-      ManagedPolicyName: !Sub "${ClusterFQDN}-EKSViewNodesAndWorkloads"
-      Description: !Sub "Policy used to view workloads running in an EKS cluster created using CAPA"
-      PolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-        - Effect: Allow
-          Action:
-          - eks:DescribeNodegroup
-          - eks:ListNodegroups
-          - eks:DescribeCluster
-          - eks:ListClusters
-          - eks:AccessKubernetesApi
-          - ssm:GetParameter
-          - eks:ListUpdates
-          - eks:ListFargateProfiles
-          Resource: "*"
+      Name: !Sub "${ClusterFQDN}-MySecret2"
+      Description: My Secret2
+      GenerateSecretString:
+        SecretStringTemplate: "{\"username\": \"Administrator2\"}"
+        GenerateStringKey: password
+        PasswordLength: 32
+      KmsKeyId: !Ref KMSKey
 Outputs:
   CloudWatchPolicyArn:
     Description: The ARN of the created CloudWatchPolicy
@@ -467,18 +458,18 @@ Outputs:
     Export:
       Name:
         Fn::Sub: "${AWS::StackName}-CloudWatchPolicyArn"
-  EKSKMSKeyArn:
+  KMSKeyArn:
     Description: The ARN of the created KMS Key to encrypt EKS related services
-    Value: !GetAtt EKSKMSKey.Arn
+    Value: !GetAtt KMSKey.Arn
     Export:
       Name:
-        Fn::Sub: "${AWS::StackName}-EKSKMSKeyArn"
-  EKSKMSKeyId:
+        Fn::Sub: "${AWS::StackName}-KMSKeyArn"
+  KMSKeyId:
     Description: The ID of the created KMS Key to encrypt EKS related services
-    Value: !Ref EKSKMSKey
+    Value: !Ref KMSKey
     Export:
       Name:
-        Fn::Sub: "${AWS::StackName}-EKSKMSKeyId"
+        Fn::Sub: "${AWS::StackName}-KMSKeyId"
   HostedZoneArn:
     Description: The ARN of the created Route53 Zone for K8s cluster
     Value: !Ref HostedZone
@@ -491,12 +482,6 @@ Outputs:
     Export:
       Name:
         Fn::Sub: "${AWS::StackName}-S3PolicyArn"
-  VaultKMSKeyId:
-    Description: The AWS KMS Key ID used to Auto Unseal HashiCorp Vault and encrypt the ROOT TOKEN and Recovery Secret.
-    Value: !Ref VaultKMSKey
-    Export:
-      Name:
-        Fn::Sub: "${AWS::StackName}-VaultKMSKeyId"
 EOF
 
 eval aws cloudformation deploy --capabilities CAPABILITY_NAMED_IAM \
@@ -505,10 +490,9 @@ eval aws cloudformation deploy --capabilities CAPABILITY_NAMED_IAM \
 
 AWS_CLOUDFORMATION_DETAILS=$(aws cloudformation describe-stacks --stack-name "${CLUSTER_NAME}-route53-iam-s3-ebs")
 CLOUDWATCH_POLICY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"CloudWatchPolicyArn\") .OutputValue")
-EKS_KMS_KEY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"EKSKMSKeyArn\") .OutputValue")
-EKS_KMS_KEY_ID=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"EKSKMSKeyId\") .OutputValue")
+KMS_KEY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"KMSKeyArn\") .OutputValue")
+KMS_KEY_ID=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"KMSKeyId\") .OutputValue")
 S3_POLICY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"S3PolicyArn\") .OutputValue")
-VAULT_KMS_KEY_ID=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"VaultKMSKeyId\") .OutputValue")
 ```
 
 Change TTL=60 of SOA + NS records for new domain
@@ -652,31 +636,44 @@ iam:
           Effect: Allow
           Action: tag:GetResources
           Resource: "*"
-    # https://aws.amazon.com/blogs/containers/introducing-efs-csi-dynamic-provisioning/
     - metadata:
         name: efs-csi-controller-sa
         namespace: kube-system
+      wellKnownPolicies:
+        efsCSIController: true
+    - metadata:
+        name: vault
+        namespace: vault
       attachPolicy:
         Version: 2012-10-17
         Statement:
-        - Effect: Allow
+        - Sid: VaultKMSUnseal
+          Effect: Allow
           Action:
-          - elasticfilesystem:DescribeAccessPoints
-          - elasticfilesystem:DescribeFileSystems
-          Resource: "*"
-        - Effect: Allow
+          - kms:Encrypt
+          - kms:Decrypt
+          - kms:DescribeKey
+          Resource:
+          - "${KMS_KEY_ARN}"
+    - metadata:
+        name: kuard
+        namespace: kuard
+      attachPolicy:
+        Version: 2012-10-17
+        Statement:
+        - Sid: AllowSecretManagerAccess
+          Effect: Allow
           Action:
-          - elasticfilesystem:CreateAccessPoint
-          Resource: "*"
-          Condition:
-            StringLike:
-              aws:RequestTag/efs.csi.aws.com/cluster: true
-        - Effect: Allow
-          Action: elasticfilesystem:DeleteAccessPoint
-          Resource: "*"
-          Condition:
-            StringEquals:
-              aws:ResourceTag/efs.csi.aws.com/cluster: true
+          - secretsmanager:GetSecretValue
+          - secretsmanager:DescribeSecret
+          Resource:
+          - "arn:aws:secretsmanager:*:*:secret:*"
+        - Sid: AllowKMSAccess
+          Effect: Allow
+          Action:
+          - kms:Decrypt
+          Resource:
+          - "${KMS_KEY_ARN}"
 vpc:
   nat:
     gateway: Disable
@@ -707,7 +704,7 @@ managedNodeGroups:
     # ami: ami-079b6e99f49a1cd7b
     maxPodsPerNode: 1000
     volumeEncrypted: true
-    volumeKmsKeyID: ${EKS_KMS_KEY_ID}
+    volumeKmsKeyID: ${KMS_KEY_ID}
     # bottlerocket:
     #   enableAdminContainer: true
 fargateProfiles:
@@ -716,7 +713,7 @@ fargateProfiles:
       - namespace: fgtest
     tags: *tags
 secretsEncryption:
-  keyARN: ${EKS_KMS_KEY_ARN}
+  keyARN: ${KMS_KEY_ARN}
 # cloudWatch:
 #   clusterLogging:
 #     enableTypes: ["audit", "authenticator", "controllerManager"]
@@ -750,7 +747,7 @@ Output:
 2021-06-05 17:34:12 [ℹ]  building cluster stack "eksctl-kube1-cluster"
 2021-06-05 17:34:13 [ℹ]  deploying stack "eksctl-kube1-cluster"
 2021-06-05 17:47:18 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-cluster"
-2021-06-05 17:47:25 [✔]  tagged EKS cluster (Environment=Dev, Owner=petr.ruzicka@gmail.com, Squad=Cloud_Container_Platform, Tribe=Cloud_Native)
+2021-06-05 17:47:25 [✔]  tagged EKS cluster (Environment=Dev, Owner=petr.ruzicka@gmail.com, Squad=Cloud_Container_Platform, Group=Cloud_Native)
 2021-06-05 17:47:25 [ℹ]  creating Fargate profile "fp-fgtest" on EKS cluster "kube1"
 2021-06-05 17:49:35 [ℹ]  created Fargate profile "fp-fgtest" on EKS cluster "kube1"
 2021-06-05 17:50:06 [ℹ]  building iamserviceaccount stack "eksctl-kube1-addon-iamserviceaccount-harbor-harbor"
@@ -877,7 +874,7 @@ using different user for cli operations and different user/role for accessing
 the AWS Console to see EKS Workloads in Cluster's tab.
 
 ```bash
-eksctl create iamidentitymapping --cluster=kube1 --region=eu-central-1 --arn "${AWS_CONSOLE_ADMIN_ROLE_ARN}" --group system:masters --username admin
+eksctl create iamidentitymapping --cluster="${CLUSTER_NAME}" --region="${AWS_DEFAULT_REGION}" --arn "${AWS_CONSOLE_ADMIN_ROLE_ARN}" --group system:masters --username admin
 ```
 
 Output:

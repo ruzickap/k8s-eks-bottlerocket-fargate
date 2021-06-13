@@ -202,7 +202,7 @@ Outputs:
         Fn::Sub: "${AWS::StackName}-RdsMasterPassword"
 EOF
 
-eval aws cloudformation deploy --capabilities CAPABILITY_NAMED_IAM --stack-name "${CLUSTER_NAME}-rds" --parameter-overrides "ClusterName=${CLUSTER_NAME} KmsKeyId=${EKS_KMS_KEY_ID} RdsMasterPassword=${MY_PASSWORD} RdsMasterUsername=${RDS_DB_USERNAME} VpcIPCidr=${EKS_VPC_CIDR}" --template-file "tmp/${CLUSTER_FQDN}/cf_rds.yml" --tags "${TAGS}"
+eval aws cloudformation deploy --capabilities CAPABILITY_NAMED_IAM --stack-name "${CLUSTER_NAME}-rds" --parameter-overrides "ClusterName=${CLUSTER_NAME} KmsKeyId=${KMS_KEY_ID} RdsMasterPassword=${MY_PASSWORD} RdsMasterUsername=${RDS_DB_USERNAME} VpcIPCidr=${EKS_VPC_CIDR}" --template-file "tmp/${CLUSTER_FQDN}/cf_rds.yml" --tags "${TAGS}"
 
 RDS_DB_HOST=$(aws rds describe-db-instances --query "DBInstances[?DBInstanceIdentifier==\`${CLUSTER_NAME}db\`].[Endpoint.Address]" --output text)
 RDS_DB_RESOURCE_ID=$(aws rds describe-db-instances --query "DBInstances[?DBInstanceIdentifier==\`${CLUSTER_NAME}db\`].DbiResourceId" --output text)
@@ -304,7 +304,7 @@ sed -i "/  serviceAccounts:/a \
           Action: \n\
             - rds-db:connect \n\
           Resource: \n\
-            - arn:aws:rds-db:${AWS_DEFAULT_REGION}:${AWS_ACCOUNT_ID}:dbuser:${RDS_DB_RESOURCE_ID}/iamtest
+            - arn:aws:rds-db:${AWS_DEFAULT_REGION}:*:dbuser:${RDS_DB_RESOURCE_ID}/iamtest
 " "tmp/${CLUSTER_FQDN}/eksctl.yaml"
 
 eksctl create iamserviceaccount --config-file "tmp/${CLUSTER_FQDN}/eksctl.yaml" --approve

@@ -33,7 +33,7 @@ export SPLUNK_INDEX_NAME="test"
 export SPLUNK_TOKEN="test"
 export SYSDIG_AGENT_ACCESSKEY="test"
 export TAGS="aaa=bbb ccc=ddd"
-export VAULT_KMS_KEY_ID="test"
+export KMS_KEY_ID="test"
 export OKTA_ISSUER="https://something.okta.com"
 export OKTA_CLIENT_ID="0xxxxxxxxx7"
 export OKTA_CLIENT_SECRET="1xxxxxH"
@@ -97,6 +97,7 @@ EOF
 kubectl create namespace cert-manager
 kubectl create namespace external-dns
 kubectl create namespace kube-prometheus-stack
+kubectl create namespace kuard
 
 # Create ServiceAccounts - they are originally created by eksctl
 for SA in aws-load-balancer-controller cluster-autoscaler ebs-csi-controller; do
