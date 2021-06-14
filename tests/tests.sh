@@ -98,6 +98,7 @@ kubectl create namespace cert-manager
 kubectl create namespace external-dns
 kubectl create namespace kube-prometheus-stack
 kubectl create namespace kuard
+kubectl create namespace vault
 
 # Create ServiceAccounts - they are originally created by eksctl
 for SA in aws-load-balancer-controller cluster-autoscaler ebs-csi-controller; do
