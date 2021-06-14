@@ -392,7 +392,7 @@ Install `vault`
 and modify the
 [default values](https://github.com/hashicorp/vault-helm/blob/master/values.yaml).
 
-```shell
+```bash
 helm repo add hashicorp https://helm.releases.hashicorp.com
 helm upgrade --install --version 0.12.0 --namespace vault --wait --wait-for-jobs --values - vault hashicorp/vault << EOF
 injector:
@@ -434,7 +434,7 @@ EOF
 
 Wait for Vault to be ready:
 
-```shell
+```bash
 # Wait for DNS vault.${CLUSTER_FQDN} to be ready...
 while [[ -z "$(dig +nocmd +noall +answer +ttlid a "vault.${CLUSTER_FQDN}")" ]] || [[ -z "$(dig +nocmd +noall +answer +ttlid a "dex.${CLUSTER_FQDN}")" ]]; do
   date
@@ -444,7 +444,7 @@ done
 
 Check the status of the vault server - it should be sealed and uninitialized:
 
-```shell
+```bash
 kubectl exec -n vault vault-0 -- vault status || true
 ```
 
@@ -467,7 +467,7 @@ HA Enabled               false
 
 Initialize the vault server:
 
-```shell
+```bash
 test -f "tmp/${CLUSTER_FQDN}/vault_cluster-keys.json" || ( kubectl exec -n vault vault-0 -- vault operator init -format=json | tee "tmp/${CLUSTER_FQDN}/vault_cluster-keys.json" )
 ```
 
@@ -501,7 +501,7 @@ Output:
 
 The vault server should be initialized + unsealed now:
 
-```shell
+```bash
 kubectl exec -n vault vault-0 -- vault status
 ```
 

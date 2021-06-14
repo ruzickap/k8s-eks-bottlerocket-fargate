@@ -630,7 +630,7 @@ The backup will be fully deleted after all associated data (disk snapshots, back
 
 Run pod writing to the EFS storage:
 
-```bash
+```shell
 kubectl apply -f - << EOF
 apiVersion: v1
 kind: Namespace
@@ -686,7 +686,7 @@ sleep 10
 
 The file is being continuously updated
 
-```bash
+```shell
 kubectl exec -it -n backup-test test-app -- cat /data/out.txt
 ```
 
@@ -697,7 +697,7 @@ Output:
 
 Run backup of "backup-test" namespace:
 
-```bash
+```shell
 velero backup create backup-test --default-volumes-to-restic --ttl 24h --include-namespaces=backup-test --wait
 ```
 
@@ -708,7 +708,7 @@ Output:
 
 Check the backups:
 
-```bash
+```shell
 velero get backups
 ```
 
@@ -719,7 +719,7 @@ Output:
 
 See the details of the "backup-test":
 
-```bash
+```shell
 velero backup describe backup-test --details
 ```
 
@@ -730,7 +730,7 @@ Output:
 
 See the files in S3 bucket:
 
-```bash
+```shell
 aws s3 ls --recursive s3://${CLUSTER_FQDN}/velero/backups/backup-test/
 ```
 
@@ -741,7 +741,7 @@ Output:
 
 Check the "backup-test" namespace and it's objects:
 
-```bash
+```shell
 kubectl get pods,pvc,secret -n backup-test
 ```
 
@@ -752,13 +752,13 @@ Output:
 
 Remove "backup-test" namespace - simulate unfortunate deletion of namespace:
 
-```bash
+```shell
 kubectl delete namespace backup-test
 ```
 
 Restore the object in the "backup-test" namespace:
 
-```bash
+```shell
 velero restore create restore-backup-test --from-backup backup-test --include-namespaces backup-test --wait
 kubectl wait --namespace backup-test --for=condition=Ready --timeout=5m pod test-app
 ```
@@ -770,7 +770,7 @@ Output:
 
 Get recovery list:
 
-```bash
+```shell
 velero restore get
 ```
 
@@ -781,7 +781,7 @@ Output:
 
 Get the details about recovery:
 
-```bash
+```shell
 velero restore describe restore-backup-test
 ```
 
@@ -792,7 +792,7 @@ Output:
 
 Check the "backup-test" namespace and it's objects:
 
-```bash
+```shell
 kubectl get pods,pvc,secret -n backup-test
 ```
 
@@ -803,7 +803,7 @@ Output:
 
 Check if the file "/data/out.txt" is being updated and see the "time gap":
 
-```bash
+```shell
 kubectl exec -it -n backup-test test-app -- cat /data/out.txt
 ```
 
@@ -814,7 +814,7 @@ Output:
 
 Delete the backup
 
-```bash
+```shell
 velero backup delete backup-test --confirm
 ```
 
@@ -825,6 +825,6 @@ Output:
 
 Delete namespace:
 
-```bash
+```shell
 kubectl delete namespace backup-test
 ```
