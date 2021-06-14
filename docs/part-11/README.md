@@ -593,7 +593,7 @@ Verify the restored vault status. You should see "Initialized: true" and
 "Sealed: false":
 
 ```bash
-kubectl exec -n vault vault-0 -- vault status
+kubectl exec -n vault vault-0 -- vault status || true
 ```
 
 Output:
