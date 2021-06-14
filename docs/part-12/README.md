@@ -230,8 +230,9 @@ a Kubernetes secret named `sops-gpg` in the `flux-system` namespace:
 ```bash
 gpg --export-secret-keys --armor "${KEY_FP}" |
 kubectl create secret generic sops-gpg \
---namespace=flux-system \
---from-file=sops.asc=/dev/stdin
+  --namespace=flux-system --from-file=sops.asc=/dev/stdin \
+  --save-config --dry-run=client -o yaml |
+kubectl apply -f -
 ```
 
 Configure Git:
@@ -244,7 +245,7 @@ test -f ~/.gitconfig || git config --global user.email "${MY_EMAIL}"
 Clone git repository created by flux:
 
 ```bash
-git clone --quiet "https://${GITHUB_TOKEN}@github.com/${MY_GITHUB_USERNAME}/${CLUSTER_NAME}-k8s-clusters.git" "tmp/${CLUSTER_FQDN}/${CLUSTER_NAME}-k8s-clusters"
+test -d "tmp/${CLUSTER_FQDN}/${CLUSTER_NAME}-k8s-clusters" || git clone --quiet "https://${GITHUB_TOKEN}@github.com/${MY_GITHUB_USERNAME}/${CLUSTER_NAME}-k8s-clusters.git" "tmp/${CLUSTER_FQDN}/${CLUSTER_NAME}-k8s-clusters"
 cd tmp/${CLUSTER_FQDN}/${CLUSTER_NAME}-k8s-clusters
 ```
 
@@ -253,7 +254,7 @@ Export the public key into the Git directory
 ```bash
 gpg --export --armor "${KEY_FP}" > clusters/${CLUSTER_FQDN}/.sops.pub.asc
 git add clusters/${CLUSTER_FQDN}/.sops.pub.asc
-git commit -m "Share GPG public key for secrets generation"
+git commit -m "Share GPG public key for secrets generation" || true
 ```
 
 Configure the Git directory for encryption:
@@ -267,7 +268,7 @@ creation_rules:
 EOF
 
 git add clusters/${CLUSTER_FQDN}/.sops.yaml
-git commit -m "Configure the Git directory for encryption"
+git commit -m "Configure the Git directory for encryption" || true
 ```
 
 ### HelmRepository
@@ -322,7 +323,7 @@ resources:
 EOF
 
 git add apps/base/helmrepository
-git commit -m "Add HelmRepository files"
+git commit -m "Add HelmRepository files" || true
 ```
 
 ### Application configuration
@@ -477,7 +478,7 @@ resources:
 EOF
 
 git add apps/base/flux
-git commit -m "Add podmonitor and configure slack notifications for flux"
+git commit -m "Add podmonitor and configure slack notifications for flux" || true
 ```
 
 #### podinfo
@@ -523,7 +524,7 @@ resources:
 EOF
 
 git add apps/base/podinfo
-git commit -m "Add podinfo"
+git commit -m "Add podinfo" || true
 ```
 
 #### Wordpress
@@ -575,7 +576,7 @@ resources:
 EOF
 
 git add apps/base/wordpress
-git commit -m "Add wordpress"
+git commit -m "Add wordpress" || true
 ```
 
 ### Dev group configuration
@@ -695,7 +696,7 @@ spec:
 EOF
 
 git add apps/dev
-git commit -m "Add dev group"
+git commit -m "Add dev group" || true
 ```
 
 ### Cluster apps configuration
@@ -733,7 +734,7 @@ resources:
 - local.yaml
 EOF
 
-mkdir clusters/${CLUSTER_FQDN}/local
+mkdir -pv clusters/${CLUSTER_FQDN}/local
 cat > clusters/${CLUSTER_FQDN}/local/helmrepository.yaml << EOF
 apiVersion: kustomize.toolkit.fluxcd.io/v1beta1
 kind: Kustomization
@@ -812,7 +813,7 @@ resources:
 EOF
 
 git add clusters/${CLUSTER_FQDN}
-git commit -m "Configure cluster applications"
+git commit -m "Configure cluster applications" || true
 git push && flux reconcile source git flux-system
 ```
 

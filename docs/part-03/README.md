@@ -698,7 +698,7 @@ EOF
 Install kyverno policies:
 
 ```shell
-mkdir "tmp/${CLUSTER_FQDN}/kyverno-policies"
+mkdir -pv "tmp/${CLUSTER_FQDN}/kyverno-policies"
 cat > "tmp/${CLUSTER_FQDN}/kyverno-policies/kustomization.yaml" << EOF
 resources:
 - github.com/kyverno/policies/pod-security?ref=930b579b1d81be74678045dd3d397f668d321cdf

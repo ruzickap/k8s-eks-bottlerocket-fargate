@@ -440,6 +440,7 @@ while [[ -z "$(dig +nocmd +noall +answer +ttlid a "vault.${CLUSTER_FQDN}")" ]] |
   date
   sleep 5
 done
+sleep 5
 ```
 
 Check the status of the vault server - it should be sealed and uninitialized:
@@ -502,7 +503,7 @@ Output:
 The vault server should be initialized + unsealed now:
 
 ```bash
-kubectl exec -n vault vault-0 -- vault status
+kubectl exec -n vault vault-0 -- vault status || true
 ```
 
 Output:
@@ -1082,4 +1083,25 @@ spec:
         - kuard.${CLUSTER_FQDN}
       secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
 EOF
+```
+
+Go to these URLs and check see the credentials synced from AWS Secrets Manager:
+
+* [https://kuard.kube1.k8s.mylabs.dev/-/env](https://kuard.kube1.k8s.mylabs.dev/-/env)
+* [https://kuard.kube1.k8s.mylabs.dev/fs/mnt/secrets-store/](https://kuard.kube1.k8s.mylabs.dev/fs/mnt/secrets-store/)
+
+You should also see it in the `kuard` secret:
+
+```shell
+kubectl wait --namespace kuard --for condition=available deployment kuard-deployment
+kubectl get secrets -n kuard mysecret --template="{{.data.username}}" | base64 -d | jq
+```
+
+Output:
+
+```json
+{
+  "password": "test1234",
+  "username": "Administrator"
+}
 ```
