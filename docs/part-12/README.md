@@ -15,7 +15,7 @@ and modify the
 
 ```shell
 helm repo add argo https://argoproj.github.io/argo-helm
-helm upgrade --install --version 3.6.6 --namespace argocd --create-namespace --values - argocd argo/argo-cd << EOF
+helm upgrade --install --version 3.6.8 --namespace argocd --create-namespace --values - argocd argo/argo-cd << EOF
 controller:
   metrics:
     enabled: true
@@ -459,7 +459,7 @@ spec:
     - kind: GitRepository
       name: flux-system
 ---
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: flux-receiver
@@ -617,7 +617,7 @@ spec:
     substitute:
       slack_channel: ${slack_channel}
 ---
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: flux-receiver
@@ -628,9 +628,12 @@ spec:
     http:
       paths:
       - path: /
+        pathType: ImplementationSpecific
         backend:
-          serviceName: webhook-receiver
-          servicePort: http
+          service:
+            name: webhook-receiver
+            port:
+              name: http
   tls:
   - hosts:
     - flux-receiver.${cluster_fqdn}
