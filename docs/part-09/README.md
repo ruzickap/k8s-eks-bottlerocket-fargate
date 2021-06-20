@@ -333,7 +333,7 @@ spec:
         ./aws/install
         aws sts get-caller-identity
         wget -q https://s3.amazonaws.com/rds-downloads/rds-ca-2019-root.pem
-        TOKEN="\$(aws rds generate-db-auth-token --hostname ${RDS_DB_HOST} --port 3306 --region eu-central-1 --username iamtest)"
+        TOKEN="\$(aws rds generate-db-auth-token --hostname ${RDS_DB_HOST} --port 3306 --region ${AWS_DEFAULT_REGION} --username iamtest)"
         mysql -h "${RDS_DB_HOST}" -u "iamtest" --password="${MY_PASSWORD}" -e "show databases;"
         mysql -h "${RDS_DB_HOST}" -u "iamtest" --password="\${TOKEN}" --enable-cleartext-plugin --ssl-ca=rds-ca-2019-root.pem -e "show databases;"
         mysql -h "${RDS_DB_HOST}" -u "iamtest" --password="\${TOKEN}" --enable-cleartext-plugin --ssl-ca=amazon-root-CA-1.pem --ssl-mode=REQUIRED -e "show databases;"

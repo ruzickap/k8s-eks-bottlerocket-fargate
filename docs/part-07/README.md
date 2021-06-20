@@ -11,7 +11,7 @@ and modify the
 
 ```bash
 helm repo add sp https://stefanprodan.github.io/podinfo
-helm upgrade --install --version 5.2.1 --namespace podinfo-keycloak --create-namespace --values - podinfo sp/podinfo << EOF
+helm upgrade --install --version 6.0.0 --namespace podinfo-keycloak --create-namespace --values - podinfo sp/podinfo << EOF
 serviceMonitor:
   enabled: true
 ingress:
@@ -19,9 +19,11 @@ ingress:
   annotations:
     nginx.ingress.kubernetes.io/auth-url: https://oauth2-proxy-keycloak.${CLUSTER_FQDN}/oauth2/auth
     nginx.ingress.kubernetes.io/auth-signin: https://oauth2-proxy-keycloak.${CLUSTER_FQDN}/oauth2/start?rd=\$scheme://\$host\$request_uri
-  path: /
   hosts:
-    - podinfo-keycloak.${CLUSTER_FQDN}
+    - host: podinfo-keycloak.${CLUSTER_FQDN}
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
   tls:
     - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
       hosts:
@@ -32,7 +34,7 @@ EOF
 Install `podinfo` secured by `oauth2`:
 
 ```bash
-helm upgrade --install --version 5.2.1 --namespace podinfo-dex --create-namespace --values - podinfo sp/podinfo << EOF
+helm upgrade --install --version 6.0.0 --namespace podinfo-dex --create-namespace --values - podinfo sp/podinfo << EOF
 # https://github.com/stefanprodan/podinfo/blob/master/charts/podinfo/values.yaml
 serviceMonitor:
   enabled: true
@@ -41,9 +43,11 @@ ingress:
   annotations:
     nginx.ingress.kubernetes.io/auth-url: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/auth
     nginx.ingress.kubernetes.io/auth-signin: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/start?rd=\$scheme://\$host\$request_uri
-  path: /
   hosts:
-    - podinfo-dex.${CLUSTER_FQDN}
+    - host: podinfo-dex.${CLUSTER_FQDN}
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
   tls:
     - secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
       hosts:
@@ -54,7 +58,7 @@ EOF
 Install `podinfo` and use Application Load Balancer:
 
 ```shell
-helm upgrade --install --version 5.2.1 --namespace default --values - podinfo-alb sp/podinfo << EOF
+helm upgrade --install --version 6.0.0 --namespace default --values - podinfo-alb sp/podinfo << EOF
 ui:
   message: "Running using Application Load Balancer"
 service:
@@ -66,9 +70,11 @@ ingress:
   annotations:
     kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/scheme: internet-facing
-  path: /
   hosts:
-    - podinfo-alb.${CLUSTER_FQDN}
+    - host: podinfo-alb.${CLUSTER_FQDN}
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
 EOF
 ```
 
