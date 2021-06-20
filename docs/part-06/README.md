@@ -11,7 +11,7 @@ and modify the
 
 ```bash
 helm repo add jaegertracing https://jaegertracing.github.io/helm-charts
-helm upgrade --install --version 2.21.2 --namespace jaeger-operator --create-namespace --values - jaeger-operator jaegertracing/jaeger-operator << EOF
+helm upgrade --install --version 2.21.4 --namespace jaeger-operator --create-namespace --values - jaeger-operator jaegertracing/jaeger-operator << EOF
 rbac:
   clusterRole: true
 EOF

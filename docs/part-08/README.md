@@ -394,7 +394,7 @@ and modify the
 
 ```bash
 helm repo add hashicorp https://helm.releases.hashicorp.com
-helm upgrade --install --version 0.12.0 --namespace vault --wait --wait-for-jobs --values - vault hashicorp/vault << EOF
+helm upgrade --install --version 0.13.0 --namespace vault --wait --wait-for-jobs --values - vault hashicorp/vault << EOF
 injector:
   metrics:
     enabled: false
@@ -848,16 +848,18 @@ and modify the
 [default values](https://github.com/stefanprodan/podinfo/blob/master/charts/podinfo/values.yaml).
 
 ```shell
-helm upgrade --install --version 5.2.1 --namespace podinfo-vault --values - podinfo sp/podinfo << EOF
+helm upgrade --install --version 6.0.0 --namespace podinfo-vault --values - podinfo sp/podinfo << EOF
 ui:
   message: "Vault Certificate"
 serviceMonitor:
   enabled: true
 ingress:
   enabled: true
-  path: /
   hosts:
-    - podinfo.vault-test-crt.${CLUSTER_FQDN}
+    - host: podinfo.vault-test-crt.${CLUSTER_FQDN}
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
   tls:
     - secretName: podinfo-vault-certificate-tls
       hosts:

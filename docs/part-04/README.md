@@ -14,7 +14,7 @@ Service account `external-dns` was created by `eksctl`.
 
 ```bash
 helm repo add jetstack https://charts.jetstack.io
-helm upgrade --install --version v1.3.1 --namespace cert-manager --wait --wait-for-jobs --values - cert-manager jetstack/cert-manager << EOF
+helm upgrade --install --version v1.4.0 --namespace cert-manager --wait --wait-for-jobs --values - cert-manager jetstack/cert-manager << EOF
 installCRDs: true
 serviceAccount:
   create: false
@@ -140,7 +140,7 @@ and modify the
 
 ```bash
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-helm upgrade --install --version 3.32.0 --namespace ingress-nginx --create-namespace --wait --wait-for-jobs --values - ingress-nginx ingress-nginx/ingress-nginx << EOF
+helm upgrade --install --version 3.33.0 --namespace ingress-nginx --create-namespace --wait --wait-for-jobs --values - ingress-nginx ingress-nginx/ingress-nginx << EOF
 controller:
   # Needed for calico
   hostNetwork: true
@@ -203,7 +203,7 @@ Service account `external-dns` was created by `eksctl`.
 
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
-helm upgrade --install --version 5.0.3 --namespace external-dns --values - external-dns bitnami/external-dns << EOF
+helm upgrade --install --version 5.1.1 --namespace external-dns --values - external-dns bitnami/external-dns << EOF
 sources:
   - ingress
   - istio-gateway
@@ -215,16 +215,9 @@ domainFilters:
   - ${CLUSTER_FQDN}
 interval: 10s
 policy: sync
-replicas: 1
 serviceAccount:
   create: false
   name: external-dns
-securityContext:
-  allowPrivilegeEscalation: false
-  readOnlyRootFilesystem: true
-  capabilities:
-    drop: ["ALL"]
-  runAsNonRoot: true
 metrics:
   enabled: true
   serviceMonitor:
@@ -239,7 +232,7 @@ Install `mailhog`
 and modify the
 [default values](https://github.com/codecentric/helm-charts/blob/master/charts/mailhog/values.yaml).
 
-```bash
+```shell
 helm repo add codecentric https://codecentric.github.io/helm-charts
 helm upgrade --install --version 4.1.0 --namespace mailhog --create-namespace --values - mailhog codecentric/mailhog << EOF
 ingress:
@@ -325,8 +318,8 @@ EOF
 
 ## Calico commands
 
-```bash
-# calicoctl ipam show --show-block
+```shell
+calicoctl ipam show --show-block
 ```
 
 Output:
