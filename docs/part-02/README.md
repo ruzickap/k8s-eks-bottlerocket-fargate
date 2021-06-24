@@ -268,7 +268,7 @@ and modify the
 
 ```bash
 helm repo add aws-efs-csi-driver https://kubernetes-sigs.github.io/aws-efs-csi-driver/
-helm upgrade --install --version 2.1.0 --namespace kube-system --values - aws-efs-csi-driver aws-efs-csi-driver/aws-efs-csi-driver << EOF
+helm upgrade --install --version 2.1.1 --namespace kube-system --values - aws-efs-csi-driver aws-efs-csi-driver/aws-efs-csi-driver << EOF
 controller:
   serviceAccount:
     create: false
@@ -308,7 +308,7 @@ The ServiceAccount `ebs-csi-controller` was created by `eksctl`.
 ```bash
 
 helm repo add aws-ebs-csi-driver https://kubernetes-sigs.github.io/aws-ebs-csi-driver
-helm upgrade --install --version 1.2.2 --namespace kube-system --values - aws-ebs-csi-driver aws-ebs-csi-driver/aws-ebs-csi-driver << EOF
+helm upgrade --install --version 1.2.3 --namespace kube-system --values - aws-ebs-csi-driver aws-ebs-csi-driver/aws-ebs-csi-driver << EOF
 enableVolumeScheduling: true
 enableVolumeResizing: true
 enableVolumeSnapshot: true
@@ -385,7 +385,7 @@ I would like to put some notes here how this can be tested...
 Start the EKS cluster with `t2.micro` where you can run max 4 pods per node:
 
 ```shell
-eksctl create cluster --name test-max-pod --region eu-central-1 --node-type=t2.micro --nodes=2 --node-volume-size=4 --kubeconfig "kubeconfig-test-max-pod.conf" --max-pods-per-node 100
+eksctl create cluster --name test-max-pod --region ${AWS_DEFAULT_REGION} --node-type=t2.micro --nodes=2 --node-volume-size=4 --kubeconfig "kubeconfig-test-max-pod.conf" --max-pods-per-node 100
 ```
 
 Show the limits of the node, which can not be fulfilled due to IP limitations:
@@ -423,16 +423,16 @@ Output:
 Delete the cluster:
 
 ```shell
-eksctl delete cluster --name test-max-pod --region eu-central-1
+eksctl delete cluster --name test-max-pod --region ${AWS_DEFAULT_REGION}
 ```
 
 Do the same with Amazon EKS + Calico:
 
 ```shell
-eksctl create cluster --name test-max-pod --region eu-central-1  --without-nodegroup --kubeconfig "kubeconfig-test-max-pod.conf"
+eksctl create cluster --name test-max-pod --region ${AWS_DEFAULT_REGION}  --without-nodegroup --kubeconfig "kubeconfig-test-max-pod.conf"
 kubectl delete daemonset -n kube-system aws-node
 kubectl apply -f https://docs.projectcalico.org/manifests/calico-vxlan.yaml
-eksctl create nodegroup --cluster test-max-pod --region eu-central-1 --node-type=t2.micro --nodes=2 --node-volume-size=4 --max-pods-per-node 100
+eksctl create nodegroup --cluster test-max-pod --region ${AWS_DEFAULT_REGION} --node-type=t2.micro --nodes=2 --node-volume-size=4 --max-pods-per-node 100
 kubectl apply -f https://k8s.io/examples/controllers/nginx-deployment.yaml
 kubectl scale --replicas=10 deployment nginx-deployment
 ```
@@ -461,3 +461,199 @@ nginx-deployment-6b474476c4-x8wkv   1/1     Running   0          2m10s
 
 It should be possible to run more pods than 4 comparing to "non-calico"
 example.
+
+## Amazon Managed Prometheus + Amazon Managed Grafana
+
+Create AMP Workspace
+
+```bash
+if ! aws amp list-workspaces | grep -q "${CLUSTER_FQDN}" ; then aws amp create-workspace --alias="${CLUSTER_FQDN}" | jq ; fi
+AMP_WORKSPACE_ID=$(aws amp list-workspaces --alias "${CLUSTER_FQDN}" | jq -r ".workspaces[0].workspaceId")
+```
+
+Output:
+
+```json
+{
+    "arn": "arn:aws:aps:eu-central-1:7xxxxxxxxxx7:workspace/ws-655f1f62-f1f3-4a1c-a35a-219af833c5ab",
+    "status": {
+        "statusCode": "CREATING"
+    },
+    "workspaceId": "ws-655f1f62-f1f3-4a1c-a35a-219af833c5ab"
+}
+```
+
+## Test EKS access
+
+Update the aws-auth ConfigMap to allow our IAM roles:
+
+```shell
+eksctl create iamidentitymapping --cluster="${CLUSTER_NAME}" --arn="${MYUSER1_ROLE_ARN}" --username dev-user
+eksctl get iamidentitymapping --cluster="${CLUSTER_NAME}"
+```
+
+Output:
+
+```text
+2021-06-23 23:17:04 [ℹ]  eksctl version 0.54.0
+2021-06-23 23:17:04 [ℹ]  using region eu-west-1
+2021-06-23 23:17:05 [ℹ]  adding identity "arn:aws:iam::7xxxxxxxxxx7:role/myuser1-kube1" to auth ConfigMap
+2021-06-23 23:17:06 [ℹ]  eksctl version 0.54.0
+2021-06-23 23:17:06 [ℹ]  using region eu-west-1
+ARN                       USERNAME        GROUPS
+arn:aws:iam::7xxxxxxxxxx7:role/Axx-xxxx-xxxxN             admin         system:masters
+arn:aws:iam::7xxxxxxxxxx7:role/eksctl-kube1-cluster-FargatePodExecutionRole-1FSA35DMJOZBB system:node:{{SessionName}}   system:bootstrappers,system:nodes,system:node-proxier
+arn:aws:iam::7xxxxxxxxxx7:role/eksctl-kube1-nodegroup-managed-ng-NodeInstanceRole-1GSZHWOPAQAOM system:node:{{EC2PrivateDNSName}} system:bootstrappers,system:nodes
+arn:aws:iam::7xxxxxxxxxx7:role/myuser1-kube1              dev-user
+```
+
+Configuring access to development namespace:
+
+```shell
+kubectl get namespace development &> /dev/null || kubectl create namespace development
+kubectl apply -f - << EOF
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: dev-role
+  namespace: development
+rules:
+  - apiGroups:
+      - ""
+      - "apps"
+      - "batch"
+      - "extensions"
+    resources:
+      - "configmaps"
+      - "cronjobs"
+      - "deployments"
+      - "events"
+      - "ingresses"
+      - "jobs"
+      - "pods"
+      - "pods/attach"
+      - "pods/exec"
+      - "pods/log"
+      - "pods/portforward"
+      - "secrets"
+      - "services"
+    verbs:
+      - "create"
+      - "delete"
+      - "describe"
+      - "get"
+      - "list"
+      - "patch"
+      - "update"
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: dev-role-binding
+  namespace: development
+subjects:
+- kind: User
+  name: dev-user
+roleRef:
+  kind: Role
+  name: dev-role
+  apiGroup: rbac.authorization.k8s.io
+EOF
+```
+
+Create `config` and `credentials` files and set the environment variables
+for `awscli`:
+
+```shell
+cat > "tmp/${CLUSTER_FQDN}/aws_config" << EOF
+[profile dev]
+role_arn=${MYUSER1_ROLE_ARN}
+source_profile=eksDev
+EOF
+
+cat > "tmp/${CLUSTER_FQDN}/aws_credentials" << EOF
+[eksDev]
+aws_access_key_id=${MYUSER1_USER_ACCESSKEYMYUSER}
+aws_secret_access_key=${MYUSER1_USER_SECRETACCESSKEY}
+EOF
+```
+
+Extract `kubeconfig` and make it usable for dev profile:
+
+```shell
+if [[ ! -f "tmp/${CLUSTER_FQDN}/kubeconfig-dev-${CLUSTER_NAME}.conf" ]]; then
+  eksctl utils write-kubeconfig --cluster="${CLUSTER_NAME}" --kubeconfig="tmp/${CLUSTER_FQDN}/kubeconfig-dev-${CLUSTER_NAME}.conf"
+  cat >> "tmp/${CLUSTER_FQDN}/kubeconfig-dev-${CLUSTER_NAME}.conf" << EOF
+      - name: AWS_PROFILE
+        value: dev
+      - name: AWS_CONFIG_FILE
+        value: ${PWD}/tmp/${CLUSTER_FQDN}/aws_config
+      - name: AWS_SHARED_CREDENTIALS_FILE
+        value: ${PWD}/tmp/${CLUSTER_FQDN}/aws_credentials
+EOF
+fi
+```
+
+Output:
+
+```text
+2021-06-23 23:17:10 [ℹ]  eksctl version 0.54.0
+2021-06-23 23:17:10 [ℹ]  using region eu-west-1
+2021-06-23 23:17:10 [✔]  saved kubeconfig as "tmp/kube1.k8s.mylabs.dev/kubeconfig-dev-kube1.conf"
+```
+
+Set the AWS variables and verify the identity:
+
+```shell
+(
+export AWS_CONFIG_FILE="tmp/${CLUSTER_FQDN}/aws_config"
+export AWS_SHARED_CREDENTIALS_FILE="tmp/${CLUSTER_FQDN}/aws_credentials"
+aws sts get-caller-identity --profile=dev | jq
+)
+```
+
+Output:
+
+```json
+{
+    "UserId": "Axxxxxxxxxxxxxxxxxxxx7:botocore-session-1624478440",
+    "Account": "7xxxxxxxxxxx7",
+    "Arn": "arn:aws:sts::7xxxxxxxxxxx7:assumed-role/myuser1-kube1/botocore-session-1624478440"
+}
+```
+
+```shell
+(
+unset AWS_ACCESS_KEY_ID
+unset AWS_SECRET_ACCESS_KEY
+
+kubectl get pods -n kube-system --kubeconfig="tmp/${CLUSTER_FQDN}/kubeconfig-dev-${CLUSTER_NAME}.conf" || true
+kubectl get pods -n development --kubeconfig="tmp/${CLUSTER_FQDN}/kubeconfig-dev-${CLUSTER_NAME}.conf"
+kubectl run curl-test --namespace development --kubeconfig="tmp/${CLUSTER_FQDN}/kubeconfig-dev-${CLUSTER_NAME}.conf" --image=radial/busyboxplus:curl --rm -it -- ping -c 5 -w 50 www.google.com
+kubectl get pods -n development --kubeconfig="tmp/${CLUSTER_FQDN}/kubeconfig-dev-${CLUSTER_NAME}.conf"
+)
+```
+
+Output:
+
+```text
+Error from server (Forbidden): pods is forbidden: User "dev-user" cannot list resource "pods" in API group "" in the namespace "kube-system"
+No resources found in development namespace.
+If you don't see a command prompt, try pressing enter.
+64 bytes from 74.125.193.103: seq=2 ttl=104 time=1.424 ms
+64 bytes from 74.125.193.103: seq=3 ttl=104 time=1.440 ms
+64 bytes from 74.125.193.103: seq=4 ttl=104 time=1.424 ms
+
+--- www.google.com ping statistics ---
+5 packets transmitted, 5 packets received, 0% packet loss
+round-trip min/avg/max = 1.424/1.442/1.462 ms
+Session ended, resume using 'kubectl attach curl-test -c curl-test -i -t' command when the pod is running
+pod "curl-test" deleted
+NAME        READY   STATUS        RESTARTS   AGE
+curl-test   0/1     Terminating   0          8s
+```
+
+The output above is showing, that `dev-user` represented by
+`tmp/${CLUSTER_FQDN}/kubeconfig-dev-${CLUSTER_NAME}.conf` and
+`tmp/${CLUSTER_FQDN}/{aws_config,aws_credentials}` can only access the
+`development` namespace and not the `kube-system`.

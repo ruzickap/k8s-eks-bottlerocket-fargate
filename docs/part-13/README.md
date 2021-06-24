@@ -35,7 +35,7 @@ Set necessary variables:
 export BASE_DOMAIN=${BASE_DOMAIN:-k8s.mylabs.dev}
 export CLUSTER_NAME=${CLUSTER_NAME:-kube1}
 export CLUSTER_FQDN="${CLUSTER_NAME}.${BASE_DOMAIN}"
-export AWS_DEFAULT_REGION="eu-central-1"
+export AWS_DEFAULT_REGION="eu-west-1"
 export KUBECONFIG=${PWD}/kubeconfig-${CLUSTER_NAME}.conf
 export MY_GITHUB_USERNAME="ruzickap"
 ```
@@ -165,6 +165,14 @@ delete: s3://kube1.k8s.mylabs.dev/velero/backups/backup-vault/backup-vault-volum
 delete: s3://kube1.k8s.mylabs.dev/velero/restores/restore-vault/restore-restore-vault-logs.gz
 delete: s3://kube1.k8s.mylabs.dev/velero/backups/backup-vault/backup-vault.tar.gz
 ...
+```
+
+Remove APM:
+
+```bash
+if aws amp list-workspaces | grep -q ${CLUSTER_FQDN} ; then
+  aws amp delete-workspace --workspace-id="$(aws amp list-workspaces --alias=${CLUSTER_FQDN} | jq .workspaces[0].workspaceId -r)"
+fi
 ```
 
 Remove CloudFormation stacks [Route53+IAM+S3+EBS]

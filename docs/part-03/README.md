@@ -33,7 +33,7 @@ and modify the
 
 ```shell
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm upgrade --install --version 2.13.0 --namespace prometheus-adapter --values - prometheus-adapter prometheus-community/prometheus-adapter << EOF
+helm upgrade --install --version 2.14.2 --namespace prometheus-adapter --values - prometheus-adapter prometheus-community/prometheus-adapter << EOF
 # Needed for calico
 # hostNetwork:
 #   enabled: true
@@ -49,7 +49,7 @@ and modify the
 
 ```bash
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm upgrade --install --version 16.1.2 --namespace kube-prometheus-stack --values - kube-prometheus-stack prometheus-community/kube-prometheus-stack << EOF
+helm upgrade --install --version 16.10.0 --namespace kube-prometheus-stack --values - kube-prometheus-stack prometheus-community/kube-prometheus-stack << EOF
 defaultRules:
   rules:
     etcd: false
@@ -261,6 +261,8 @@ grafana:
     - grafana-piechart-panel
     # Needed for MySQL Instances Overview -> Table Openings details
     - grafana-polystat-panel
+  env:
+    GF_AUTH_SIGV4_AUTH_ENABLED: true
   datasources:
     datasources.yaml:
       apiVersion: 1
@@ -269,11 +271,17 @@ grafana:
         type: loki
         access: proxy
         url: http://loki.loki:3100
-  additionalDataSources:
-  - name: CloudWatch
-    type: cloudwatch
-    jsonData:
-      defaultRegion: ${AWS_DEFAULT_REGION}
+      # - name: CloudWatch
+      #   type: cloudwatch
+      #   jsonData:
+      #     defaultRegion: ${AWS_DEFAULT_REGION}
+      # Automated AMP provisioning as datasource does not work - needs to be done manually
+      # - name: Amazon Managed Prometheus
+      #   type: prometheus
+      #   url: https://aps-workspaces.${AWS_DEFAULT_REGION}.amazonaws.com/workspaces/${AMP_WORKSPACE_ID}
+      #   jsonData:
+      #     sigV4Auth: true
+      #     sigV4Region: ${AWS_DEFAULT_REGION}
   dashboardProviders:
     dashboardproviders.yaml:
       apiVersion: 1
@@ -470,6 +478,9 @@ prometheusOperator:
   admissionWebhooks:
     enabled: false
 prometheus:
+  serviceAccount:
+    create: false
+    name: kube-prometheus-stack-prometheus
   ingress:
     enabled: true
     annotations:
@@ -489,6 +500,8 @@ prometheus:
     podMonitorSelectorNilUsesHelmValues: false
     retentionSize: 1GB
     serviceMonitorSelectorNilUsesHelmValues: false
+    remoteWrite:
+      - url: http://localhost:8005/workspaces/${AMP_WORKSPACE_ID}/api/v1/remote_write
     storageSpec:
       volumeClaimTemplate:
         spec:
@@ -496,6 +509,21 @@ prometheus:
           resources:
             requests:
               storage: 2Gi
+    containers:
+      - name: aws-sigv4-proxy-sidecar
+        image: public.ecr.aws/aws-observability/aws-sigv4-proxy:1.0
+        args:
+        - --name
+        - aps
+        - --region
+        - ${AWS_DEFAULT_REGION}
+        - --host
+        - aps-workspaces.${AWS_DEFAULT_REGION}.amazonaws.com
+        - --port
+        - :8005
+        ports:
+        - name: aws-sigv4-proxy
+          containerPort: 8005
 EOF
 ```
 
@@ -633,7 +661,7 @@ and modify the
 [default values](https://github.com/aws/aws-node-termination-handler/blob/main/config/helm/aws-node-termination-handler/values.yaml).
 
 ```bash
-helm upgrade --install --version 0.15.0 --namespace kube-system --create-namespace --values - aws-node-termination-handler eks/aws-node-termination-handler << EOF
+helm upgrade --install --version 0.15.1 --namespace kube-system --create-namespace --values - aws-node-termination-handler eks/aws-node-termination-handler << EOF
 enableRebalanceMonitoring: true
 awsRegion: ${AWS_DEFAULT_REGION}
 enableSpotInterruptionDraining: true
