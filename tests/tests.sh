@@ -8,7 +8,7 @@ export CLUSTER_FQDN="${CLUSTER_NAME}.${BASE_DOMAIN}"
 export LETSENCRYPT_ENVIRONMENT=${LETSENCRYPT_ENVIRONMENT:-staging}
 export LETSENCRYPT_CERTIFICATE="https://letsencrypt.org/certs/staging/letsencrypt-stg-root-x1.pem"
 export MY_EMAIL="petr.ruzicka@gmail.com"
-export AWS_DEFAULT_REGION="eu-central-1"
+export AWS_DEFAULT_REGION="eu-west-1"
 declare -A MY_GITHUB_ORG_OAUTH_DEX_CLIENT_ID MY_GITHUB_ORG_OAUTH_DEX_CLIENT_SECRET MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_ID MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_SECRET
 MY_GITHUB_ORG_OAUTH_DEX_CLIENT_ID[${CLUSTER_NAME}]="3xxxxxxxxxxxxxxxxxx3"
 MY_GITHUB_ORG_OAUTH_DEX_CLIENT_SECRET[${CLUSTER_NAME}]="7xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx8"
@@ -42,6 +42,7 @@ export VAULT_CERT_MANAGER_SECRET_ID="test"
 export SLACK_BOT_API_TOKEN="token"
 export SLACK_INCOMING_WEBHOOK_URL="https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK"
 export SLACK_CHANNEL="mylabs"
+export AMP_WORKSPACE_ID="amp-workspace-id"
 
 test -d tests || ( echo -e "\n*** Run in top level of git repository\n"; exit 1 )
 
