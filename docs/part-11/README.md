@@ -645,7 +645,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteMany
-  storageClassName: efs-dynamic-sc
+  storageClassName: efs-drupal
   resources:
     requests:
       storage: 1Gi

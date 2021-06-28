@@ -346,7 +346,7 @@ spec:
         cpu: "500m"
   restartPolicy: Never
 EOF
-sleep 20
+sleep 30
 ```
 
 Check the logs:
@@ -362,11 +362,8 @@ Output:
 
 ### Install Drupal
 
-Get the `FileSystemId` from EFS:
-
-```bash
-EFS_AP_DRUPAL_ID=$(aws efs describe-access-points --query "AccessPoints[?(FileSystemId==\`${EFS_FS_ID}\` && RootDirectory.Path==\`/drupal\`)].[AccessPointId]" --output text)
-```
+The variables containing `FileSystemId` and `AccessPointId` like
+`EFS_FS_ID_DRUPAL` and `EFS_AP_ID_DRUPAL1`  were defined previously.
 
 Create ReadWriteMany persistent volume like described [here](https://github.com/kubernetes-sigs/aws-efs-csi-driver/blob/master/examples/kubernetes/multiple_pods/README.md):
 
@@ -378,7 +375,7 @@ kind: PersistentVolume
 metadata:
   name: efs-drupal-pv
 spec:
-  storageClassName: efs-static-sc
+  storageClassName: efs-drupal-static
   capacity:
     storage: 1Gi
   volumeMode: Filesystem
@@ -387,7 +384,7 @@ spec:
   persistentVolumeReclaimPolicy: Delete
   csi:
     driver: efs.csi.aws.com
-    volumeHandle: ${EFS_FS_ID}::${EFS_AP_DRUPAL_ID}
+    volumeHandle: ${EFS_FS_ID_DRUPAL}::${EFS_AP_ID_DRUPAL1}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -397,7 +394,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteMany
-  storageClassName: efs-static-sc
+  storageClassName: efs-drupal-static
   volumeName: efs-drupal-pv
   resources:
     requests:
@@ -445,7 +442,7 @@ persistence:
   # EFS dynamic provisioning can not be used due to UID/GID issue when EFS assign
   # randomly GID to the NFS share and then Drupal can not write to it
   # (chown to such directory is not working - prohibited by AWS)
-  # storageClass: efs-dynamic-sc
+  # storageClass: efs-drupal
   # accessMode: ReadWriteMany
   # size: 1Gi
   existingClaim: drupal-efs-pvc
@@ -454,11 +451,8 @@ EOF
 
 ### Install Drupal2
 
-Get the `FileSystemId` from EFS:
-
-```bash
-EFS_AP_DRUPAL2_ID=$(aws efs describe-access-points --query "AccessPoints[?(FileSystemId==\`${EFS_FS_ID}\` && RootDirectory.Path==\`/drupal2\`)].[AccessPointId]" --output text)
-```
+The variables containing `FileSystemId` and `AccessPointId` like
+`EFS_FS_ID_DRUPAL` and `EFS_AP_ID_DRUPAL2` were defined previously.
 
 Create ReadWriteMany persistent volume like described [here](https://github.com/kubernetes-sigs/aws-efs-csi-driver/blob/master/examples/kubernetes/multiple_pods/README.md):
 
@@ -470,7 +464,7 @@ kind: PersistentVolume
 metadata:
   name: efs-drupal2-pv
 spec:
-  storageClassName: efs-static-sc
+  storageClassName: efs-drupal-static
   capacity:
     storage: 1Gi
   volumeMode: Filesystem
@@ -479,7 +473,7 @@ spec:
   persistentVolumeReclaimPolicy: Delete
   csi:
     driver: efs.csi.aws.com
-    volumeHandle: ${EFS_FS_ID}::${EFS_AP_DRUPAL2_ID}
+    volumeHandle: ${EFS_FS_ID_DRUPAL}::${EFS_AP_ID_DRUPAL2}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -489,7 +483,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteMany
-  storageClassName: efs-static-sc
+  storageClassName: efs-drupal-static
   volumeName: efs-drupal2-pv
   resources:
     requests:

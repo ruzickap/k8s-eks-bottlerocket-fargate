@@ -394,7 +394,7 @@ and modify the
 
 ```bash
 helm repo add hashicorp https://helm.releases.hashicorp.com
-helm upgrade --install --version 0.13.0 --namespace vault --wait --wait-for-jobs --values - vault hashicorp/vault << EOF
+helm upgrade --install --version 0.13.0 --namespace vault --wait --values - vault hashicorp/vault << EOF
 injector:
   metrics:
     enabled: false

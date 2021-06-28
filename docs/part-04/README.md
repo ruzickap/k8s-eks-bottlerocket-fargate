@@ -14,7 +14,7 @@ Service account `external-dns` was created by `eksctl`.
 
 ```bash
 helm repo add jetstack https://charts.jetstack.io
-helm upgrade --install --version v1.4.0 --namespace cert-manager --wait --wait-for-jobs --values - cert-manager jetstack/cert-manager << EOF
+helm upgrade --install --version v1.4.0 --namespace cert-manager --wait --values - cert-manager jetstack/cert-manager << EOF
 installCRDs: true
 serviceAccount:
   create: false
@@ -26,10 +26,10 @@ securityContext:
 prometheus:
   servicemonitor:
     enabled: true
-# webhook:
-#   # Needed for calico
-#   securePort: 10251
-#   hostNetwork: true
+webhook:
+  # Needed for calico
+  securePort: 10251
+  hostNetwork: true
 EOF
 ```
 
@@ -140,7 +140,7 @@ and modify the
 
 ```bash
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-helm upgrade --install --version 3.33.0 --namespace ingress-nginx --create-namespace --wait --wait-for-jobs --values - ingress-nginx ingress-nginx/ingress-nginx << EOF
+helm upgrade --install --version 3.33.0 --namespace ingress-nginx --create-namespace --wait --values - ingress-nginx ingress-nginx/ingress-nginx << EOF
 controller:
   # Needed for calico
   hostNetwork: true

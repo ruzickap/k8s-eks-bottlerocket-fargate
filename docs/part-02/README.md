@@ -148,7 +148,7 @@ Resources:
       VpcId:
         Fn::ImportValue:
           Fn::Sub: "eksctl-${ClusterName}-cluster::VPC"
-      GroupName: !Sub "${ClusterName}-efs-sg-groupname"
+      GroupName: !Sub "${ClusterName}-efs-sg"
       GroupDescription: Security group for mount target
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -158,20 +158,20 @@ Resources:
             Ref: VpcIPCidr
       Tags:
         - Key: Name
-          Value: !Sub "${ClusterName}-efs-sg-tagname"
-  FileSystem:
+          Value: !Sub "${ClusterName}-efs-sg"
+  FileSystemDrupal:
     Type: AWS::EFS::FileSystem
     Properties:
       Encrypted: true
       FileSystemTags:
       - Key: Name
-        Value: !Sub "${ClusterName}-efs"
+        Value: !Sub "${ClusterName}-efs-drupal"
       KmsKeyId: !Ref KmsKeyId
   MountTargetAZ1:
     Type: AWS::EFS::MountTarget
     Properties:
       FileSystemId:
-        Ref: FileSystem
+        Ref: FileSystemDrupal
       SubnetId:
         Fn::Select:
         - 0
@@ -184,7 +184,7 @@ Resources:
     Type: AWS::EFS::MountTarget
     Properties:
       FileSystemId:
-        Ref: FileSystem
+        Ref: FileSystemDrupal
       SubnetId:
         Fn::Select:
         - 1
@@ -193,10 +193,10 @@ Resources:
           - Fn::ImportValue: !Sub "eksctl-${ClusterName}-cluster::SubnetsPrivate"
       SecurityGroups:
       - Ref: MountTargetSecurityGroup
-  AccessPointDrupal:
+  AccessPointDrupal1:
     Type: AWS::EFS::AccessPoint
     Properties:
-      FileSystemId: !Ref FileSystem
+      FileSystemId: !Ref FileSystemDrupal
       # Set proper uid/gid: https://github.com/bitnami/bitnami-docker-drupal/blob/02f7e41c88eee96feb90c8b7845ee7aeb5927c38/9/debian-10/Dockerfile#L49
       PosixUser:
         Uid: "1001"
@@ -206,14 +206,14 @@ Resources:
           OwnerGid: "1001"
           OwnerUid: "1001"
           Permissions: "700"
-        Path: "/drupal"
+        Path: "/drupal1"
       AccessPointTags:
         - Key: Name
-          Value: !Sub "${ClusterName}-drupal-efs-ap"
+          Value: !Sub "${ClusterName}-drupal1-ap"
   AccessPointDrupal2:
     Type: AWS::EFS::AccessPoint
     Properties:
-      FileSystemId: !Ref FileSystem
+      FileSystemId: !Ref FileSystemDrupal
       # Set proper uid/gid: https://github.com/bitnami/bitnami-docker-drupal/blob/02f7e41c88eee96feb90c8b7845ee7aeb5927c38/9/debian-10/Dockerfile#L49
       PosixUser:
         Uid: "1001"
@@ -226,34 +226,157 @@ Resources:
         Path: "/drupal2"
       AccessPointTags:
         - Key: Name
-          Value: !Sub "${ClusterName}-drupal2-efs-ap"
+          Value: !Sub "${ClusterName}-drupal2-ap"
+  FileSystemMyuser1:
+    Type: AWS::EFS::FileSystem
+    Properties:
+      Encrypted: true
+      FileSystemTags:
+      - Key: Name
+        Value: !Sub "${ClusterName}-myuser1"
+      KmsKeyId: !Ref KmsKeyId
+  MountTargetAZ1Myuser1:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId:
+        Ref: FileSystemMyuser1
+      SubnetId:
+        Fn::Select:
+        - 0
+        - Fn::Split:
+          - ","
+          - Fn::ImportValue: !Sub "eksctl-${ClusterName}-cluster::SubnetsPrivate"
+      SecurityGroups:
+      - Ref: MountTargetSecurityGroup
+  MountTargetAZ2Myuser1:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId:
+        Ref: FileSystemMyuser1
+      SubnetId:
+        Fn::Select:
+        - 1
+        - Fn::Split:
+          - ","
+          - Fn::ImportValue: !Sub "eksctl-${ClusterName}-cluster::SubnetsPrivate"
+      SecurityGroups:
+      - Ref: MountTargetSecurityGroup
+  AccessPointMyuser1:
+    Type: AWS::EFS::AccessPoint
+    Properties:
+      FileSystemId: !Ref FileSystemMyuser1
+      # Set proper uid/gid: https://github.com/bitnami/bitnami-docker-drupal/blob/02f7e41c88eee96feb90c8b7845ee7aeb5927c38/9/debian-10/Dockerfile#L49
+      RootDirectory:
+        Path: "/myuser1"
+      AccessPointTags:
+        - Key: Name
+          Value: !Sub "${ClusterName}-myuser1"
+  FileSystemMyuser2:
+    Type: AWS::EFS::FileSystem
+    Properties:
+      Encrypted: true
+      FileSystemTags:
+      - Key: Name
+        Value: !Sub "${ClusterName}-Myuser2"
+      KmsKeyId: !Ref KmsKeyId
+  MountTargetAZ1Myuser2:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId:
+        Ref: FileSystemMyuser2
+      SubnetId:
+        Fn::Select:
+        - 0
+        - Fn::Split:
+          - ","
+          - Fn::ImportValue: !Sub "eksctl-${ClusterName}-cluster::SubnetsPrivate"
+      SecurityGroups:
+      - Ref: MountTargetSecurityGroup
+  MountTargetAZ2Myuser2:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId:
+        Ref: FileSystemMyuser2
+      SubnetId:
+        Fn::Select:
+        - 1
+        - Fn::Split:
+          - ","
+          - Fn::ImportValue: !Sub "eksctl-${ClusterName}-cluster::SubnetsPrivate"
+      SecurityGroups:
+      - Ref: MountTargetSecurityGroup
+  AccessPointMyuser2:
+    Type: AWS::EFS::AccessPoint
+    Properties:
+      FileSystemId: !Ref FileSystemMyuser2
+      # Set proper uid/gid: https://github.com/bitnami/bitnami-docker-drupal/blob/02f7e41c88eee96feb90c8b7845ee7aeb5927c38/9/debian-10/Dockerfile#L49
+      RootDirectory:
+        Path: "/myuser2"
+      AccessPointTags:
+        - Key: Name
+          Value: !Sub "${ClusterName}-myuser2"
 Outputs:
-  FileSystemId:
+  FileSystemIdDrupal:
     Description: Id of Elastic File System
     Value:
-      Ref: FileSystem
+      Ref: FileSystemDrupal
     Export:
       Name:
-        Fn::Sub: "${AWS::StackName}-FileSystemId"
-  AccessPointDrupal:
-    Description: EFS AccessPoint ID for Drupal
+        Fn::Sub: "${AWS::StackName}-FileSystemIdDrupal"
+  AccessPointIdDrupal1:
+    Description: EFS AccessPoint ID for Drupal1
     Value:
-      Ref: AccessPointDrupal
+      Ref: AccessPointDrupal1
     Export:
       Name:
-        Fn::Sub: "${AWS::StackName}-AccessPointDrupal"
-  AccessPointDrupal2:
+        Fn::Sub: "${AWS::StackName}-AccessPointIdDrupal1"
+  AccessPointIdDrupal2:
     Description: EFS AccessPoint2 ID for Drupal2
     Value:
       Ref: AccessPointDrupal2
     Export:
       Name:
-        Fn::Sub: "${AWS::StackName}-AccessPointDrupal2"
+        Fn::Sub: "${AWS::StackName}-AccessPointIdDrupal2"
+  FileSystemIdMyuser1:
+    Description: Id of Elastic File System Myuser1
+    Value:
+      Ref: FileSystemMyuser1
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-FileSystemIdMyuser1"
+  AccessPointIdMyuser1:
+    Description: EFS AccessPoint2 ID for Myuser1
+    Value:
+      Ref: AccessPointMyuser1
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-AccessPointIdMyuser1"
+  FileSystemIdMyuser2:
+    Description: ID of Elastic File System Myuser2
+    Value:
+      Ref: FileSystemMyuser2
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-FileSystemIdMyuser2"
+  AccessPointIdMyuser2:
+    Description: EFS AccessPoint2 ID for Myuser2
+    Value:
+      Ref: AccessPointMyuser2
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-AccessPointIdMyuser2"
 EOF
 
 eval aws cloudformation deploy --stack-name "${CLUSTER_NAME}-efs" --parameter-overrides "ClusterName=${CLUSTER_NAME} KmsKeyId=${KMS_KEY_ID} VpcIPCidr=${EKS_VPC_CIDR}" --template-file "tmp/${CLUSTER_FQDN}/cf_efs.yml" --tags "${TAGS}"
 
-EFS_FS_ID=$(aws efs describe-file-systems --query "FileSystems[?Name==\`${CLUSTER_NAME}-efs\`].[FileSystemId]" --output text)
+AWS_CLOUDFORMATION_DETAILS=$(aws cloudformation describe-stacks --stack-name "${CLUSTER_NAME}-efs")
+EFS_FS_ID_DRUPAL=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"FileSystemIdDrupal\") .OutputValue")
+EFS_AP_ID_DRUPAL1=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"AccessPointIdDrupal1\") .OutputValue")
+EFS_AP_ID_DRUPAL2=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"AccessPointIdDrupal2\") .OutputValue")
+EFS_FS_ID_MYUSER1=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"FileSystemIdMyuser1\") .OutputValue")
+EFS_AP_ID_MYUSER1=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"AccessPointIdMyuser1\") .OutputValue")
+EFS_FS_ID_MYUSER2=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"FileSystemIdMyuser2\") .OutputValue")
+EFS_AP_ID_MYUSER2=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"AccessPointIdMyuser2\") .OutputValue")
 ```
 
 Install [Amazon EFS CSI Driver](https://github.com/kubernetes-sigs/aws-efs-csi-driver),
@@ -273,27 +396,78 @@ controller:
   serviceAccount:
     create: false
 storageClasses:
-- name: efs-dynamic-sc
+- name: efs-drupal-dynamic
   mountOptions:
   - tls
   parameters:
     provisioningMode: efs-ap
-    fileSystemId: "${EFS_FS_ID}"
+    fileSystemId: "${EFS_FS_ID_DRUPAL}"
     directoryPerms: "700"
     basePath: "/dynamic_provisioning"
+  reclaimPolicy: Delete
+- name: efs-drupal-static
+  mountOptions:
+  - tls
+  parameters:
+    provisioningMode: efs-ap
+    fileSystemId: "${EFS_FS_ID_DRUPAL}"
+    directoryPerms: "700"
+  reclaimPolicy: Delete
+- name: efs-myuser1
+  mountOptions:
+  - tls
+  parameters:
+    provisioningMode: efs-ap
+    fileSystemId: "${EFS_FS_ID_MYUSER1}"
+    directoryPerms: "700"
+  reclaimPolicy: Delete
+- name: efs-myuser2
+  mountOptions:
+  - tls
+  parameters:
+    provisioningMode: efs-ap
+    fileSystemId: "${EFS_FS_ID_MYUSER2}"
+    directoryPerms: "700"
   reclaimPolicy: Delete
 EOF
 ```
 
-Create storage class for static EFS:
+Create `PersistentVolume`s which can be consumed by users (`myuser1`, `myuser2`)
+using `PersistentVolumeClaim`:
 
 ```bash
 kubectl apply -f - << EOF
-kind: StorageClass
-apiVersion: storage.k8s.io/v1
+apiVersion: v1
+kind: PersistentVolume
 metadata:
-  name: efs-static-sc
-provisioner: efs.csi.aws.com
+  name: efs-myuser1
+spec:
+  storageClassName: efs-myuser1
+  capacity:
+    storage: 1Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Delete
+  csi:
+    driver: efs.csi.aws.com
+    volumeHandle: ${EFS_FS_ID_MYUSER1}::${EFS_AP_ID_MYUSER1}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: efs-myuser2
+spec:
+  storageClassName: efs-myuser2
+  capacity:
+    storage: 1Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Delete
+  csi:
+    driver: efs.csi.aws.com
+    volumeHandle: ${EFS_FS_ID_MYUSER2}::${EFS_AP_ID_MYUSER2}
 EOF
 ```
 
@@ -487,105 +661,65 @@ Output:
 
 Update the aws-auth ConfigMap to allow our IAM roles:
 
-```shell
-eksctl create iamidentitymapping --cluster="${CLUSTER_NAME}" --arn="${MYUSER1_ROLE_ARN}" --username dev-user
+```bash
+eksctl get iamidentitymapping --cluster="${CLUSTER_NAME}" --arn="${MYUSER1_ROLE_ARN}" || eksctl create iamidentitymapping --cluster="${CLUSTER_NAME}" --arn="${MYUSER1_ROLE_ARN}" --username myuser1 --group capsule.clastix.io
+eksctl get iamidentitymapping --cluster="${CLUSTER_NAME}" --arn="${MYUSER2_ROLE_ARN}" || eksctl create iamidentitymapping --cluster="${CLUSTER_NAME}" --arn="${MYUSER2_ROLE_ARN}" --username myuser2 --group capsule.clastix.io
 eksctl get iamidentitymapping --cluster="${CLUSTER_NAME}"
 ```
 
 Output:
 
 ```text
-2021-06-23 23:17:04 [ℹ]  eksctl version 0.54.0
-2021-06-23 23:17:04 [ℹ]  using region eu-west-1
-2021-06-23 23:17:05 [ℹ]  adding identity "arn:aws:iam::7xxxxxxxxxx7:role/myuser1-kube1" to auth ConfigMap
-2021-06-23 23:17:06 [ℹ]  eksctl version 0.54.0
-2021-06-23 23:17:06 [ℹ]  using region eu-west-1
 ARN                       USERNAME        GROUPS
-arn:aws:iam::7xxxxxxxxxx7:role/Axx-xxxx-xxxxN             admin         system:masters
-arn:aws:iam::7xxxxxxxxxx7:role/eksctl-kube1-cluster-FargatePodExecutionRole-1FSA35DMJOZBB system:node:{{SessionName}}   system:bootstrappers,system:nodes,system:node-proxier
-arn:aws:iam::7xxxxxxxxxx7:role/eksctl-kube1-nodegroup-managed-ng-NodeInstanceRole-1GSZHWOPAQAOM system:node:{{EC2PrivateDNSName}} system:bootstrappers,system:nodes
-arn:aws:iam::7xxxxxxxxxx7:role/myuser1-kube1              dev-user
-```
-
-Configuring access to development namespace:
-
-```shell
-kubectl get namespace development &> /dev/null || kubectl create namespace development
-kubectl apply -f - << EOF
-kind: Role
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: dev-role
-  namespace: development
-rules:
-  - apiGroups:
-      - ""
-      - "apps"
-      - "batch"
-      - "extensions"
-    resources:
-      - "configmaps"
-      - "cronjobs"
-      - "deployments"
-      - "events"
-      - "ingresses"
-      - "jobs"
-      - "pods"
-      - "pods/attach"
-      - "pods/exec"
-      - "pods/log"
-      - "pods/portforward"
-      - "secrets"
-      - "services"
-    verbs:
-      - "create"
-      - "delete"
-      - "describe"
-      - "get"
-      - "list"
-      - "patch"
-      - "update"
----
-kind: RoleBinding
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: dev-role-binding
-  namespace: development
-subjects:
-- kind: User
-  name: dev-user
-roleRef:
-  kind: Role
-  name: dev-role
-  apiGroup: rbac.authorization.k8s.io
-EOF
+arn:aws:iam::7xxxxxxxxxxxx7:role/AVM-OIDC-ADMIN             admin         system:masters
+arn:aws:iam::7xxxxxxxxxxxx7:role/eksctl-kube1-cluster-FargatePodExecutionRole-V6D382FKHGRL  system:node:{{SessionName}}   system:bootstrappers,system:nodes,system:node-proxier
+arn:aws:iam::7xxxxxxxxxxxx7:role/eksctl-kube1-nodegroup-managed-ng-NodeInstanceRole-BUBT3FN0WIJS  system:node:{{EC2PrivateDNSName}} system:bootstrappers,system:nodes
+arn:aws:iam::7xxxxxxxxxxxx7:role/myuser1-kube1              myuser1         capsule.clastix.io
+arn:aws:iam::7xxxxxxxxxxxx7:role/myuser2-kube1              myuser2         capsule.clastix.io
 ```
 
 Create `config` and `credentials` files and set the environment variables
 for `awscli`:
 
-```shell
+```bash
 cat > "tmp/${CLUSTER_FQDN}/aws_config" << EOF
-[profile dev]
+[profile myuser1]
 role_arn=${MYUSER1_ROLE_ARN}
-source_profile=eksDev
+source_profile=myuser1
+
+[profile myuser2]
+role_arn=${MYUSER2_ROLE_ARN}
+source_profile=myuser2
 EOF
 
 cat > "tmp/${CLUSTER_FQDN}/aws_credentials" << EOF
-[eksDev]
+[myuser1]
 aws_access_key_id=${MYUSER1_USER_ACCESSKEYMYUSER}
 aws_secret_access_key=${MYUSER1_USER_SECRETACCESSKEY}
+
+[myuser2]
+aws_access_key_id=${MYUSER2_USER_ACCESSKEYMYUSER}
+aws_secret_access_key=${MYUSER2_USER_SECRETACCESSKEY}
 EOF
 ```
 
 Extract `kubeconfig` and make it usable for dev profile:
 
-```shell
-if [[ ! -f "tmp/${CLUSTER_FQDN}/kubeconfig-dev-${CLUSTER_NAME}.conf" ]]; then
-  eksctl utils write-kubeconfig --cluster="${CLUSTER_NAME}" --kubeconfig="tmp/${CLUSTER_FQDN}/kubeconfig-dev-${CLUSTER_NAME}.conf"
-  cat >> "tmp/${CLUSTER_FQDN}/kubeconfig-dev-${CLUSTER_NAME}.conf" << EOF
+```bash
+if [[ ! -f "tmp/${CLUSTER_FQDN}/kubeconfig-myuser1.conf" ]]; then
+  eksctl utils write-kubeconfig --cluster="${CLUSTER_NAME}" --kubeconfig="tmp/${CLUSTER_FQDN}/kubeconfig-myuser1.conf"
+  cp -f "tmp/${CLUSTER_FQDN}/kubeconfig-myuser1.conf" "tmp/${CLUSTER_FQDN}/kubeconfig-myuser2.conf"
+  cat >> "tmp/${CLUSTER_FQDN}/kubeconfig-myuser1.conf" << EOF
       - name: AWS_PROFILE
-        value: dev
+        value: myuser1
+      - name: AWS_CONFIG_FILE
+        value: ${PWD}/tmp/${CLUSTER_FQDN}/aws_config
+      - name: AWS_SHARED_CREDENTIALS_FILE
+        value: ${PWD}/tmp/${CLUSTER_FQDN}/aws_credentials
+EOF
+  cat >> "tmp/${CLUSTER_FQDN}/kubeconfig-myuser2.conf" << EOF
+      - name: AWS_PROFILE
+        value: myuser2
       - name: AWS_CONFIG_FILE
         value: ${PWD}/tmp/${CLUSTER_FQDN}/aws_config
       - name: AWS_SHARED_CREDENTIALS_FILE
@@ -594,66 +728,170 @@ EOF
 fi
 ```
 
-Output:
-
-```text
-2021-06-23 23:17:10 [ℹ]  eksctl version 0.54.0
-2021-06-23 23:17:10 [ℹ]  using region eu-west-1
-2021-06-23 23:17:10 [✔]  saved kubeconfig as "tmp/kube1.k8s.mylabs.dev/kubeconfig-dev-kube1.conf"
-```
-
 Set the AWS variables and verify the identity:
 
-```shell
-(
+```bash
+env -i bash << EOF
 export AWS_CONFIG_FILE="tmp/${CLUSTER_FQDN}/aws_config"
 export AWS_SHARED_CREDENTIALS_FILE="tmp/${CLUSTER_FQDN}/aws_credentials"
-aws sts get-caller-identity --profile=dev | jq
-)
+export PATH="/usr/local/bin:\${PATH}"
+aws sts get-caller-identity --profile=myuser1 | jq
+aws sts get-caller-identity --profile=myuser2 | jq
+EOF
 ```
 
 Output:
 
 ```json
 {
-    "UserId": "Axxxxxxxxxxxxxxxxxxxx7:botocore-session-1624478440",
-    "Account": "7xxxxxxxxxxx7",
-    "Arn": "arn:aws:sts::7xxxxxxxxxxx7:assumed-role/myuser1-kube1/botocore-session-1624478440"
+  "UserId": "AROA2TXJQ2JHRZM5JQPOL:botocore-session-1624817597",
+  "Account": "7xxxxxxxxxxxx7",
+  "Arn": "arn:aws:sts::7xxxxxxxxxxxx7:assumed-role/myuser1-kube1/botocore-session-1624817597"
+}
+{
+  "UserId": "AROA2TXJQ2JH4OJAVYJD5:botocore-session-1624817602",
+  "Account": "7xxxxxxxxxxxx7",
+  "Arn": "arn:aws:sts::7xxxxxxxxxxxx7:assumed-role/myuser2-kube1/botocore-session-1624817602"
 }
 ```
 
-```shell
-(
-unset AWS_ACCESS_KEY_ID
-unset AWS_SECRET_ACCESS_KEY
+## Capsule
 
-kubectl get pods -n kube-system --kubeconfig="tmp/${CLUSTER_FQDN}/kubeconfig-dev-${CLUSTER_NAME}.conf" || true
-kubectl get pods -n development --kubeconfig="tmp/${CLUSTER_FQDN}/kubeconfig-dev-${CLUSTER_NAME}.conf"
-kubectl run curl-test --namespace development --kubeconfig="tmp/${CLUSTER_FQDN}/kubeconfig-dev-${CLUSTER_NAME}.conf" --image=radial/busyboxplus:curl --rm -it -- ping -c 5 -w 50 www.google.com
-kubectl get pods -n development --kubeconfig="tmp/${CLUSTER_FQDN}/kubeconfig-dev-${CLUSTER_NAME}.conf"
-)
+Install Capsule
+[helm chart](https://github.com/clastix/capsule/tree/master/charts/capsule)
+and modify the
+[default values](https://github.com/clastix/capsule/blob/master/charts/capsule/values.yaml):
+
+```bash
+helm repo add clastix https://clastix.github.io/charts
+helm upgrade --install --version 0.0.19 --namespace capsule-system --create-namespace --wait --values - capsule clastix/capsule << EOF
+serviceMonitor:
+  enabled: true
+EOF
+sleep 20
+```
+
+```bash
+kubectl apply -f - << EOF
+apiVersion: capsule.clastix.io/v1alpha1
+kind: Tenant
+metadata:
+  name: myuser1
+  namespace: capsule-system
+spec:
+  namespaceQuota: 1
+  owner:
+    kind: User
+    name: myuser1
+  limitRanges:
+    -
+      limits:
+        -
+          max:
+            storage: 10Gi
+          min:
+            storage: 1Gi
+          type: PersistentVolumeClaim
+  storageClasses:
+    allowed:
+      - efs-myuser1
+---
+apiVersion: capsule.clastix.io/v1alpha1
+kind: Tenant
+metadata:
+  name: myuser2
+  namespace: capsule-system
+spec:
+  namespaceQuota: 1
+  owner:
+    kind: User
+    name: myuser2
+  limitRanges:
+    -
+      limits:
+        -
+          max:
+            storage: 10Gi
+          min:
+            storage: 1Gi
+          type: PersistentVolumeClaim
+  storageClasses:
+    allowed:
+      - efs-myuser2
+EOF
+```
+
+```bash
+env -i bash << EOF2
+set -x
+export PATH="/usr/local/bin:\${PATH}"
+export KUBECONFIG="tmp/${CLUSTER_FQDN}/kubeconfig-myuser1.conf"
+
+kubectl create namespace myuser1  || true
+kubectl get pods -n myuser1
+kubectl get pods -n default  || true
+kubectl get namespace  || true
+kubectl get storageclass  || true
+
+# This is working fine
+kubectl apply -f - << EOF
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: myuser1-efs-pvc
+  namespace: myuser1
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: efs-myuser1
+  volumeName: efs-myuser1
+  resources:
+    requests:
+      storage: 1Gi
+EOF
+
+# This will not work because of StorageClass efs-myuser2 can not be used by this tenant
+kubectl apply -f - << EOF || true
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: myuser1-2-efs-pvc
+  namespace: myuser1
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: efs-myuser2
+  volumeName: efs-myuser2
+  resources:
+    requests:
+      storage: 1Gi
+EOF
+EOF2
 ```
 
 Output:
 
 ```text
-Error from server (Forbidden): pods is forbidden: User "dev-user" cannot list resource "pods" in API group "" in the namespace "kube-system"
-No resources found in development namespace.
-If you don't see a command prompt, try pressing enter.
-64 bytes from 74.125.193.103: seq=2 ttl=104 time=1.424 ms
-64 bytes from 74.125.193.103: seq=3 ttl=104 time=1.440 ms
-64 bytes from 74.125.193.103: seq=4 ttl=104 time=1.424 ms
-
---- www.google.com ping statistics ---
-5 packets transmitted, 5 packets received, 0% packet loss
-round-trip min/avg/max = 1.424/1.442/1.462 ms
-Session ended, resume using 'kubectl attach curl-test -c curl-test -i -t' command when the pod is running
-pod "curl-test" deleted
-NAME        READY   STATUS        RESTARTS   AGE
-curl-test   0/1     Terminating   0          8s
++ export PATH=/usr/local/bin:/usr/gnu/bin:/usr/local/bin:/bin:/usr/bin:.
++ PATH=/usr/local/bin:/usr/gnu/bin:/usr/local/bin:/bin:/usr/bin:.
++ export KUBECONFIG=tmp/kube1.k8s.mylabs.dev/kubeconfig-myuser1.conf
++ KUBECONFIG=tmp/kube1.k8s.mylabs.dev/kubeconfig-myuser1.conf
++ kubectl create namespace myuser1
+namespace/myuser1 created
++ kubectl get pods -n myuser1
+No resources found in myuser1 namespace.
++ kubectl get pods -n default
+Error from server (Forbidden): pods is forbidden: User "myuser1" cannot list resource "pods" in API group "" in the namespace "default"
++ true
++ kubectl get namespace
+Error from server (Forbidden): namespaces is forbidden: User "myuser1" cannot list resource "namespaces" in API group "" at the cluster scope
++ true
++ kubectl get storageclass
+Error from server (Forbidden): storageclasses.storage.k8s.io is forbidden: User "myuser1" cannot list resource "storageclasses" in API group "storage.k8s.io" at the cluster scope
++ true
++ kubectl apply -f -
+persistentvolumeclaim/myuser1-efs-pvc created
++ kubectl apply -f -
+Error from server: error when creating "STDIN": admission webhook "pvc.capsule.clastix.io" denied the request: Storage Class efs-myuser2 is forbidden for the current Tenant, one of the following (efs-myuser1)
++ true
 ```
-
-The output above is showing, that `dev-user` represented by
-`tmp/${CLUSTER_FQDN}/kubeconfig-dev-${CLUSTER_NAME}.conf` and
-`tmp/${CLUSTER_FQDN}/{aws_config,aws_credentials}` can only access the
-`development` namespace and not the `kube-system`.

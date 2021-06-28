@@ -162,10 +162,10 @@ fi
 Install [calicoctl](https://docs.projectcalico.org/getting-started/clis/calicoctl/install):
 
 ```bash
-# if [[ ! -x /usr/local/bin/calicoctl ]]; then
-#   sudo curl -s -Lo /usr/local/bin/calicoctl https://github.com/projectcalico/calicoctl/releases/download/v3.18.3/calicoctl
-#   sudo chmod a+x /usr/local/bin/calicoctl
-# fi
+if [[ ! -x /usr/local/bin/calicoctl ]]; then
+  sudo curl -s -Lo /usr/local/bin/calicoctl https://github.com/projectcalico/calicoctl/releases/download/v3.18.4/calicoctl
+  sudo chmod a+x /usr/local/bin/calicoctl
+fi
 ```
 
 Install [SOPS: Secrets OPerationS](https://github.com/mozilla/sops):
@@ -478,28 +478,28 @@ Resources:
           Principal:
             AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
           Action: sts:AssumeRole
-  UserMyUser1:
+  UserMyUser2:
     Type: AWS::IAM::User
     Properties:
-      UserName: !Sub "myuser1-${ClusterName}"
+      UserName: !Sub "myuser2-${ClusterName}"
       Policies:
-      - PolicyName: !Sub "myuser1-${ClusterName}-policy"
+      - PolicyName: !Sub "myuser2-${ClusterName}-policy"
         PolicyDocument:
           Version: "2012-10-17"
           Statement:
           - Sid: AllowAssumeOrganizationAccountRole
             Effect: Allow
             Action: sts:AssumeRole
-            Resource: !GetAtt RoleMyUser1.Arn
-  AccessKeyMyUser1:
+            Resource: !GetAtt RoleMyUser2.Arn
+  AccessKeyMyUser2:
     Type: AWS::IAM::AccessKey
     Properties:
-      UserName: !Ref UserMyUser1
-  RoleMyUser1:
+      UserName: !Ref UserMyUser2
+  RoleMyUser2:
     Type: AWS::IAM::Role
     Properties:
-      Description: !Sub "IAM role for the myuser1-${ClusterName} user"
-      RoleName: !Sub "myuser1-${ClusterName}"
+      Description: !Sub "IAM role for the myuser2-${ClusterName} user"
+      RoleName: !Sub "myuser2-${ClusterName}"
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -556,6 +556,24 @@ Outputs:
     Export:
       Name:
         Fn::Sub: "${AWS::StackName}-SecretAccessKeyMyUser1"
+  RoleMyUser2Arn:
+    Description: The ARN of the MyUser2 IAM Role
+    Value: !GetAtt RoleMyUser2.Arn
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-RoleMyUser2Arn"
+  AccessKeyMyUser2:
+    Description: The AccessKey for MyUser2 user
+    Value: !Ref AccessKeyMyUser2
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-AccessKeyMyUser2"
+  SecretAccessKeyMyUser2:
+    Description: The SecretAccessKey for MyUser2 user
+    Value: !GetAtt AccessKeyMyUser2.SecretAccessKey
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-SecretAccessKeyMyUser2"
 EOF
 
 eval aws cloudformation deploy --capabilities CAPABILITY_NAMED_IAM \
@@ -570,6 +588,9 @@ S3_POLICY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs
 MYUSER1_ROLE_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"RoleMyUser1Arn\") .OutputValue")
 MYUSER1_USER_ACCESSKEYMYUSER=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"AccessKeyMyUser1\") .OutputValue")
 MYUSER1_USER_SECRETACCESSKEY=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"SecretAccessKeyMyUser1\") .OutputValue")
+MYUSER2_ROLE_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"RoleMyUser2Arn\") .OutputValue")
+MYUSER2_USER_ACCESSKEYMYUSER=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"AccessKeyMyUser2\") .OutputValue")
+MYUSER2_USER_SECRETACCESSKEY=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"SecretAccessKeyMyUser2\") .OutputValue")
 ```
 
 Change TTL=60 of SOA + NS records for new domain

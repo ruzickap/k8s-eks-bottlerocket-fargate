@@ -19,13 +19,24 @@ export MY_GITHUB_ORG_NAME="ruzickap-org"
 export KUBECONFIG="${PWD}/kubeconfig-test-${CLUSTER_NAME}.conf"
 
 export MY_PASSWORD="passwd"
+export MYUSER1_ROLE_ARN="test"
+export MYUSER2_ROLE_ARN="test"
+export MYUSER1_USER_ACCESSKEYMYUSER="test"
+export MYUSER2_USER_ACCESSKEYMYUSER="test"
+export MYUSER1_USER_SECRETACCESSKEY="test"
+export MYUSER2_USER_SECRETACCESSKEY="test"
 export AQUA_ENFORCER_TOKEN="token"
 export AQUA_REGISTRY_PASSWORD="passwd"
 export AQUA_REGISTRY_USERNAME="user"
 export AWS_ACCESS_KEY_ID="test"
 export AWS_SECRET_ACCESS_KEY="test"
-export EFS_AP_ID="123"
-export EFS_FS_ID="123"
+export EFS_FS_ID_DRUPAL="123"
+export EFS_AP_ID_DRUPAL1="123"
+export EFS_AP_ID_DRUPAL2="123"
+export EFS_FS_ID_MYUSER1="123"
+export EFS_AP_ID_MYUSER1="123"
+export EFS_FS_ID_MYUSER2="123"
+export EFS_AP_ID_MYUSER2="123"
 export EKSCTL_IAM_SERVICE_ACCOUNTS='[{"metadata":{"name":"ebs-snapshot-controller"},"status":{"roleARN":"arn2"}},{"metadata":{"name":"ebs-csi-controller-sa"},"status":{"roleARN":"arn1"}}]'
 export RDS_DB_HOST="testdomain123.com"
 export SPLUNK_HOST="test"
@@ -144,7 +155,7 @@ sed docs/part-{02..08}/README.md \
   -e "s/ --wait / --wait --timeout 30m /" \
   -e "s/.*aws /# &/" \
   -e "s/.*eksctl /# &/" \
-  -e "/kubectl delete CSIDriver efs.csi.aws.com/d" \
+  -e "s/.*AWS_CLOUDFORMATION_DETAILS.*/# &/" \
   -e "s/^kubectl patch storageclass gp3/# &/" \
   -e "s/vault auth list/echo github/ ; s/^vault /# &/ ; s/.*\$(vault /# &/ ; s/.*kubectl exec -n vault vault-0/# &/ ; s/.*VAULT_ROOT_TOKEN/# &/" \
   -e "s/+ttlid a \".*\${CLUSTER_FQDN}\"/+ttlid a google.com/" \
@@ -169,6 +180,7 @@ sed \
 
 test -d "tmp/${CLUSTER_FQDN}/" && rm -rf "tmp/${CLUSTER_FQDN}/"
 mkdir -vp "tmp/${CLUSTER_FQDN}"
+touch tmp/${CLUSTER_FQDN}/kubeconfig-myuser1.conf
 
 # shellcheck disable=SC1091
 source /tmp/README-test.sh
