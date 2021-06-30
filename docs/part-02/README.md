@@ -267,6 +267,10 @@ Resources:
       FileSystemId: !Ref FileSystemMyuser1
       # Set proper uid/gid: https://github.com/bitnami/bitnami-docker-drupal/blob/02f7e41c88eee96feb90c8b7845ee7aeb5927c38/9/debian-10/Dockerfile#L49
       RootDirectory:
+        CreationInfo:
+          OwnerGid: "1000"
+          OwnerUid: "1000"
+          Permissions: "700"
         Path: "/myuser1"
       AccessPointTags:
         - Key: Name
@@ -277,7 +281,7 @@ Resources:
       Encrypted: true
       FileSystemTags:
       - Key: Name
-        Value: !Sub "${ClusterName}-Myuser2"
+        Value: !Sub "${ClusterName}-myuser2"
       KmsKeyId: !Ref KmsKeyId
   MountTargetAZ1Myuser2:
     Type: AWS::EFS::MountTarget
@@ -311,6 +315,10 @@ Resources:
       FileSystemId: !Ref FileSystemMyuser2
       # Set proper uid/gid: https://github.com/bitnami/bitnami-docker-drupal/blob/02f7e41c88eee96feb90c8b7845ee7aeb5927c38/9/debian-10/Dockerfile#L49
       RootDirectory:
+        CreationInfo:
+          OwnerGid: "1000"
+          OwnerUid: "1000"
+          Permissions: "700"
         Path: "/myuser2"
       AccessPointTags:
         - Key: Name
@@ -397,8 +405,6 @@ controller:
     create: false
 storageClasses:
 - name: efs-drupal-dynamic
-  mountOptions:
-  - tls
   parameters:
     provisioningMode: efs-ap
     fileSystemId: "${EFS_FS_ID_DRUPAL}"
@@ -406,24 +412,18 @@ storageClasses:
     basePath: "/dynamic_provisioning"
   reclaimPolicy: Delete
 - name: efs-drupal-static
-  mountOptions:
-  - tls
   parameters:
     provisioningMode: efs-ap
     fileSystemId: "${EFS_FS_ID_DRUPAL}"
     directoryPerms: "700"
   reclaimPolicy: Delete
-- name: efs-myuser1
-  mountOptions:
-  - tls
+- name: efs-myuser1-sc
   parameters:
     provisioningMode: efs-ap
     fileSystemId: "${EFS_FS_ID_MYUSER1}"
     directoryPerms: "700"
   reclaimPolicy: Delete
-- name: efs-myuser2
-  mountOptions:
-  - tls
+- name: efs-myuser2-sc
   parameters:
     provisioningMode: efs-ap
     fileSystemId: "${EFS_FS_ID_MYUSER2}"
@@ -440,9 +440,9 @@ kubectl apply -f - << EOF
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: efs-myuser1
+  name: efs-myuser1-pv
 spec:
-  storageClassName: efs-myuser1
+  storageClassName: efs-myuser1-sc
   capacity:
     storage: 1Gi
   volumeMode: Filesystem
@@ -456,9 +456,9 @@ spec:
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: efs-myuser2
+  name: efs-myuser2-pv
 spec:
-  storageClassName: efs-myuser2
+  storageClassName: efs-myuser2-sc
   capacity:
     storage: 1Gi
   volumeMode: Filesystem
@@ -762,16 +762,19 @@ Install Capsule
 and modify the
 [default values](https://github.com/clastix/capsule/blob/master/charts/capsule/values.yaml):
 
-```bash
+```shell
 helm repo add clastix https://clastix.github.io/charts
 helm upgrade --install --version 0.0.19 --namespace capsule-system --create-namespace --wait --values - capsule clastix/capsule << EOF
 serviceMonitor:
   enabled: true
+# Needed for calico
+manager:
+  hostNetwork: true
 EOF
-sleep 20
+kubectl wait --namespace capsule-system --for=condition=Ready --selector=app.kubernetes.io/name=capsule pod
 ```
 
-```bash
+```shell
 kubectl apply -f - << EOF
 apiVersion: capsule.clastix.io/v1alpha1
 kind: Tenant
@@ -794,7 +797,7 @@ spec:
           type: PersistentVolumeClaim
   storageClasses:
     allowed:
-      - efs-myuser1
+      - efs-myuser1-sc
 ---
 apiVersion: capsule.clastix.io/v1alpha1
 kind: Tenant
@@ -817,37 +820,64 @@ spec:
           type: PersistentVolumeClaim
   storageClasses:
     allowed:
-      - efs-myuser2
+      - efs-myuser2-sc
 EOF
 ```
 
-```bash
+```shell
 env -i bash << EOF2
 set -x
 export PATH="/usr/local/bin:\${PATH}"
 export KUBECONFIG="tmp/${CLUSTER_FQDN}/kubeconfig-myuser1.conf"
 
-kubectl create namespace myuser1  || true
+kubectl create namespace myuser1 || true
 kubectl get pods -n myuser1
-kubectl get pods -n default  || true
-kubectl get namespace  || true
-kubectl get storageclass  || true
+kubectl get pods -n default || true
+kubectl get namespace || true
+kubectl get storageclass || true
 
 # This is working fine
 kubectl apply -f - << EOF
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: myuser1-efs-pvc
+  name: efs-myuser1-pvc
   namespace: myuser1
 spec:
   accessModes:
     - ReadWriteMany
-  storageClassName: efs-myuser1
-  volumeName: efs-myuser1
+  storageClassName: efs-myuser1-sc
+  volumeName: efs-myuser1-pv
   resources:
     requests:
       storage: 1Gi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myuser1-pod
+  namespace: myuser1
+spec:
+  volumes:
+    - name: efs-myuser1-storage
+      persistentVolumeClaim:
+        claimName: efs-myuser1-pvc
+  containers:
+    - name: myuser1-container
+      image: alpine
+      command: ["dd"]
+      args: ["if=/dev/zero", "of=/mnt/myuser1-file", "bs=1M", "count=10"]
+      resources:
+        limits:
+          cpu: "70m"
+          memory: "50Mi"
+        requests:
+          cpu: "50m"
+          memory: "25Mi"
+      volumeMounts:
+        - mountPath: "/mnt"
+          name: efs-myuser1-storage
+  restartPolicy: Never
 EOF
 
 # This will not work because of StorageClass efs-myuser2 can not be used by this tenant
@@ -860,8 +890,8 @@ metadata:
 spec:
   accessModes:
     - ReadWriteMany
-  storageClassName: efs-myuser2
-  volumeName: efs-myuser2
+  storageClassName: efs-myuser2-sc
+  volumeName: efs-myuser2-pv
   resources:
     requests:
       storage: 1Gi
@@ -890,8 +920,61 @@ Error from server (Forbidden): namespaces is forbidden: User "myuser1" cannot li
 Error from server (Forbidden): storageclasses.storage.k8s.io is forbidden: User "myuser1" cannot list resource "storageclasses" in API group "storage.k8s.io" at the cluster scope
 + true
 + kubectl apply -f -
-persistentvolumeclaim/myuser1-efs-pvc created
+persistentvolumeclaim/efs-myuser1-pvc created
 + kubectl apply -f -
 Error from server: error when creating "STDIN": admission webhook "pvc.capsule.clastix.io" denied the request: Storage Class efs-myuser2 is forbidden for the current Tenant, one of the following (efs-myuser1)
 + true
+```
+
+```shell
+env -i bash << EOF2
+set -x
+export PATH="/usr/local/bin:\${PATH}"
+export KUBECONFIG="tmp/${CLUSTER_FQDN}/kubeconfig-myuser2.conf"
+
+kubectl create namespace myuser2 || true
+
+kubectl apply -f - << EOF
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: efs-myuser2-pvc
+  namespace: myuser2
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: efs-myuser2-sc
+  volumeName: efs-myuser2-pv
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myuser2-pod
+  namespace: myuser2
+spec:
+  volumes:
+    - name: efs-myuser2-storage
+      persistentVolumeClaim:
+        claimName: efs-myuser2-pvc
+  containers:
+    - name: myuser2-container
+      image: alpine
+      command: ["dd"]
+      args: ["if=/dev/zero", "of=/mnt/myuser2-file", "bs=1M", "count=20"]
+      resources:
+        limits:
+          cpu: "70m"
+          memory: "50Mi"
+        requests:
+          cpu: "50m"
+          memory: "25Mi"
+      volumeMounts:
+        - mountPath: "/mnt"
+          name: efs-myuser2-storage
+  restartPolicy: Never
+EOF
+EOF2
 ```

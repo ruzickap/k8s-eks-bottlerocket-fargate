@@ -62,7 +62,7 @@ kubectl delete istiooperator -n istio-system istio-controlplane || true
 Detach policy from IAM role:
 
 ```bash
-if AWS_CLOUDFORMATION_DETAILS=$(aws cloudformation describe-stacks --stack-name "${CLUSTER_NAME}-route53-iam-s3-ebs"); then
+if AWS_CLOUDFORMATION_DETAILS=$(aws cloudformation describe-stacks --stack-name "${CLUSTER_NAME}-route53-iam-s3-kms-asm"); then
   CLOUDWATCH_POLICY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"CloudWatchPolicyArn\") .OutputValue")
   FARGATE_POD_EXECUTION_ROLE_ARN=$(eksctl get iamidentitymapping --cluster="${CLUSTER_NAME}" -o json | jq -r ".[] | select (.rolearn | contains(\"FargatePodExecutionRole\")) .rolearn")
   aws iam detach-role-policy --policy-arn "${CLOUDWATCH_POLICY_ARN}" --role-name "${FARGATE_POD_EXECUTION_ROLE_ARN#*/}" || true
@@ -178,7 +178,7 @@ fi
 Remove CloudFormation stacks [Route53+IAM+S3+EBS]
 
 ```bash
-aws cloudformation delete-stack --stack-name "${CLUSTER_NAME}-route53-iam-s3-ebs"
+aws cloudformation delete-stack --stack-name "${CLUSTER_NAME}-route53-iam-s3-kms-asm"
 ```
 
 Remove CloudFormation created by ClusterAPI:
@@ -257,7 +257,7 @@ rm /tmp/demo-magic.sh "${KUBECONFIG}" /tmp/README-${CLUSTER_NAME}.sh "kubeconfig
 Wait for CloudFormation to be deleted:
 
 ```bash
-aws cloudformation wait stack-delete-complete --stack-name "${CLUSTER_NAME}-route53-iam-s3-ebs"
+aws cloudformation wait stack-delete-complete --stack-name "${CLUSTER_NAME}-route53-iam-s3-kms-asm"
 aws cloudformation wait stack-delete-complete --stack-name "eksctl-${CLUSTER_NAME}-cluster"
 ```
 

@@ -640,7 +640,6 @@ I used these guides to set it up:
 * [Configure Vault as a Certificate Manager in Kubernetes with Helm](https://learn.hashicorp.com/tutorials/vault/kubernetes-cert-manager)
 * [cert-manager Vault](https://cert-manager.io/docs/configuration/vault/#authenticating-with-kubernetes-service-accounts)
 * [Vault Agent with Kubernetes](https://learn.hashicorp.com/tutorials/vault/agent-kubernetes)
-* [How to use Vault PKI Engine for Dynamic TLS Certificates on GKE](https://www.arctiq.ca/our-blog/2019/4/1/how-to-use-vault-pki-engine-for-dynamic-tls-certificates-on-gke/)
 
 Configure PKI secrets engine:
 

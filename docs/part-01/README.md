@@ -301,7 +301,7 @@ configure the DNS delegation from the `BASE_DOMAIN`.
 ```bash
 mkdir -vp "tmp/${CLUSTER_FQDN}"
 
-cat > "tmp/${CLUSTER_FQDN}/aws_policies.yml" << \EOF
+cat > "tmp/${CLUSTER_FQDN}/aws-route53-iam-s3-kms-asm.yml" << \EOF
 Description: "Template to generate the necessary IAM Policies for access to Route53 and S3"
 Parameters:
   ClusterFQDN:
@@ -578,9 +578,9 @@ EOF
 
 eval aws cloudformation deploy --capabilities CAPABILITY_NAMED_IAM \
   --parameter-overrides "ClusterFQDN=${CLUSTER_FQDN} ClusterName=${CLUSTER_NAME} BaseDomain=${BASE_DOMAIN}" \
-  --stack-name "${CLUSTER_NAME}-route53-iam-s3-ebs" --template-file "tmp/${CLUSTER_FQDN}/aws_policies.yml" --tags "${TAGS}"
+  --stack-name "${CLUSTER_NAME}-route53-iam-s3-kms-asm" --template-file "tmp/${CLUSTER_FQDN}/aws-route53-iam-s3-kms-asm.yml" --tags "${TAGS}"
 
-AWS_CLOUDFORMATION_DETAILS=$(aws cloudformation describe-stacks --stack-name "${CLUSTER_NAME}-route53-iam-s3-ebs")
+AWS_CLOUDFORMATION_DETAILS=$(aws cloudformation describe-stacks --stack-name "${CLUSTER_NAME}-route53-iam-s3-kms-asm")
 CLOUDWATCH_POLICY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"CloudWatchPolicyArn\") .OutputValue")
 KMS_KEY_ARN=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"KMSKeyArn\") .OutputValue")
 KMS_KEY_ID=$(echo "${AWS_CLOUDFORMATION_DETAILS}" | jq -r ".Stacks[0].Outputs[] | select(.OutputKey==\"KMSKeyId\") .OutputValue")
@@ -808,8 +808,8 @@ EOF
 
 if ! eksctl get clusters --name="${CLUSTER_NAME}" &> /dev/null ; then
   eksctl create cluster --config-file "tmp/${CLUSTER_FQDN}/eksctl.yaml" --kubeconfig "${KUBECONFIG}" --without-nodegroup
-  # kubectl delete daemonset -n kube-system aws-node
-  # kubectl apply -f https://docs.projectcalico.org/manifests/calico-vxlan.yaml
+  kubectl delete daemonset -n kube-system aws-node
+  kubectl apply -f https://docs.projectcalico.org/manifests/calico-vxlan.yaml
   eksctl create nodegroup --config-file "tmp/${CLUSTER_FQDN}/eksctl.yaml"
 fi
 ```
