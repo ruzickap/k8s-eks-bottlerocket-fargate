@@ -9,7 +9,7 @@ and modify the
 
 ```bash
 helm repo add vmware-tanzu https://vmware-tanzu.github.io/helm-charts
-helm upgrade --install --version 2.22.0 --namespace velero --create-namespace --values - velero vmware-tanzu/velero << EOF
+helm upgrade --install --version 2.23.1 --namespace velero --create-namespace --values - velero vmware-tanzu/velero << EOF
 initContainers:
   - name: velero-plugin-for-aws
     image: velero/velero-plugin-for-aws:v1.2.0

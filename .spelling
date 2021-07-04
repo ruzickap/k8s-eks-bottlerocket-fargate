@@ -12,6 +12,7 @@ CloudFlare
 CloudFormation
 CloudWatch
 ClusterAPI
+ClusterIssuer
 ClusterIssuers
 ClusterPolicy
 ConfigMap

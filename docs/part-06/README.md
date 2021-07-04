@@ -11,7 +11,7 @@ and modify the
 
 ```bash
 helm repo add jaegertracing https://jaegertracing.github.io/helm-charts
-helm upgrade --install --version 2.21.4 --namespace jaeger-operator --create-namespace --values - jaeger-operator jaegertracing/jaeger-operator << EOF
+helm upgrade --install --version 2.22.0 --namespace jaeger-operator --create-namespace --values - jaeger-operator jaegertracing/jaeger-operator << EOF
 rbac:
   clusterRole: true
 EOF
@@ -196,7 +196,7 @@ and modify the
 
 ```bash
 helm repo add kiali https://kiali.org/helm-charts
-helm upgrade --install --version 1.35.0 --namespace kiali-operator --create-namespace kiali-operator kiali/kiali-operator
+helm upgrade --install --version 1.36.0 --namespace kiali-operator --create-namespace kiali-operator kiali/kiali-operator
 ```
 
 Install Kiali CR:
@@ -269,6 +269,9 @@ helm upgrade --install --version 9.9.2 --namespace kube-system --values - cluste
 autoDiscovery:
   clusterName: ${CLUSTER_NAME}
 awsRegion: ${AWS_DEFAULT_REGION}
+# Required to fix IMDSv2 issue: https://github.com/kubernetes/autoscaler/issues/3592
+extraArgs:
+  aws-use-static-instance-list: true
 rbac:
   serviceAccount:
     create: false

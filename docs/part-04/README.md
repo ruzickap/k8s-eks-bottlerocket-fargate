@@ -89,6 +89,11 @@ metadata:
   namespace: cert-manager
 spec:
   secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
+  # https://github.com/jetstack/cert-manager/pull/3537
+  # This will start working in cert-manager 1.15
+  # secretTemplate:
+  #   annotations:
+  #     kubed.appscode.com/sync: ""
   issuerRef:
     name: letsencrypt-${LETSENCRYPT_ENVIRONMENT}-dns
     kind: ClusterIssuer
@@ -140,7 +145,7 @@ and modify the
 
 ```bash
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-helm upgrade --install --version 3.33.0 --namespace ingress-nginx --create-namespace --wait --values - ingress-nginx ingress-nginx/ingress-nginx << EOF
+helm upgrade --install --version 3.34.0 --namespace ingress-nginx --create-namespace --wait --values - ingress-nginx ingress-nginx/ingress-nginx << EOF
 controller:
   # Needed for calico
   hostNetwork: true
@@ -203,7 +208,7 @@ Service account `external-dns` was created by `eksctl`.
 
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
-helm upgrade --install --version 5.1.1 --namespace external-dns --values - external-dns bitnami/external-dns << EOF
+helm upgrade --install --version 5.1.3 --namespace external-dns --values - external-dns bitnami/external-dns << EOF
 sources:
   - ingress
   - istio-gateway

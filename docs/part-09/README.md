@@ -119,7 +119,7 @@ Resources:
     DeletionPolicy: Delete
     Properties:
       AllocatedStorage: !Ref RdsStorage
-      AutoMinorVersionUpgrade: "false"
+      AutoMinorVersionUpgrade: "true"
       VPCSecurityGroups:
         - !Ref DbSecurityGroup
       DBName: !Sub "${ClusterName}db"
@@ -128,9 +128,8 @@ Resources:
       DBInstanceClass: !Ref RdsInstanceClass
       DBSubnetGroupName: !Ref RdsInstanceSubnetGroup
       CopyTagsToSnapshot: true
-      # EnableCloudwatchLogsExports:
-      #   - general
-      #   - slowquery
+      EnableCloudwatchLogsExports:
+        - slowquery
       EnableIAMDatabaseAuthentication: true
       Engine: mysql
       EngineVersion: 8.0.23
@@ -238,7 +237,7 @@ and modify the
 [default values](https://github.com/prometheus-community/helm-charts/blob/main/charts/prometheus-mysql-exporter/values.yaml).
 
 ```bash
-helm upgrade --install --version 1.2.0 --namespace prometheus-mysql-exporter --create-namespace --values - prometheus-mysql-exporter prometheus-community/prometheus-mysql-exporter << EOF
+helm upgrade --install --version 1.2.1 --namespace prometheus-mysql-exporter --create-namespace --values - prometheus-mysql-exporter prometheus-community/prometheus-mysql-exporter << EOF
 serviceMonitor:
   enabled: true
 mysql:
@@ -409,7 +408,7 @@ and modify the
 
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
-helm upgrade --install --version 10.2.23 --namespace drupal --values - drupal bitnami/drupal << EOF
+helm upgrade --install --version 10.2.24 --namespace drupal --values - drupal bitnami/drupal << EOF
 replicaCount: 2
 drupalUsername: admin
 drupalPassword: ${MY_PASSWORD}
@@ -500,7 +499,7 @@ kubectl label namespace drupal2 istio-injection=enabled kiali.io/member-of=kiali
 Install `drupal2`:
 
 ```bash
-helm upgrade --install --version 10.2.23 --namespace drupal2 --values - drupal2 bitnami/drupal << EOF
+helm upgrade --install --version 10.2.24 --namespace drupal2 --values - drupal2 bitnami/drupal << EOF
 replicaCount: 2
 drupalUsername: admin
 drupalPassword: ${MY_PASSWORD}

@@ -399,7 +399,7 @@ and modify the
 
 ```bash
 helm repo add aws-efs-csi-driver https://kubernetes-sigs.github.io/aws-efs-csi-driver/
-helm upgrade --install --version 2.1.1 --namespace kube-system --values - aws-efs-csi-driver aws-efs-csi-driver/aws-efs-csi-driver << EOF
+helm upgrade --install --version 2.1.3 --namespace kube-system --values - aws-efs-csi-driver aws-efs-csi-driver/aws-efs-csi-driver << EOF
 controller:
   serviceAccount:
     create: false

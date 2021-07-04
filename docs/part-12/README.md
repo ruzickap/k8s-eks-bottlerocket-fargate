@@ -820,12 +820,74 @@ git commit -m "Configure cluster applications" || true
 git push && flux reconcile source git flux-system
 ```
 
+Output:
+
+```text
+[master f753663] Configure cluster applications
+ 10 files changed, 232 insertions(+)
+ create mode 100644 clusters/kube1.k8s.mylabs.dev/kustomization.yaml
+ create mode 100644 clusters/kube1.k8s.mylabs.dev/local.yaml
+ create mode 100644 clusters/kube1.k8s.mylabs.dev/local/apps.yaml
+ create mode 100644 clusters/kube1.k8s.mylabs.dev/local/helmrepository.yaml
+ create mode 100644 clusters/kube1.k8s.mylabs.dev/local/kustomization.yaml
+ create mode 100644 clusters/kube1.k8s.mylabs.dev/local/namespace-wordpess.yaml
+ create mode 100644 clusters/kube1.k8s.mylabs.dev/local/secret-github-webhook-token.yaml
+ create mode 100644 clusters/kube1.k8s.mylabs.dev/local/secret-mariadb-auth.yaml
+ create mode 100644 clusters/kube1.k8s.mylabs.dev/local/secret-slack-url.yaml
+ create mode 100644 clusters/kube1.k8s.mylabs.dev/local/secret-wordpress-password.yaml
+Enumerating objects: 77, done.
+Counting objects: 100% (77/77), done.
+Delta compression using up to 8 threads
+Compressing objects: 100% (63/63), done.
+Writing objects: 100% (74/74), 16.79 KiB | 1.53 MiB/s, done.
+Total 74 (delta 13), reused 0 (delta 0)
+remote: Resolving deltas: 100% (13/13), done.
+To https://github.com/ruzickap/kube1-k8s-clusters.git
+   c28b717..f753663  master -> master
+► annotating GitRepository flux-system in flux-system namespace
+✔ GitRepository annotated
+◎ waiting for GitRepository reconciliation
+✔ GitRepository reconciliation completed
+✔ fetched revision master/f753663cda616aea570d4a3da341927784a6a6d2
+```
+
 Configure GitHub Webhook:
 
 ```bash
 sleep 50
 FLUX_RECEIVER_URL=$(kubectl -n flux-system get receiver github-receiver -o jsonpath="{.status.url}")
-curl -s -H "Authorization: token $GITHUB_TOKEN" -X POST -d "{\"active\": true, \"events\": [\"push\"], \"config\": {\"url\": \"https://flux-receiver.${CLUSTER_FQDN}${FLUX_RECEIVER_URL}\", \"content_type\": \"json\", \"secret\": \"${GITHUB_WEBHOOK_SECRET}\", \"insecure_ssl\": \"1\"}}" https://api.github.com/repos/${MY_GITHUB_USERNAME}/${CLUSTER_NAME}-k8s-clusters/hooks
+curl -s -H "Authorization: token $GITHUB_TOKEN" -X POST -d "{\"active\": true, \"events\": [\"push\"], \"config\": {\"url\": \"https://flux-receiver.${CLUSTER_FQDN}${FLUX_RECEIVER_URL}\", \"content_type\": \"json\", \"secret\": \"${GITHUB_WEBHOOK_SECRET}\", \"insecure_ssl\": \"1\"}}" https://api.github.com/repos/${MY_GITHUB_USERNAME}/${CLUSTER_NAME}-k8s-clusters/hooks | jq
+```
+
+Output:
+
+```json
+{
+  "type": "Repository",
+  "id": 305811245,
+  "name": "web",
+  "active": true,
+  "events": [
+    "push"
+  ],
+  "config": {
+    "content_type": "json",
+    "insecure_ssl": "1",
+    "secret": "********",
+    "url": "https://flux-receiver.kube1.k8s.mylabs.dev/hook/83b6f1ddc67400ec1b8fdfe9e555c14ad0179daed23ac22440e4056d953feb93"
+  },
+  "updated_at": "2021-07-04T07:58:14Z",
+  "created_at": "2021-07-04T07:58:14Z",
+  "url": "https://api.github.com/repos/ruzickap/kube1-k8s-clusters/hooks/305811245",
+  "test_url": "https://api.github.com/repos/ruzickap/kube1-k8s-clusters/hooks/305811245/test",
+  "ping_url": "https://api.github.com/repos/ruzickap/kube1-k8s-clusters/hooks/305811245/pings",
+  "deliveries_url": "https://api.github.com/repos/ruzickap/kube1-k8s-clusters/hooks/305811245/deliveries",
+  "last_response": {
+    "code": null,
+    "status": "unused",
+    "message": null
+  }
+}
 ```
 
 Check the flux errors:

@@ -90,7 +90,17 @@ Install necessary software:
 ```bash
 if [[ -x /usr/bin/apt-get ]]; then
   apt update -qq
-  DEBIAN_FRONTEND=noninteractive apt-get install -y -qq apache2-utils ansible awscli dnsutils git gnupg2 jq sudo unzip > /dev/null
+  DEBIAN_FRONTEND=noninteractive apt-get install -y -qq apache2-utils ansible dnsutils git gnupg2 jq sudo unzip > /dev/null
+fi
+```
+
+Install [AWS CLI](https://aws.amazon.com/cli/)  binary:
+
+```bash
+if [[ ! -x /usr/local/bin/aws ]]; then
+  curl -sL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip"
+  unzip -q -o /tmp/awscliv2.zip -d /tmp/
+  sudo /tmp/aws/install
 fi
 ```
 
@@ -118,7 +128,7 @@ Install [eksctl](https://eksctl.io/):
 ```bash
 if [[ ! -x /usr/local/bin/eksctl ]]; then
   # https://github.com/weaveworks/eksctl/releases
-  curl -s -L "https://github.com/weaveworks/eksctl/releases/download/0.53.0/eksctl_$(uname)_amd64.tar.gz" | sudo tar xz -C /usr/local/bin/
+  curl -s -L "https://github.com/weaveworks/eksctl/releases/download/0.55.0/eksctl_$(uname)_amd64.tar.gz" | sudo tar xz -C /usr/local/bin/
 fi
 ```
 
@@ -314,6 +324,18 @@ Parameters:
     Description: "Base domain where cluster domains + their subdomains will live. Ex: k8s.mylabs.dev"
     Type: String
 Resources:
+  # This AWS control checks whether the status of the AWS Systems Manager association compliance is COMPLIANT or NON_COMPLIANT after the association is executed on an instance.
+  ConfigRule:
+    Type: "AWS::Config::ConfigRule"
+    Properties:
+      ConfigRuleName: !Sub "${ClusterName}-ec2-managedinstance-association-compliance-status-check"
+      Scope:
+        ComplianceResourceTypes:
+          - "AWS::SSM::AssociationCompliance"
+      Description: "A Config rule that checks whether the compliance status of the Amazon EC2 Systems Manager association compliance is COMPLIANT or NON_COMPLIANT after the association execution on the instance. The rule is compliant if the field status is COMPLIANT."
+      Source:
+        Owner: "AWS"
+        SourceIdentifier: "EC2_MANAGEDINSTANCE_ASSOCIATION_COMPLIANCE_STATUS_CHECK"
   CloudWatchPolicy:
     Type: AWS::IAM::ManagedPolicy
     Properties:
@@ -429,6 +451,10 @@ Resources:
     Properties:
       AccessControl: Private
       BucketName: !Sub "${ClusterFQDN}"
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
   SecretsManagerMySecret:
     Type: AWS::SecretsManager::Secret
     Properties:
@@ -766,7 +792,6 @@ vpc:
     gateway: Disable
 managedNodeGroups:
   - name: managed-ng-1
-    # amiFamily: Bottlerocket
     instanceType: t3.xlarge
     instancePrefix: ruzickap
     desiredCapacity: 3
@@ -774,26 +799,20 @@ managedNodeGroups:
     maxSize: 4
     volumeSize: 30
     ssh:
-      # Enable ssh access (via the admin container)
-      allow: false
-      publicKeyPath: ~/.ssh/id_rsa.pub
+      enableSsm: true
     labels:
       role: worker
     tags: *tags
     iam:
       withAddonPolicies:
         autoScaler: true
-        # cloudWatch: true
+        cloudWatch: true
         ebs: true
         efs: true
-    # aws ec2 describe-images --owners amazon --filters "Name=name,Values=bottlerocket-aws-k8s-1.19*x86_64*" --region eu-central-1 --query "sort_by(Images, &CreationDate)"
-    # aws ec2 describe-images --owners amazon --filters "Name=name,Values=amazon-eks-node-1.19*" --region eu-central-1 --query "sort_by(Images, &CreationDate)"
-    # ami: ami-079b6e99f49a1cd7b
     maxPodsPerNode: 1000
     volumeEncrypted: true
     volumeKmsKeyID: ${KMS_KEY_ID}
-    # bottlerocket:
-    #   enableAdminContainer: true
+    disableIMDSv1: true
 fargateProfiles:
   - name: fp-fgtest
     selectors:
@@ -801,9 +820,10 @@ fargateProfiles:
     tags: *tags
 secretsEncryption:
   keyARN: ${KMS_KEY_ARN}
-# cloudWatch:
-#   clusterLogging:
-#     enableTypes: ["audit", "authenticator", "controllerManager"]
+cloudWatch:
+  clusterLogging:
+    enableTypes:
+      - authenticator
 EOF
 
 if ! eksctl get clusters --name="${CLUSTER_NAME}" &> /dev/null ; then
