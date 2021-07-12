@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Monitoring and Logging | Amazon EKS Bottlerocket and Fargate</title>
+    <meta name="generator" content="VuePress 1.8.2">
+    <link rel="icon" href="https://kubernetes.io/images/favicon.png">
+    <meta name="description" content="Amazon EKS Bottlerocket and Fargate">
+    <meta property="article:modified_time" content="2021-07-12T18:41:22.000Z">
+    <meta property="og:site_name" content="Amazon EKS Bottlerocket and Fargate">
+    <meta property="og:title" content="Monitoring and Logging">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="/part-03/">
+    <meta name="twitter:title" content="Monitoring and Logging">
+    <meta name="twitter:url" content="/part-03/">
+    <meta name="twitter:card" content="summary_large_image">
+    
+    <link rel="preload" href="/k8s-eks-bottlerocket-fargate/assets/css/0.styles.469548fb.css" as="style"><link rel="preload" href="/k8s-eks-bottlerocket-fargate/assets/js/app.db6020ce.js" as="script"><link rel="preload" href="/k8s-eks-bottlerocket-fargate/assets/js/2.d14c45f0.js" as="script"><link rel="preload" href="/k8s-eks-bottlerocket-fargate/assets/js/10.91b3f549.js" as="script"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/11.d4dfe5db.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/12.52027939.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/13.3be92f7c.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/14.b61c720e.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/15.ba8e2bee.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/16.6b5e79d1.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/17.79bf7cb4.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/18.70a5b47a.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/19.8b6649ad.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/20.32b760a2.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/3.3d315818.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/4.56852772.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/5.9f42c740.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/6.c4c2285d.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/7.664c5e19.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/8.85109cfe.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/9.2b3e0640.js">
+    <link rel="stylesheet" href="/k8s-eks-bottlerocket-fargate/assets/css/0.styles.469548fb.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div class="theme-container"><header class="navbar"><div class="sidebar-button"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" viewBox="0 0 448 512" class="icon"><path fill="currentColor" d="M436 124H12c-6.627 0-12-5.373-12-12V80c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12z"></path></svg></div> <a href="/k8s-eks-bottlerocket-fargate/" class="home-link router-link-active"><img src="https://kubernetes.io/images/favicon.png" alt="Amazon EKS Bottlerocket and Fargate" class="logo"> <span class="site-name can-hide">Amazon EKS Bottlerocket and Fargate</span></a> <div class="links"><div class="search-box"><input aria-label="Search" autocomplete="off" spellcheck="false" value=""> <!----></div> <nav class="nav-links can-hide"><div class="nav-item"><a href="/k8s-eks-bottlerocket-fargate/" class="nav-link">
+  Home
+</a></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="Links" class="dropdown-title"><span class="title">Links</span> <span class="arrow down"></span></button> <button type="button" aria-label="Links" class="mobile-dropdown-title"><span class="title">Links</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="https://aws.amazon.com/eks/" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  Amazon EKS
+  <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></li><li class="dropdown-item"><!----> <a href="https://aws.amazon.com/bottlerocket/" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  Bottlerocket
+  <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></li></ul></div></div> <a href="https://github.com/ruzickap/k8s-eks-bottlerocket-fargate" target="_blank" rel="noopener noreferrer" class="repo-link">
+    GitHub
+    <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></nav></div></header> <div class="sidebar-mask"></div> <aside class="sidebar"><nav class="nav-links"><div class="nav-item"><a href="/k8s-eks-bottlerocket-fargate/" class="nav-link">
+  Home
+</a></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="Links" class="dropdown-title"><span class="title">Links</span> <span class="arrow down"></span></button> <button type="button" aria-label="Links" class="mobile-dropdown-title"><span class="title">Links</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="https://aws.amazon.com/eks/" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  Amazon EKS
+  <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></li><li class="dropdown-item"><!----> <a href="https://aws.amazon.com/bottlerocket/" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  Bottlerocket
+  <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></li></ul></div></div> <a href="https://github.com/ruzickap/k8s-eks-bottlerocket-fargate" target="_blank" rel="noopener noreferrer" class="repo-link">
+    GitHub
+    <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></nav>  <ul class="sidebar-links"><li><a href="/k8s-eks-bottlerocket-fargate/" aria-current="page" class="sidebar-link">Amazon EKS Bottlerocket and Fargate</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/#requirements" class="sidebar-link">Requirements</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/#content" class="sidebar-link">Content</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-01/" class="sidebar-link">Amazon EKS Bottlerocket and Fargate</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-01/#requirements" class="sidebar-link">Requirements</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-01/#prepare-the-local-working-environment" class="sidebar-link">Prepare the local working environment</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-01/#configure-aws-route-53-domain-delegation" class="sidebar-link">Configure AWS Route 53 Domain delegation</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-01/#add-new-domain-to-route-53-policies-s3-ebs" class="sidebar-link">Add new domain to Route 53, Policies, S3, EBS</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-01/#create-amazon-eks" class="sidebar-link">Create Amazon EKS</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-02/" class="sidebar-link">AWS</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#fargate" class="sidebar-link">Fargate</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#aws-load-balancer-controller" class="sidebar-link">aws-load-balancer-controller</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#aws-for-fluent-bit" class="sidebar-link">aws-for-fluent-bit</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#aws-cloudwatch-metrics" class="sidebar-link">aws-cloudwatch-metrics</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#aws-efs-csi-driver" class="sidebar-link">aws-efs-csi-driver</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#aws-ebs-csi-driver" class="sidebar-link">aws-ebs-csi-driver</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#external-snapshotter-crds" class="sidebar-link">external-snapshotter CRDs</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#test-amazon-eks-pod-limits" class="sidebar-link">Test Amazon EKS pod limits</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#amazon-managed-prometheus-amazon-managed-grafana" class="sidebar-link">Amazon Managed Prometheus + Amazon Managed Grafana</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#test-eks-access" class="sidebar-link">Test EKS access</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#capsule" class="sidebar-link">Capsule</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-03/" aria-current="page" class="active sidebar-link">Monitoring and Logging</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#metrics-server" class="sidebar-link">metrics-server</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#prometheus-adapter" class="sidebar-link">prometheus-adapter</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#kube-prometheus-stack" class="sidebar-link">kube-prometheus-stack</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#enable-calico-monitoring" class="sidebar-link">Enable calico monitoring</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#loki" class="sidebar-link">loki</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#aws-node-termination-handler" class="sidebar-link">aws-node-termination-handler</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#kyverno" class="sidebar-link">kyverno</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#nri-bundle" class="sidebar-link">nri-bundle</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#splunk-connect" class="sidebar-link">splunk-connect</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#aqua-security-enforcer" class="sidebar-link">Aqua Security Enforcer</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#sysdig-agent" class="sidebar-link">sysdig-agent</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-04/" class="sidebar-link">DNS, Ingress, Certificates</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#cert-manager" class="sidebar-link">cert-manager</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#kubed" class="sidebar-link">kubed</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#ingress-nginx" class="sidebar-link">ingress-nginx</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#istio-and-related-tools" class="sidebar-link">Istio and related tools</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#external-dns" class="sidebar-link">external-dns</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#mailhog" class="sidebar-link">mailhog</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#kubewatch" class="sidebar-link">kubewatch</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#calico-commands" class="sidebar-link">Calico commands</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-05/" class="sidebar-link">Authentication</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-05/#keycloak" class="sidebar-link">Keycloak</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-05/#oauth2-proxy-keycloak" class="sidebar-link">oauth2-proxy - Keycloak</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-05/#dex" class="sidebar-link">Dex</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-05/#oauth2-proxy" class="sidebar-link">oauth2-proxy</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-05/#gangway" class="sidebar-link">Gangway</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-05/#openunison" class="sidebar-link">openunison</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-05/#kube-oidc-proxy" class="sidebar-link">kube-oidc-proxy</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-06/" class="sidebar-link">Others</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-06/#cluster-autoscaler" class="sidebar-link">cluster-autoscaler</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-07/" class="sidebar-link">Workloads</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#podinfo" class="sidebar-link">podinfo</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#polaris" class="sidebar-link">Polaris</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#kubei" class="sidebar-link">kubei</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#kube-bench" class="sidebar-link">kube-bench</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#kubernetes-dashboard" class="sidebar-link">kubernetes-dashboard</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#octant" class="sidebar-link">Octant</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#kubeview" class="sidebar-link">kubeview</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#kube-ops-view" class="sidebar-link">kube-ops-view</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#s3-upload-test" class="sidebar-link">S3 upload test</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-08/" class="sidebar-link">Other workloads</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-08/#cluster-api" class="sidebar-link">Cluster API</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-08/#hashicorp-vault" class="sidebar-link">HashiCorp Vault</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-08/#podinfo-with-vault-certificate" class="sidebar-link">podinfo with vault certificate</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-08/#secrets-store-csi-driver" class="sidebar-link">secrets-store-csi-driver</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-08/#kuard" class="sidebar-link">kuard</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-09/" class="sidebar-link">Drupal</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-09/#drupal-installation" class="sidebar-link">Drupal installation</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-10/" class="sidebar-link">Harbor</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-10/#cloudwatch-retention" class="sidebar-link">CloudWatch retention</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-11/" class="sidebar-link">Velero</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-11/#backup-vault-using-csi-volume-snapshotting" class="sidebar-link">Backup Vault using CSI Volume Snapshotting</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-11/#delete-restore-vault-using-csi-volume-snapshotting" class="sidebar-link">Delete + Restore Vault using CSI Volume Snapshotting</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-11/#backup-delete-restore-app-with-efs-storage-using-restic" class="sidebar-link">Backup + Delete + Restore app with EFS storage using restic</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-12/" class="sidebar-link">GitOps tools</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-12/#argocd" class="sidebar-link">ArgoCD</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-12/#flux" class="sidebar-link">Flux</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-13/" class="sidebar-link">Clean-up</a></li></ul> </aside> <main class="page"> <div class="theme-default-content content__default"><h1 id="monitoring-and-logging"><a href="#monitoring-and-logging" class="header-anchor">#</a> Monitoring and Logging</h1> <h2 id="metrics-server"><a href="#metrics-server" class="header-anchor">#</a> metrics-server</h2> <p>Install <code>metrics-server</code> <a href="https://artifacthub.io/packages/helm/bitnami/metrics-server" target="_blank" rel="noopener noreferrer">helm chart<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>
+and modify the
+<a href="https://github.com/bitnami/charts/blob/master/bitnami/metrics-server/values.yaml" target="_blank" rel="noopener noreferrer">default values<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>helm repo <span class="token function">add</span> bitnami https://charts.bitnami.com/bitnami
+helm upgrade --install --version <span class="token number">5.8</span>.15 --namespace kube-system --values - metrics-server bitnami/metrics-server <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+apiService:
+  create: true
+# Needed for calico
+hostNetwork: true
+EOF</span>
+</code></pre></div><h2 id="prometheus-adapter"><a href="#prometheus-adapter" class="header-anchor">#</a> prometheus-adapter</h2> <p>Installs the Prometheus Adapter for the Custom Metrics API.
+Custom metrics are used in Kubernetes by Horizontal Pod Autoscaler to scale
+workloads based upon your own metric pulled from an external metrics provider
+like Prometheus.
+It can also replace the <a href="https://github.com/kubernetes-incubator/metrics-server" target="_blank" rel="noopener noreferrer">metrics server<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>
+on clusters that already run Prometheus and collect the appropriate metrics.</p> <p>Install <code>prometheus-adapter</code> <a href="https://artifacthub.io/packages/helm/prometheus-community/prometheus-adapter" target="_blank" rel="noopener noreferrer">helm chart<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>
+and modify the
+<a href="https://github.com/prometheus-community/helm-charts/blob/main/charts/prometheus-adapter/values.yaml" target="_blank" rel="noopener noreferrer">default values<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>:</p> <div class="language-shell extra-class"><pre class="language-shell"><code>helm repo <span class="token function">add</span> prometheus-community https://prometheus-community.github.io/helm-charts
+helm upgrade --install --version <span class="token number">2.14</span>.2 --namespace prometheus-adapter --values - prometheus-adapter prometheus-community/prometheus-adapter <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+# Needed for calico
+hostNetwork:
+  enabled: true
+EOF</span>
+</code></pre></div><h2 id="kube-prometheus-stack"><a href="#kube-prometheus-stack" class="header-anchor">#</a> kube-prometheus-stack</h2> <p>Install <code>kube-prometheus-stack</code> <a href="https://artifacthub.io/packages/helm/prometheus-community/kube-prometheus-stack" target="_blank" rel="noopener noreferrer">helm chart<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>
+and modify the
+<a href="https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/values.yaml" target="_blank" rel="noopener noreferrer">default values<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>helm repo <span class="token function">add</span> prometheus-community https://prometheus-community.github.io/helm-charts
+helm upgrade --install --version <span class="token number">16.12</span>.2 --namespace kube-prometheus-stack --values - kube-prometheus-stack prometheus-community/kube-prometheus-stack <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+defaultRules:
+  rules:
+    etcd: false
+    kubernetesSystem: false
+    kubeScheduler: false
+additionalPrometheusRulesMap:
+  # Flux rule: https://toolkit.fluxcd.io/guides/monitoring/
+  rule-name:
+    groups:
+    - name: GitOpsToolkit
+      rules:
+      - alert: ReconciliationFailure
+        expr: max(gotk_reconcile_condition{status=&quot;False&quot;,type=&quot;Ready&quot;}) by (namespace, name, kind) + on(namespace, name, kind) (max(gotk_reconcile_condition{status=&quot;Deleted&quot;}) by (namespace, name, kind)) * 2 == 1
+        for: 10m
+        labels:
+          severity: page
+        annotations:
+          summary: &quot;{{ \<span class="token variable">$labels</span>.kind }} {{ \<span class="token variable">$labels</span>.namespace }}/{{ \<span class="token variable">$labels</span>.name }} reconciliation has been failing for more than ten minutes.&quot;
+    # https://github.com/openstack/openstack-helm-infra/blob/master/prometheus/values_overrides/kubernetes.yaml
+    - name: calico.rules
+      rules:
+      - alert: prom_exporter_calico_unavailable
+        expr: avg_over_time(up{job=&quot;kubernetes-pods&quot;,application=&quot;calico&quot;}[5m]) == 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          description: Calico exporter is not collecting metrics or is not available for past 10 minutes
+          title: Calico exporter is not collecting metrics or is not available
+      - alert: calico_datapane_failures_high_1h
+        expr: absent(felix_int_dataplane_failures) OR increase(felix_int_dataplane_failures[1h]) &gt; 5
+        labels:
+          severity: page
+        annotations:
+          description: &quot;Felix instance {{ \<span class="token variable">$labels</span>.instance }} has seen {{ \<span class="token variable">$value</span> }} dataplane failures within the last hour&quot;
+          summary: &quot;A high number of dataplane failures within Felix are happening&quot;
+      - alert: calico_datapane_address_msg_batch_size_high_5m
+        expr: absent(felix_int_dataplane_addr_msg_batch_size_sum) OR absent(felix_int_dataplane_addr_msg_batch_size_count) OR (felix_int_dataplane_addr_msg_batch_size_sum/felix_int_dataplane_addr_msg_batch_size_count) &gt; 5
+        for: 5m
+        labels:
+          severity: page
+        annotations:
+          description: &quot;Felix instance {{ \<span class="token variable">$labels</span>.instance }} has seen a high value of {{ \<span class="token variable">$value</span> }} dataplane address message batch size&quot;
+          summary: &quot;Felix address message batch size is higher&quot;
+      - alert: calico_datapane_iface_msg_batch_size_high_5m
+        expr: absent(felix_int_dataplane_iface_msg_batch_size_sum) OR absent(felix_int_dataplane_iface_msg_batch_size_count) OR (felix_int_dataplane_iface_msg_batch_size_sum/felix_int_dataplane_iface_msg_batch_size_count) &gt; 5
+        for: 5m
+        labels:
+          severity: page
+        annotations:
+          description: &quot;Felix instance {{ \<span class="token variable">$labels</span>.instance }} has seen a high value of {{ \<span class="token variable">$value</span> }} dataplane interface message batch size&quot;
+          summary: &quot;Felix interface message batch size is higher&quot;
+      - alert: calico_ipset_errors_high_1h
+        expr: absent(felix_ipset_errors) OR increase(felix_ipset_errors[1h]) &gt; 5
+        labels:
+          severity: page
+        annotations:
+          description: &quot;Felix instance {{ \<span class="token variable">$labels</span>.instance }} has seen {{ \<span class="token variable">$value</span> }} ipset errors within the last hour&quot;
+          summary: &quot;A high number of ipset errors within Felix are happening&quot;
+      - alert: calico_iptable_save_errors_high_1h
+        expr: absent(felix_iptables_save_errors) OR increase(felix_iptables_save_errors[1h]) &gt; 5
+        labels:
+          severity: page
+        annotations:
+          description: &quot;Felix instance {{ \<span class="token variable">$labels</span>.instance }} has seen {{ \<span class="token variable">$value</span> }} iptable save errors within the last hour&quot;
+          summary: &quot;A high number of iptable save errors within Felix are happening&quot;
+      - alert: calico_iptable_restore_errors_high_1h
+        expr: absent(felix_iptables_restore_errors) OR increase(felix_iptables_restore_errors[1h]) &gt; 5
+        labels:
+          severity: page
+        annotations:
+          description: &quot;Felix instance {{ \<span class="token variable">$labels</span>.instance }} has seen {{ \<span class="token variable">$value</span> }} iptable restore errors within the last hour&quot;
+          summary: &quot;A high number of iptable restore errors within Felix are happening&quot;
+alertmanager:
+  config:
+    global:
+      slack_api_url: <span class="token variable">${SLACK_INCOMING_WEBHOOK_URL}</span>
+      smtp_smarthost: &quot;mailhog.mailhog.svc.cluster.local:1025&quot;
+      smtp_from: &quot;alertmanager@<span class="token variable">${CLUSTER_FQDN}</span>&quot;
+    route:
+      receiver: slack-notifications
+      group_by: [&quot;alertname&quot;, &quot;job&quot;]
+      routes:
+        - match:
+            severity: warning
+          continue: true
+          receiver: slack-notifications
+        - match:
+            severity: warning
+          receiver: email-notifications
+    receivers:
+      - name: &quot;email-notifications&quot;
+        email_configs:
+        - to: &quot;notification@<span class="token variable">${CLUSTER_FQDN}</span>&quot;
+          require_tls: false
+      - name: &quot;slack-notifications&quot;
+        slack_configs:
+          - channel: &quot;#<span class="token variable">${SLACK_CHANNEL}</span>&quot;
+            send_resolved: True
+            icon_url: &quot;https://avatars3.githubusercontent.com/u/3380462&quot;
+            title: &quot;{{ template <span class="token entity" title="\&quot;">\&quot;</span>slack.cp.title<span class="token entity" title="\&quot;">\&quot;</span> . }}&quot;
+            text: &quot;{{ template <span class="token entity" title="\&quot;">\&quot;</span>slack.cp.text<span class="token entity" title="\&quot;">\&quot;</span> . }}&quot;
+            footer: &quot;https://<span class="token variable">${CLUSTER_FQDN}</span>&quot;
+            actions:
+              - type: button
+                text: &quot;Runbook :blue_book:&quot;
+                url: &quot;{{ (index .Alerts 0).Annotations.runbook_url }}&quot;
+              - type: button
+                text: &quot;Query :mag:&quot;
+                url: &quot;{{ (index .Alerts 0).GeneratorURL }}&quot;
+              - type: button
+                text: &quot;Silence :no_bell:&quot;
+                url: &quot;{{ template <span class="token entity" title="\&quot;">\&quot;</span>__alert_silence_link<span class="token entity" title="\&quot;">\&quot;</span> . }}&quot;
+    templates:
+      - &quot;/etc/alertmanager/config/cp-slack-templates.tmpl&quot;
+  templateFiles:
+    cp-slack-templates.tmpl: |-
+      {{ define &quot;slack.cp.title&quot; -}}
+        [{{ .Status | toUpper -}}
+        {{ if eq .Status &quot;firing&quot; }}:{{ .Alerts.Firing | len }}{{- end -}}
+        ] {{ template &quot;__alert_severity_prefix_title&quot; . }} {{ .CommonLabels.alertname }}
+      {{- end }}
+      {{/* The test to display in the alert */}}
+      {{ define &quot;slack.cp.text&quot; -}}
+        {{ range .Alerts }}
+            *Alert:* {{ .Annotations.message}}
+            *Details:*
+            {{ range .Labels.SortedPairs }} - *{{ .Name }}:* \<span class="token variable"><span class="token variable">`</span><span class="token punctuation">{</span><span class="token punctuation">{</span> .Value <span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token punctuation">\</span><span class="token variable">`</span></span>
+            {{ end }}
+            *-----*
+          {{ end }}
+      {{- end }}
+      {{ define &quot;__alert_silence_link&quot; -}}
+        {{ .ExternalURL }}/#/silences/new?filter=%7B
+        {{- range .CommonLabels.SortedPairs -}}
+          {{- if ne .Name &quot;alertname&quot; -}}
+            {{- .Name }}%3D&quot;{{- .Value -}}&quot;%2C%20
+          {{- end -}}
+        {{- end -}}
+          alertname%3D&quot;{{ .CommonLabels.alertname }}&quot;%7D
+      {{- end }}
+      {{ define &quot;__alert_severity_prefix&quot; -}}
+          {{ if ne .Status &quot;firing&quot; -}}
+          :white_check_mark:
+          {{- else if eq .Labels.severity &quot;critical&quot; -}}
+          :fire:
+          {{- else if eq .Labels.severity &quot;warning&quot; -}}
+          :warning:
+          {{- else -}}
+          :question:
+          {{- end }}
+      {{- end }}
+      {{ define &quot;__alert_severity_prefix_title&quot; -}}
+          {{ if ne .Status &quot;firing&quot; -}}
+          :white_check_mark:
+          {{- else if eq .CommonLabels.severity &quot;critical&quot; -}}
+          :fire:
+          {{- else if eq .CommonLabels.severity &quot;warning&quot; -}}
+          :warning:
+          {{- else if eq .CommonLabels.severity &quot;info&quot; -}}
+          :information_source:
+          {{- else if eq .CommonLabels.status_icon &quot;information&quot; -}}
+          :information_source:
+          {{- else -}}
+          :question:
+          {{- end }}
+      {{- end }}
+  ingress:
+    enabled: true
+    annotations:
+      nginx.ingress.kubernetes.io/auth-url: https://oauth2-proxy.<span class="token variable">${CLUSTER_FQDN}</span>/oauth2/auth
+      nginx.ingress.kubernetes.io/auth-signin: https://oauth2-proxy.<span class="token variable">${CLUSTER_FQDN}</span>/oauth2/start?rd=\<span class="token variable">$scheme</span>://\<span class="token variable">$host</span>\<span class="token variable">$request_uri</span>
+    hosts:
+      - alertmanager.<span class="token variable">${CLUSTER_FQDN}</span>
+    paths: [&quot;/&quot;]
+    pathType: ImplementationSpecific
+    tls:
+      - secretName: ingress-cert-<span class="token variable">${LETSENCRYPT_ENVIRONMENT}</span>
+        hosts:
+          - alertmanager.<span class="token variable">${CLUSTER_FQDN}</span>
+  alertmanagerSpec:
+    storage:
+      volumeClaimTemplate:
+        spec:
+          accessModes: [&quot;ReadWriteOnce&quot;]
+          resources:
+            requests:
+              storage: 1Gi
+# https://github.com/grafana/helm-charts/blob/main/charts/grafana/values.yaml
+grafana:
+  serviceAccount:
+    create: false
+    name: grafana
+  ingress:
+    enabled: true
+    annotations:
+      nginx.ingress.kubernetes.io/auth-url: https://oauth2-proxy.<span class="token variable">${CLUSTER_FQDN}</span>/oauth2/auth
+      nginx.ingress.kubernetes.io/auth-signin: https://oauth2-proxy.<span class="token variable">${CLUSTER_FQDN}</span>/oauth2/start?rd=\<span class="token variable">$scheme</span>://\<span class="token variable">$host</span>\<span class="token variable">$request_uri</span>
+    hosts:
+      - grafana.<span class="token variable">${CLUSTER_FQDN}</span>
+    paths: [&quot;/&quot;]
+    pathType: ImplementationSpecific
+    tls:
+      - secretName: ingress-cert-<span class="token variable">${LETSENCRYPT_ENVIRONMENT}</span>
+        hosts:
+          - grafana.<span class="token variable">${CLUSTER_FQDN}</span>
+  plugins:
+    - digiapulssi-breadcrumb-panel
+    - grafana-piechart-panel
+    # Needed for MySQL Instances Overview -&gt; Table Openings details
+    - grafana-polystat-panel
+  env:
+    GF_AUTH_SIGV4_AUTH_ENABLED: true
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+      - name: Loki
+        type: loki
+        access: proxy
+        url: http://loki.loki:3100
+      # - name: CloudWatch
+      #   type: cloudwatch
+      #   jsonData:
+      #     defaultRegion: <span class="token variable">${AWS_DEFAULT_REGION}</span>
+      # Automated AMP provisioning as datasource does not work - needs to be done manually
+      # - name: Amazon Managed Prometheus
+      #   type: prometheus
+      #   url: https://aps-workspaces.<span class="token variable">${AWS_DEFAULT_REGION}</span>.amazonaws.com/workspaces/<span class="token variable">${AMP_WORKSPACE_ID}</span>
+      #   jsonData:
+      #     sigV4Auth: true
+      #     sigV4Region: <span class="token variable">${AWS_DEFAULT_REGION}</span>
+  dashboardProviders:
+    dashboardproviders.yaml:
+      apiVersion: 1
+      providers:
+        - name: &quot;default&quot;
+          orgId: 1
+          folder: &quot;&quot;
+          type: file
+          disableDeletion: false
+          editable: true
+          options:
+            path: /var/lib/grafana/dashboards/default
+  dashboards:
+    default:
+      k8s-cluster-summary:
+        gnetId: 8685
+        revision: 1
+        datasource: Prometheus
+      node-exporter-full:
+        gnetId: 1860
+        revision: 21
+        datasource: Prometheus
+      prometheus-2-0-overview:
+        gnetId: 3662
+        revision: 2
+        datasource: Prometheus
+      stians-disk-graphs:
+        gnetId: 9852
+        revision: 1
+        datasource: Prometheus
+      kubernetes-apiserver:
+        gnetId: 12006
+        revision: 1
+        datasource: Prometheus
+      ingress-nginx:
+        gnetId: 9614
+        revision: 1
+        datasource: Prometheus
+      ingress-nginx2:
+        gnetId: 11875
+        revision: 1
+        datasource: Prometheus
+      istio-mesh:
+        gnetId: 7639
+        revision: 54
+        datasource: Prometheus
+      istio-performance:
+        gnetId: 11829
+        revision: 54
+        datasource: Prometheus
+      istio-service:
+        gnetId: 7636
+        revision: 54
+        datasource: Prometheus
+      istio-workload:
+        gnetId: 7630
+        revision: 54
+        datasource: Prometheus
+      istio-control-plane:
+        gnetId: 7645
+        revision: 54
+        datasource: Prometheus
+      velero-stats:
+        gnetId: 11055
+        revision: 2
+        datasource: Prometheus
+      jaeger:
+        gnetId: 10001
+        revision: 2
+        datasource: Prometheus
+      loki-promtail:
+        gnetId: 10880
+        revision: 1
+        datasource: Prometheus
+      # https://github.com/fluxcd/flux2/blob/main/manifests/monitoring/grafana/dashboards/cluster.json
+      gitops-toolkit-control-plane:
+        url: https://raw.githubusercontent.com/fluxcd/flux2/9916a5376123b4bcdc0f11999a8f8781ce5ee78c/manifests/monitoring/grafana/dashboards/control-plane.json
+        datasource: Prometheus
+      gitops-toolkit-cluster:
+        url: https://raw.githubusercontent.com/fluxcd/flux2/344a909d19498f1f02b936882b529d84bbd460b8/manifests/monitoring/grafana/dashboards/cluster.json
+        datasource: Prometheus
+      kyverno-cluster-policy-report:
+        gnetId: 13996
+        revision: 3
+        datasource: Prometheus
+      kyverno-policy-report:
+        gnetId: 13995
+        revision: 3
+        datasource: Prometheus
+      kyverno-policy-reports:
+        gnetId: 13968
+        revision: 1
+        datasource: Prometheus
+      # calico-felix-dashboard:
+      #   gnetId: 12175
+      #   revision: 5
+      #   datasource: Prometheus
+      harbor:
+        gnetId: 14075
+        revision: 2
+        datasource: Prometheus
+      aws-efs:
+        gnetId: 653
+        revision: 4
+        datasource: CloudWatch
+      amazon-rds-os-metrics:
+        gnetId: 702
+        revision: 1
+        datasource: CloudWatch
+      aws-rds:
+        gnetId: 707
+        revision: 5
+        datasource: CloudWatch
+      aws-rds-opt:
+        gnetId: 11698
+        revision: 1
+        datasource: CloudWatch
+      aws-ec2:
+        gnetId: 617
+        revision: 4
+        datasource: CloudWatch
+      aws-network-load-balancer:
+        gnetId: 12111
+        revision: 2
+        datasource: CloudWatch
+      aws-ebs:
+        gnetId: 623
+        revision: 4
+        datasource: CloudWatch
+      CPU_Utilization_Details:
+        url: https://raw.githubusercontent.com/percona/grafana-dashboards/1316f80e834f9a3617e196b41617299c13d62421/dashboards/CPU_Utilization_Details.json
+        datasource: Prometheus
+      Disk_Details:
+        url: https://raw.githubusercontent.com/percona/grafana-dashboards/1316f80e834f9a3617e196b41617299c13d62421/dashboards/Disk_Details.json
+        datasource: Prometheus
+      Memory_Details:
+        url: https://raw.githubusercontent.com/percona/grafana-dashboards/1316f80e834f9a3617e196b41617299c13d62421/dashboards/Memory_Details.json
+        datasource: Prometheus
+      MySQL_Command_Handler_Counters_Compare:
+        url: https://raw.githubusercontent.com/percona/grafana-dashboards/1316f80e834f9a3617e196b41617299c13d62421/dashboards/MySQL_Command_Handler_Counters_Compare.json
+        datasource: Prometheus
+      MySQL_InnoDB_Compression_Details:
+        url: https://raw.githubusercontent.com/percona/grafana-dashboards/1316f80e834f9a3617e196b41617299c13d62421/dashboards/MySQL_InnoDB_Compression_Details.json
+        datasource: Prometheus
+      MySQL_InnoDB_Details:
+        url: https://raw.githubusercontent.com/percona/grafana-dashboards/1316f80e834f9a3617e196b41617299c13d62421/dashboards/MySQL_InnoDB_Details.json
+        datasource: Prometheus
+      MySQL_Instance_Summary:
+        url: https://raw.githubusercontent.com/percona/grafana-dashboards/1316f80e834f9a3617e196b41617299c13d62421/dashboards/MySQL_Instance_Summary.json
+        datasource: Prometheus
+      MySQL_Instances_Compare:
+        url: https://raw.githubusercontent.com/percona/grafana-dashboards/1316f80e834f9a3617e196b41617299c13d62421/dashboards/MySQL_Instances_Compare.json
+        datasource: Prometheus
+      MySQL_Instances_Overview:
+        url: https://raw.githubusercontent.com/percona/grafana-dashboards/1316f80e834f9a3617e196b41617299c13d62421/dashboards/MySQL_Instances_Overview.json
+        datasource: Prometheus
+      MySQL_MyISAM_Aria_Details:
+        url: https://raw.githubusercontent.com/percona/grafana-dashboards/1316f80e834f9a3617e196b41617299c13d62421/dashboards/MySQL_MyISAM_Aria_Details.json
+        datasource: Prometheus
+      Network_Details:
+        url: https://raw.githubusercontent.com/percona/grafana-dashboards/1316f80e834f9a3617e196b41617299c13d62421/dashboards/Network_Details.json
+        datasource: Prometheus
+      Nodes_Compare:
+        url: https://raw.githubusercontent.com/percona/grafana-dashboards/1316f80e834f9a3617e196b41617299c13d62421/dashboards/Nodes_Compare.json
+        datasource: Prometheus
+      Nodes_Overview:
+        url: https://raw.githubusercontent.com/percona/grafana-dashboards/1316f80e834f9a3617e196b41617299c13d62421/dashboards/Nodes_Overview.json
+        datasource: Prometheus
+      Prometheus_Exporters_Overview:
+        url: https://raw.githubusercontent.com/percona/grafana-dashboards/1316f80e834f9a3617e196b41617299c13d62421/dashboards/Prometheus_Exporters_Overview.json
+        datasource: Prometheus
+  grafana.ini:
+    server:
+      root_url: https://grafana.<span class="token variable">${CLUSTER_FQDN}</span>
+    # Using oauth2-proxy instead of default Grafana Oauth
+    auth.anonymous:
+      enabled: true
+      org_role: Admin
+  smtp:
+    enabled: true
+    host: &quot;mailhog.mailhog.svc.cluster.local:1025&quot;
+    from_address: grafana@<span class="token variable">${CLUSTER_FQDN}</span>
+kubeControllerManager:
+  enabled: false
+kubeEtcd:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeProxy:
+  enabled: false
+prometheusOperator:
+  tls:
+    enabled: false
+  admissionWebhooks:
+    enabled: false
+prometheus:
+  serviceAccount:
+    create: false
+    name: kube-prometheus-stack-prometheus
+  ingress:
+    enabled: true
+    annotations:
+      nginx.ingress.kubernetes.io/auth-url: https://oauth2-proxy.<span class="token variable">${CLUSTER_FQDN}</span>/oauth2/auth
+      nginx.ingress.kubernetes.io/auth-signin: https://oauth2-proxy.<span class="token variable">${CLUSTER_FQDN}</span>/oauth2/start?rd=\<span class="token variable">$scheme</span>://\<span class="token variable">$host</span>\<span class="token variable">$request_uri</span>
+    paths: [&quot;/&quot;]
+    pathType: ImplementationSpecific
+    hosts:
+      - prometheus.<span class="token variable">${CLUSTER_FQDN}</span>
+    tls:
+      - secretName: ingress-cert-<span class="token variable">${LETSENCRYPT_ENVIRONMENT}</span>
+        hosts:
+          - prometheus.<span class="token variable">${CLUSTER_FQDN}</span>
+  prometheusSpec:
+    externalUrl: https://prometheus.<span class="token variable">${CLUSTER_FQDN}</span>
+    ruleSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    retentionSize: 1GB
+    serviceMonitorSelectorNilUsesHelmValues: false
+    remoteWrite:
+      - url: http://localhost:8005/workspaces/<span class="token variable">${AMP_WORKSPACE_ID}</span>/api/v1/remote_write
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes: [&quot;ReadWriteOnce&quot;]
+          resources:
+            requests:
+              storage: 2Gi
+    containers:
+      - name: aws-sigv4-proxy-sidecar
+        image: public.ecr.aws/aws-observability/aws-sigv4-proxy:1.0
+        args:
+        - --name
+        - aps
+        - --region
+        - <span class="token variable">${AWS_DEFAULT_REGION}</span>
+        - --host
+        - aps-workspaces.<span class="token variable">${AWS_DEFAULT_REGION}</span>.amazonaws.com
+        - --port
+        - :8005
+        ports:
+        - name: aws-sigv4-proxy
+          containerPort: 8005
+EOF</span>
+</code></pre></div><h2 id="enable-calico-monitoring"><a href="#enable-calico-monitoring" class="header-anchor">#</a> Enable calico monitoring</h2> <blockquote><p>This step should be done right after Prometheus installation to prevent
+Alertmanager from firing calico related alarms</p></blockquote> <p>Enable Felix Prometheus metrics:</p> <div class="language-bash extra-class"><pre class="language-bash"><code><span class="token comment"># calicoctl patch felixConfiguration default --patch &quot;{\&quot;spec\&quot;:{\&quot;prometheusMetricsEnabled\&quot;: true}}&quot;</span>
+</code></pre></div><p>Creating a service to expose Felix metrics according
+<a href="https://docs.projectcalico.org/maintenance/monitor/monitor-component-metrics" target="_blank" rel="noopener noreferrer">Monitor Calico component metrics<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>kubectl apply -f - <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+apiVersion: v1
+kind: Service
+metadata:
+  name: felix-metrics-svc
+  namespace: kube-system
+  labels:
+    app: calico-felix
+spec:
+  selector:
+    k8s-app: calico-node
+  ports:
+  - name: metrics-http
+    port: 9091
+    targetPort: 9091
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: felix-metrics-sm
+  namespace: kube-system
+  labels:
+    app: calico
+spec:
+  endpoints:
+  - interval: 10s
+    path: /metrics
+    port: metrics-http
+  namespaceSelector:
+    matchNames:
+    - kube-system
+  selector:
+    matchLabels:
+      app: calico-felix
+EOF</span>
+</code></pre></div><p>Creating a service to expose kube-controllers metrics:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>kubectl apply -f - <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+apiVersion: v1
+kind: Service
+metadata:
+  name: kube-controllers-metrics-svc
+  namespace: kube-system
+  labels:
+    app: calico-kube-controllers
+spec:
+  selector:
+    k8s-app: calico-kube-controllers
+  ports:
+  - name: metrics-http
+    port: 9094
+    targetPort: 9094
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: kube-controllers-metrics-sm
+  namespace: kube-system
+spec:
+  endpoints:
+  - interval: 10s
+    path: /metrics
+    port: metrics-http
+  namespaceSelector:
+    matchNames:
+    - kube-system
+  selector:
+    matchLabels:
+      app: calico-kube-controllers
+EOF</span>
+</code></pre></div><h2 id="loki"><a href="#loki" class="header-anchor">#</a> loki</h2> <p>Install <code>loki</code> <a href="https://artifacthub.io/packages/helm/grafana/loki" target="_blank" rel="noopener noreferrer">helm chart<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>
+and modify the
+<a href="https://github.com/grafana/helm-charts/blob/main/charts/loki/values.yaml" target="_blank" rel="noopener noreferrer">default values<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>.</p> <div class="language-shell extra-class"><pre class="language-shell"><code>helm repo <span class="token function">add</span> grafana https://grafana.github.io/helm-charts
+helm upgrade --install --version <span class="token number">2.5</span>.0 --namespace loki --create-namespace --values - loki grafana/loki <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+serviceMonitor:
+  enabled: true
+EOF</span>
+</code></pre></div><p>Install promtail to ingest logs to loki:</p> <p>Install <code>loki</code> <a href="https://artifacthub.io/packages/helm/grafana/promtail" target="_blank" rel="noopener noreferrer">helm chart<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>
+and modify the
+<a href="https://github.com/grafana/helm-charts/blob/main/charts/promtail/values.yaml" target="_blank" rel="noopener noreferrer">default values<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>.</p> <div class="language-shell extra-class"><pre class="language-shell"><code>helm upgrade --install --version <span class="token number">3.5</span>.1 --namespace promtail --create-namespace --values - promtail grafana/promtail <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+serviceMonitor:
+  enabled: true
+config:
+  lokiAddress: http://loki-headless.loki:3100/loki/api/v1/push
+EOF</span>
+</code></pre></div><h2 id="aws-node-termination-handler"><a href="#aws-node-termination-handler" class="header-anchor">#</a> aws-node-termination-handler</h2> <p>Install <a href="https://github.com/aws/aws-node-termination-handler" target="_blank" rel="noopener noreferrer">AWS Node Termination Handler<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>
+which gracefully handle EC2 instance shutdown within Kubernetes.
+This may happen when one of the K8s workers needs to be replaced by scheduling
+the event: <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/monitoring-instances-status-check_sched.html" target="_blank" rel="noopener noreferrer">https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/monitoring-instances-status-check_sched.html<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></p> <p>Install <code>aws-node-termination-handler</code> <a href="https://artifacthub.io/packages/helm/aws/aws-node-termination-handler" target="_blank" rel="noopener noreferrer">helm chart<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>
+and modify the
+<a href="https://github.com/aws/aws-node-termination-handler/blob/main/config/helm/aws-node-termination-handler/values.yaml" target="_blank" rel="noopener noreferrer">default values<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>.</p> <div class="language-bash extra-class"><pre class="language-bash"><code>helm upgrade --install --version <span class="token number">0.15</span>.1 --namespace kube-system --create-namespace --values - aws-node-termination-handler eks/aws-node-termination-handler <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+enableRebalanceMonitoring: true
+awsRegion: <span class="token variable">${AWS_DEFAULT_REGION}</span>
+enableSpotInterruptionDraining: true
+enableScheduledEventDraining: true
+deleteLocalData: true
+podMonitor:
+  create: true
+EOF</span>
+</code></pre></div><h2 id="kyverno"><a href="#kyverno" class="header-anchor">#</a> kyverno</h2> <p>Install <code>kyverno</code> <a href="https://artifacthub.io/packages/helm/kyverno/kyverno" target="_blank" rel="noopener noreferrer">helm chart<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>
+and modify the
+<a href="https://github.com/kyverno/kyverno/blob/main/charts/kyverno/values.yaml" target="_blank" rel="noopener noreferrer">default values<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>.</p> <div class="language-shell extra-class"><pre class="language-shell"><code>helm repo <span class="token function">add</span> kyverno https://kyverno.github.io/kyverno/
+helm upgrade --install --version v1.4.1 --namespace kyverno --create-namespace --values - kyverno kyverno/kyverno <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+hostNetwork: true
+EOF</span>
+</code></pre></div><p>Install <code>policy-reporter</code> <a href="https://github.com/fjogeleit/policy-reporter/tree/main/charts/policy-reporter" target="_blank" rel="noopener noreferrer">helm chart<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>
+and modify the
+<a href="https://github.com/fjogeleit/policy-reporter/blob/main/charts/policy-reporter/values.yaml" target="_blank" rel="noopener noreferrer">default values<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>.</p> <div class="language-shell extra-class"><pre class="language-shell"><code>helm repo <span class="token function">add</span> policy-reporter https://fjogeleit.github.io/policy-reporter
+helm upgrade --install --version <span class="token number">1.7</span>.1 --namespace policy-reporter --create-namespace --values - policy-reporter policy-reporter/policy-reporter <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+ui:
+  enabled: true
+  ingress:
+    enabled: true
+    annotations:
+      nginx.ingress.kubernetes.io/auth-url: https://oauth2-proxy.<span class="token variable">${CLUSTER_FQDN}</span>/oauth2/auth
+      nginx.ingress.kubernetes.io/auth-signin: https://oauth2-proxy.<span class="token variable">${CLUSTER_FQDN}</span>/oauth2/start?rd=\<span class="token variable">$scheme</span>://\<span class="token variable">$host</span>\<span class="token variable">$request_uri</span>
+    hosts:
+      - host: policy-reporter.<span class="token variable">${CLUSTER_FQDN}</span>
+        paths: [&quot;/&quot;]
+    tls:
+      - secretName: ingress-cert-<span class="token variable">${LETSENCRYPT_ENVIRONMENT}</span>
+        hosts:
+          - policy-reporter.<span class="token variable">${CLUSTER_FQDN}</span>
+monitoring:
+  enabled: true
+  namespace: default
+target:
+  loki:
+    host: http://loki-headless.loki:3100
+    minimumPriority: &quot;info&quot;
+    skipExistingOnStartup: true
+  # slack:
+  #   webhook: &quot;<span class="token variable">${SLACK_INCOMING_WEBHOOK_URL}</span>&quot;
+  #   minimumPriority: &quot;warning&quot;
+  #   skipExistingOnStartup: true
+EOF</span>
+</code></pre></div><p>Install kyverno policies:</p> <div class="language-shell extra-class"><pre class="language-shell"><code><span class="token function">mkdir</span> -pv <span class="token string">&quot;tmp/<span class="token variable">${CLUSTER_FQDN}</span>/kyverno-policies&quot;</span>
+<span class="token function">cat</span> <span class="token operator">&gt;</span> <span class="token string">&quot;tmp/<span class="token variable">${CLUSTER_FQDN}</span>/kyverno-policies/kustomization.yaml&quot;</span> <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+resources:
+- github.com/kyverno/policies/pod-security?ref=930b579b1d81be74678045dd3d397f668d321cdf
+
+patches:
+  - patch: |-
+      - op: replace
+        path: /spec/validationFailureAction
+        value: audit
+    target:
+      kind: ClusterPolicy
+EOF</span>
+kustomize build <span class="token string">&quot;tmp/<span class="token variable">${CLUSTER_FQDN}</span>/kyverno-policies&quot;</span> <span class="token operator">|</span> kubectl apply -f -
+</code></pre></div><p>Check if all policies are in place in <code>audit</code> mode:</p> <div class="language-shell extra-class"><pre class="language-shell"><code>kubectl get clusterpolicies.kyverno.io
+</code></pre></div><p>Output:</p> <div class="language-text extra-class"><pre class="language-text"><code>NAME                             BACKGROUND   ACTION
+deny-privilege-escalation        true         audit
+disallow-add-capabilities        true         audit
+disallow-host-namespaces         true         audit
+disallow-host-path               true         audit
+disallow-host-ports              true         audit
+disallow-privileged-containers   true         audit
+disallow-selinux                 true         audit
+require-default-proc-mount       true         audit
+require-non-root-groups          true         audit
+require-run-as-non-root          true         audit
+restrict-apparmor-profiles       true         audit
+restrict-seccomp                 true         audit
+restrict-sysctls                 true         audit
+restrict-volume-types            true         audit
+</code></pre></div><p>Viewing policy report summaries</p> <div class="language-shell extra-class"><pre class="language-shell"><code>kubectl get policyreport -A
+</code></pre></div><p>Output:</p> <div class="language-text extra-class"><pre class="language-text"><code>NAMESPACE               NAME                            PASS   FAIL   WARN   ERROR   SKIP   AGE
+amazon-cloudwatch       polr-ns-amazon-cloudwatch       99     6      0      0       0      3h55m
+kube-prometheus-stack   polr-ns-kube-prometheus-stack   261    19     0      0       0      3h55m
+loki                    polr-ns-loki                    34     1      0      0       0      3h55m
+promtail                polr-ns-promtail                96     9      0      0       0      3h55m
+</code></pre></div><p>Viewing policy violations:</p> <div class="language-shell extra-class"><pre class="language-shell"><code>kubectl describe policyreport -n amazon-cloudwatch polr-ns-amazon-cloudwatch <span class="token operator">|</span> <span class="token function">grep</span> <span class="token string">&quot;Status: \+fail&quot;</span> -B10
+</code></pre></div><p>Output:</p> <div class="language-text extra-class"><pre class="language-text"><code>  Message:        validation error: Running as root is not allowed. The fields spec.securityContext.runAsNonRoot, spec.containers[*].securityContext.runAsNonRoot, and spec.initContainers[*].securityContext.runAsNonRoot must be `true`. Rule check-containers[0] failed at path /spec/securityContext/runAsNonRoot/. Rule check-containers[1] failed at path /spec/containers/0/securityContext/.
+  Policy:         require-run-as-non-root
+  Resources:
+    API Version:  v1
+    Kind:         Pod
+    Name:         aws-cloudwatch-metrics-ft9fv
+    Namespace:    amazon-cloudwatch
+    UID:          8a520c22-4103-4c47-a0ce-dc0e77c7f4a8
+  Rule:           check-containers
+  Scored:         true
+  Status:         fail
+--
+  Message:        validation error: Running as root is not allowed. The fields spec.securityContext.runAsNonRoot, spec.containers[*].securityContext.runAsNonRoot, and spec.initContainers[*].securityContext.runAsNonRoot must be `true`. Rule check-containers[0] failed at path /spec/securityContext/runAsNonRoot/. Rule check-containers[1] failed at path /spec/containers/0/securityContext/.
+  Policy:         require-run-as-non-root
+  Resources:
+    API Version:  v1
+    Kind:         Pod
+    Name:         aws-cloudwatch-metrics-wrqmq
+    Namespace:    amazon-cloudwatch
+    UID:          18c08ec4-6aad-4e82-8a6a-b78ef7c79dd1
+  Rule:           check-containers
+  Scored:         true
+  Status:         fail
+--
+  Message:        validation error: HostPath volumes are forbidden. The fields spec.volumes[*].hostPath must not be set. Rule host-path failed at path /spec/volumes/1/hostPath/
+  Policy:         disallow-host-path
+  Resources:
+    API Version:  v1
+    Kind:         Pod
+    Name:         aws-cloudwatch-metrics-xzcl2
+    Namespace:    amazon-cloudwatch
+    UID:          8a1104f8-dc74-4f12-ac21-0939b73aa651
+  Rule:           host-path
+  Scored:         true
+  Status:         fail
+--
+  Message:        validation error: Running as root is not allowed. The fields spec.securityContext.runAsNonRoot, spec.containers[*].securityContext.runAsNonRoot, and spec.initContainers[*].securityContext.runAsNonRoot must be `true`. Rule check-containers[0] failed at path /spec/securityContext/runAsNonRoot/. Rule check-containers[1] failed at path /spec/containers/0/securityContext/.
+  Policy:         require-run-as-non-root
+  Resources:
+    API Version:  v1
+    Kind:         Pod
+    Name:         aws-cloudwatch-metrics-xzcl2
+    Namespace:    amazon-cloudwatch
+    UID:          8a1104f8-dc74-4f12-ac21-0939b73aa651
+  Rule:           check-containers
+  Scored:         true
+  Status:         fail
+--
+  Message:        validation error: HostPath volumes are forbidden. The fields spec.volumes[*].hostPath must not be set. Rule host-path failed at path /spec/volumes/1/hostPath/
+  Policy:         disallow-host-path
+  Resources:
+    API Version:  v1
+    Kind:         Pod
+    Name:         aws-cloudwatch-metrics-ft9fv
+    Namespace:    amazon-cloudwatch
+    UID:          8a520c22-4103-4c47-a0ce-dc0e77c7f4a8
+  Rule:           host-path
+  Scored:         true
+  Status:         fail
+--
+  Message:        validation error: HostPath volumes are forbidden. The fields spec.volumes[*].hostPath must not be set. Rule host-path failed at path /spec/volumes/1/hostPath/
+  Policy:         disallow-host-path
+  Resources:
+    API Version:  v1
+    Kind:         Pod
+    Name:         aws-cloudwatch-metrics-wrqmq
+    Namespace:    amazon-cloudwatch
+    UID:          18c08ec4-6aad-4e82-8a6a-b78ef7c79dd1
+  Rule:           host-path
+  Scored:         true
+  Status:         fail
+</code></pre></div><p>Create ClusterPolicy to check if <code>team_name</code> label is present in namespaces:</p> <div class="language-shell extra-class"><pre class="language-shell"><code>kubectl apply -f - <span class="token operator">&lt;&lt;</span> <span class="token punctuation">\</span>EOF
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-ns-labels
+spec:
+  validationFailureAction: audit
+  background: <span class="token boolean">true</span>
+  rules:
+  - name: check-for-labels-on-namespace
+    match:
+      resources:
+        kinds:
+        - Namespace
+    validate:
+      message: <span class="token string">&quot;The label <span class="token variable"><span class="token variable">`</span>team_name<span class="token variable">`</span></span> is required.&quot;</span>
+      pattern:
+        metadata:
+          labels:
+            team_name: <span class="token string">&quot;?*&quot;</span>
+EOF
+</code></pre></div><p>See the results:</p> <div class="language-shell extra-class"><pre class="language-shell"><code>kubectl get clusterpolicyreport
+</code></pre></div><p>Output:</p> <div class="language-text extra-class"><pre class="language-text"><code>NAME                  PASS   FAIL   WARN   ERROR   SKIP   AGE
+clusterpolicyreport   0      9      0      0       0      129m
+</code></pre></div><h2 id="nri-bundle"><a href="#nri-bundle" class="header-anchor">#</a> nri-bundle</h2> <p>Install <code>nri-bundle</code> <a href="https://artifacthub.io/packages/helm/newrelic/nri-bundle" target="_blank" rel="noopener noreferrer">helm chart<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>
+and modify the
+<a href="https://github.com/newrelic/helm-charts/blob/master/charts/nri-bundle/values.yaml" target="_blank" rel="noopener noreferrer">default values<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>.</p> <div class="language-shell extra-class"><pre class="language-shell"><code>helm repo <span class="token function">add</span> newrelic https://helm-charts.newrelic.com
+helm upgrade --install --version <span class="token number">2.8</span>.1 --namespace nri-bundle --create-namespace --values - nri-bundle newrelic/nri-bundle <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+prometheus:
+  enabled: true
+kubeEvents:
+  enabled: true
+logging:
+  enabled: true
+global:
+  licenseKey: <span class="token variable">${NEW_RELIC_LICENSE_KEY}</span>
+  cluster: ruzickap-<span class="token variable">${CLUSTER_FQDN}</span>
+EOF</span>
+</code></pre></div><h2 id="splunk-connect"><a href="#splunk-connect" class="header-anchor">#</a> splunk-connect</h2> <p>Install <code>splunk-connect</code> <a href="https://github.com/splunk/splunk-connect-for-kubernetes/" target="_blank" rel="noopener noreferrer">helm chart<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>
+and modify the
+<a href="https://github.com/splunk/splunk-connect-for-kubernetes/blob/develop/helm-chart/splunk-connect-for-kubernetes/values.yaml" target="_blank" rel="noopener noreferrer">default values<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>.</p> <div class="language-shell extra-class"><pre class="language-shell"><code>helm repo <span class="token function">add</span> splunk https://splunk.github.io/splunk-connect-for-kubernetes/
+helm upgrade --install --version <span class="token number">1.4</span>.7 --namespace splunk-connect --create-namespace --values - splunk-connect splunk/splunk-connect-for-kubernetes <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+global:
+  splunk:
+    hec:
+      host: <span class="token variable">${SPLUNK_HOST}</span>
+      token: <span class="token variable">${SPLUNK_TOKEN}</span>
+      indexName: <span class="token variable">${SPLUNK_INDEX_NAME}</span>
+  kubernetes:
+    clusterName: ruzickap-<span class="token variable">${CLUSTER_FQDN}</span>
+  prometheus_enabled: true
+  monitoring_agent_enabled: true
+EOF</span>
+</code></pre></div><h2 id="aqua-security-enforcer"><a href="#aqua-security-enforcer" class="header-anchor">#</a> Aqua Security Enforcer</h2> <p>Install <code>aqua-enforcer</code> <a href="https://github.com/aquasecurity/aqua-helm/tree/5.3/enforcer" target="_blank" rel="noopener noreferrer">helm chart<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>
+and modify the
+<a href="https://github.com/aquasecurity/aqua-helm/blob/5.3/enforcer/values.yaml" target="_blank" rel="noopener noreferrer">default values<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>.</p> <div class="language-shell extra-class"><pre class="language-shell"><code>helm repo <span class="token function">add</span> aqua-helm https://helm.aquasec.com
+helm upgrade --install --version <span class="token number">5.3</span>.0 --namespace aqua --create-namespace --values - aqua aqua-helm/enforcer <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+multi_cluster: true
+imageCredentials:
+  create: true
+  username: &quot;<span class="token variable">${AQUA_REGISTRY_USERNAME}</span>&quot;
+  password: &quot;<span class="token variable">${AQUA_REGISTRY_PASSWORD}</span>&quot;
+enforcerToken: &quot;<span class="token variable">${AQUA_ENFORCER_TOKEN}</span>&quot;
+gate:
+  host: &quot;<span class="token variable">${AQUA_GATE_HOST}</span>&quot;
+  port: 443
+EOF</span>
+</code></pre></div><h2 id="sysdig-agent"><a href="#sysdig-agent" class="header-anchor">#</a> sysdig-agent</h2> <p>Install <code>sysdig-agent</code> <a href="https://github.com/sysdiglabs/charts/tree/master/charts/sysdig" target="_blank" rel="noopener noreferrer">helm chart<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>
+and modify the
+<a href="https://github.com/sysdiglabs/charts/blob/master/charts/sysdig/values.yaml" target="_blank" rel="noopener noreferrer">default values<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>.</p> <div class="language-shell extra-class"><pre class="language-shell"><code>helm repo <span class="token function">add</span> sysdig https://charts.sysdig.com
+helm upgrade --install --version <span class="token number">1.11</span>.11 --namespace sysdig-agent --create-namespace --values - sysdig-agent sysdig/sysdig <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+sysdig:
+  accessKey: <span class="token variable">${SYSDIG_AGENT_ACCESSKEY}</span>
+  settings:
+    collector: ingest-eu1.app.sysdig.com
+    k8s_cluster_name: <span class="token variable">${CLUSTER_FQDN}</span>
+    prometheus:
+      enabled: true
+      histograms: true
+auditLog:
+  enabled: true
+EOF</span>
+</code></pre></div><p>Integrate the Kubernetes Audit facility with Sysdig Secure by enabling
+CloudWatch audit logs for Sysdig <a href="https://github.com/sysdiglabs/ekscloudwatch" target="_blank" rel="noopener noreferrer">https://github.com/sysdiglabs/ekscloudwatch<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>:</p> <p>As a &quot;quick and dirty&quot; to make <code>sysdig-eks-cloudwatch</code> running you need to add
+<code>CloudWatchReadOnlyAccess</code> policy to <code>eksctl-kube1-nodegroup-ng01-NodeInstanceRole</code>
+role. This should be done better using <a href="https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/setting-up-enable-IAM.html" target="_blank" rel="noopener noreferrer">IRSA<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>
+but this is enough for non-prod tests...</p> <div class="language-shell extra-class"><pre class="language-shell"><code>kubectl --namespace sysdig-agent apply -f https://raw.githubusercontent.com/sysdiglabs/ekscloudwatch/master/ekscloudwatch-config.yaml
+kubectl --namespace sysdig-agent apply -f https://raw.githubusercontent.com/sysdiglabs/ekscloudwatch/master/deployment.yaml
+</code></pre></div></div> <footer class="page-edit"><div class="edit-link"><a href="https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/edit/master/docs/part-03/README.md" target="_blank" rel="noopener noreferrer">Edit this page</a> <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></div> <div class="last-updated"><span class="prefix">Last Updated:</span> <span class="time">7/12/2021, 6:41:22 PM</span></div></footer> <div class="page-nav"><p class="inner"><span class="prev">
+      ←
+      <a href="/k8s-eks-bottlerocket-fargate/part-02/" class="prev">
+        AWS
+      </a></span> <span class="next"><a href="/k8s-eks-bottlerocket-fargate/part-04/">
+        DNS, Ingress, Certificates
+      </a>
+      →
+    </span></p></div> </main></div><div class="global-ui"><!----><!----></div></div>
+    <script src="/k8s-eks-bottlerocket-fargate/assets/js/app.db6020ce.js" defer></script><script src="/k8s-eks-bottlerocket-fargate/assets/js/2.d14c45f0.js" defer></script><script src="/k8s-eks-bottlerocket-fargate/assets/js/10.91b3f549.js" defer></script>
+  </body>
+</html>
