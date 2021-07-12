@@ -482,7 +482,7 @@ The ServiceAccount `ebs-csi-controller` was created by `eksctl`.
 ```bash
 
 helm repo add aws-ebs-csi-driver https://kubernetes-sigs.github.io/aws-ebs-csi-driver
-helm upgrade --install --version 1.2.3 --namespace kube-system --values - aws-ebs-csi-driver aws-ebs-csi-driver/aws-ebs-csi-driver << EOF
+helm upgrade --install --version 1.2.4 --namespace kube-system --values - aws-ebs-csi-driver aws-ebs-csi-driver/aws-ebs-csi-driver << EOF
 enableVolumeScheduling: true
 enableVolumeResizing: true
 enableVolumeSnapshot: true

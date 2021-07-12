@@ -257,7 +257,7 @@ and modify the
 [default values](https://github.com/bitnami/charts/blob/master/bitnami/phpmyadmin/values.yaml).
 
 ```bash
-helm upgrade --install --version 8.2.7 --namespace phpmyadmin --create-namespace --values - phpmyadmin bitnami/phpmyadmin << EOF
+helm upgrade --install --version 8.2.8 --namespace phpmyadmin --create-namespace --values - phpmyadmin bitnami/phpmyadmin << EOF
 ingress:
   enabled: true
   hostname: phpmyadmin.${CLUSTER_FQDN}
@@ -408,7 +408,7 @@ and modify the
 
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
-helm upgrade --install --version 10.2.24 --namespace drupal --values - drupal bitnami/drupal << EOF
+helm upgrade --install --version 10.2.26 --namespace drupal --values - drupal bitnami/drupal << EOF
 replicaCount: 2
 drupalUsername: admin
 drupalPassword: ${MY_PASSWORD}
@@ -499,7 +499,7 @@ kubectl label namespace drupal2 istio-injection=enabled kiali.io/member-of=kiali
 Install `drupal2`:
 
 ```bash
-helm upgrade --install --version 10.2.24 --namespace drupal2 --values - drupal2 bitnami/drupal << EOF
+helm upgrade --install --version 10.2.26 --namespace drupal2 --values - drupal2 bitnami/drupal << EOF
 replicaCount: 2
 drupalUsername: admin
 drupalPassword: ${MY_PASSWORD}
