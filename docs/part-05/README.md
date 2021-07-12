@@ -9,7 +9,7 @@ and modify the
 
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
-helm upgrade --install --version 2.4.8 --namespace keycloak --create-namespace --values - keycloak bitnami/keycloak << EOF
+helm upgrade --install --version 4.0.2 --namespace keycloak --create-namespace --values - keycloak bitnami/keycloak << EOF
 auth:
   adminUser: admin
   adminPassword: ${MY_PASSWORD}
@@ -38,6 +38,10 @@ postgresql:
     enabled: false
 keycloakConfigCli:
   enabled: true
+  # Workaround for bug: https://github.com/bitnami/charts/issues/6823
+  image:
+    repository: adorsys/keycloak-config-cli
+    tag: v4.0.1-14.0.0
   configuration:
     myrealm.yaml: |
       realm: myrealm
@@ -156,7 +160,7 @@ and modify the
 
 ```bash
 helm repo add k8s-at-home https://k8s-at-home.com/charts/
-helm upgrade --install --version 5.0.5 --namespace oauth2-proxy-keycloak --create-namespace --values - oauth2-proxy k8s-at-home/oauth2-proxy << EOF
+helm upgrade --install --version 5.0.6 --namespace oauth2-proxy-keycloak --create-namespace --values - oauth2-proxy k8s-at-home/oauth2-proxy << EOF
 config:
   clientID: oauth2-proxy-keycloak.${CLUSTER_FQDN}
   clientSecret: "${MY_PASSWORD}"
@@ -258,7 +262,7 @@ config:
       secret: ${MY_PASSWORD}
     - id: kiali.${CLUSTER_FQDN}
       redirectURIs:
-        - https://kiali.${CLUSTER_FQDN}/
+        - https://kiali.${CLUSTER_FQDN}
       name: Kiali
       secret: ${MY_PASSWORD}
     - id: keycloak.${CLUSTER_FQDN}
@@ -292,7 +296,7 @@ and modify the
 [default values](https://github.com/k8s-at-home/charts/blob/master/charts/stable/oauth2-proxy/values.yaml).
 
 ```bash
-helm upgrade --install --version 5.0.5 --namespace oauth2-proxy --create-namespace --values - oauth2-proxy k8s-at-home/oauth2-proxy << EOF
+helm upgrade --install --version 5.0.6 --namespace oauth2-proxy --create-namespace --values - oauth2-proxy k8s-at-home/oauth2-proxy << EOF
 config:
   clientID: oauth2-proxy.${CLUSTER_FQDN}
   clientSecret: "${MY_PASSWORD}"
