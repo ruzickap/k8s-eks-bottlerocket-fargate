@@ -168,3 +168,46 @@ kubectl delete deployment pasue-deployment
 sleep 800
 kubectl get nodes -L node.kubernetes.io/instance-type -L topology.kubernetes.io/zone
 ```
+
+## Descheduler
+
+Install `descheduler`
+[helm chart](https://artifacthub.io/packages/helm/descheduler/descheduler)
+and modify the
+[default values](https://github.com/kubernetes-sigs/descheduler/blob/master/charts/descheduler/values.yaml).
+
+```bash
+helm repo add descheduler https://kubernetes-sigs.github.io/descheduler/
+helm upgrade --install --version 0.21.0 --namespace kube-system --values - descheduler descheduler/descheduler << EOF
+cronJobApiVersion: "batch/v1beta1"
+successfulJobsHistoryLimit: 10
+EOF
+```
+
+## Rancher
+
+Install `rancher-server`
+[helm chart](https://github.com/rancher/rancher/tree/master/chart)
+and modify the
+[default values](https://github.com/rancher/rancher/blob/master/chart/values.yaml).
+
+```shell
+helm repo add rancher-latest https://releases.rancher.com/server-charts/latest
+helm upgrade --install --version 2.5.8 --namespace cattle-system --create-namespace --values - rancher rancher-latest/rancher << EOF
+hostname: rancher.${CLUSTER_FQDN}
+ingress:
+  extraAnnotations:
+    nginx.ingress.kubernetes.io/auth-url: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/auth
+    nginx.ingress.kubernetes.io/auth-signin: https://oauth2-proxy.${CLUSTER_FQDN}/oauth2/start?rd=\$scheme://\$host\$request_uri
+  tls:
+    source: secret
+replicas: 1
+EOF
+```
+
+Copy the certificate to the secret with name: `tls-rancher-ingress`.
+Rancher helm chart can not use existing secret for TLS ingress :-(
+
+```shell
+kubectl get secret -n cattle-system ingress-cert-staging -o json | jq ".metadata.name=\"tls-rancher-ingress\"" | kubectl apply -f -
+```

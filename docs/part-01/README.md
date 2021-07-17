@@ -88,7 +88,8 @@ installed.
 Install necessary software:
 
 ```bash
-if [[ -x /usr/bin/apt-get ]]; then
+
+if command -v apt-get &> /dev/null; then
   apt update -qq
   DEBIAN_FRONTEND=noninteractive apt-get install -y -qq apache2-utils ansible dnsutils git gnupg2 jq sudo unzip > /dev/null
 fi
@@ -97,7 +98,7 @@ fi
 Install [AWS CLI](https://aws.amazon.com/cli/)  binary:
 
 ```bash
-if [[ ! -x /usr/local/bin/aws ]]; then
+if ! command -v aws &> /dev/null; then
   curl -sL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip"
   unzip -q -o /tmp/awscliv2.zip -d /tmp/
   sudo /tmp/aws/install
@@ -107,7 +108,7 @@ fi
 Install [kubectl](https://github.com/kubernetes/kubectl) binary:
 
 ```bash
-if [[ ! -x /usr/local/bin/kubectl ]]; then
+if ! command -v kubectl &> /dev/null; then
   # https://github.com/kubernetes/kubectl/releases
   sudo curl -s -Lo /usr/local/bin/kubectl "https://storage.googleapis.com/kubernetes-release/release/v1.21.1/bin/$(uname | sed "s/./\L&/g" )/amd64/kubectl"
   sudo chmod a+x /usr/local/bin/kubectl
@@ -117,7 +118,7 @@ fi
 Install [Helm](https://helm.sh/):
 
 ```bash
-if [[ ! -x /usr/local/bin/helm ]]; then
+if ! command -v helm &> /dev/null; then
   # https://github.com/helm/helm/releases
   curl -s https://raw.githubusercontent.com/helm/helm/master/scripts/get | bash -s -- --version v3.6.0
 fi
@@ -126,7 +127,7 @@ fi
 Install [eksctl](https://eksctl.io/):
 
 ```bash
-if [[ ! -x /usr/local/bin/eksctl ]]; then
+if ! command -v eksctl &> /dev/null; then
   # https://github.com/weaveworks/eksctl/releases
   curl -s -L "https://github.com/weaveworks/eksctl/releases/download/0.55.0/eksctl_$(uname)_amd64.tar.gz" | sudo tar xz -C /usr/local/bin/
 fi
@@ -135,7 +136,7 @@ fi
 Install [AWS IAM Authenticator for Kubernetes](https://github.com/kubernetes-sigs/aws-iam-authenticator):
 
 ```bash
-if [[ ! -x /usr/local/bin/aws-iam-authenticator ]]; then
+if ! command -v aws-iam-authenticator &> /dev/null; then
   # https://docs.aws.amazon.com/eks/latest/userguide/install-aws-iam-authenticator.html
   sudo curl -s -Lo /usr/local/bin/aws-iam-authenticator "https://amazon-eks.s3.us-west-2.amazonaws.com/1.19.6/2021-01-05/bin/$(uname | sed "s/./\L&/g")/amd64/aws-iam-authenticator"
   sudo chmod a+x /usr/local/bin/aws-iam-authenticator
@@ -145,7 +146,7 @@ fi
 Install [vault](https://www.vaultproject.io/downloads):
 
 ```bash
-if [[ ! -x /usr/local/bin/vault ]]; then
+if ! command -v vault &> /dev/null; then
   curl -s -L "https://releases.hashicorp.com/vault/1.7.2/vault_1.7.2_$(uname | sed "s/./\L&/g")_amd64.zip" -o /tmp/vault.zip
   sudo unzip -q /tmp/vault.zip -d /usr/local/bin/
   rm /tmp/vault.zip
@@ -155,7 +156,7 @@ fi
 Install [velero](https://github.com/vmware-tanzu/velero/releases):
 
 ```bash
-if [[ ! -x /usr/local/bin/velero ]]; then
+if ! command -v velero &> /dev/null; then
   curl -s -L "https://github.com/vmware-tanzu/velero/releases/download/v1.6.0/velero-v1.6.0-$(uname | sed "s/./\L&/g")-amd64.tar.gz" -o /tmp/velero.tar.gz
   sudo tar xzf /tmp/velero.tar.gz -C /usr/local/bin/ --strip-components 1 "velero-v1.6.0-$(uname | sed "s/./\L&/g")-amd64/velero"
 fi
@@ -164,7 +165,7 @@ fi
 Install [flux](https://toolkit.fluxcd.io/):
 
 ```bash
-if [[ ! -x /usr/local/bin/flux ]]; then
+if ! command -v flux &> /dev/null; then
   curl -s https://fluxcd.io/install.sh | sudo bash
 fi
 ```
@@ -172,7 +173,7 @@ fi
 Install [calicoctl](https://docs.projectcalico.org/getting-started/clis/calicoctl/install):
 
 ```bash
-if [[ ! -x /usr/local/bin/calicoctl ]]; then
+if ! command -v calicoctl &> /dev/null; then
   sudo curl -s -Lo /usr/local/bin/calicoctl https://github.com/projectcalico/calicoctl/releases/download/v3.18.4/calicoctl
   sudo chmod a+x /usr/local/bin/calicoctl
 fi
@@ -181,7 +182,7 @@ fi
 Install [SOPS: Secrets OPerationS](https://github.com/mozilla/sops):
 
 ```bash
-if [[ ! -x /usr/local/bin/sops ]]; then
+if ! command -v sops &> /dev/null; then
   sudo curl -s -Lo /usr/local/bin/sops "https://github.com/mozilla/sops/releases/download/v3.7.1/sops-v3.7.1.$(uname | sed "s/./\L&/g")"
   sudo chmod a+x /usr/local/bin/sops
 fi
@@ -190,7 +191,7 @@ fi
 Install [kustomize](https://kustomize.io/):
 
 ```bash
-if [[ ! -x /usr/local/bin/kustomize ]]; then
+if ! command -v kustomize &> /dev/null; then
   curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | sudo bash -s 4.1.2 /usr/local/bin/
 fi
 ```
@@ -198,7 +199,7 @@ fi
 Install [hey](https://github.com/rakyll/hey):
 
 ```bash
-if [[ ! -x /usr/local/bin/hey ]]; then
+if ! command -v hey &> /dev/null; then
   sudo curl -s -Lo /usr/local/bin/hey "https://hey-release.s3.us-east-2.amazonaws.com/hey_$(uname | sed "s/./\L&/g")_amd64"
   sudo chmod a+x /usr/local/bin/hey
 fi
@@ -792,6 +793,7 @@ vpc:
     gateway: Disable
 managedNodeGroups:
   - name: managed-ng-1
+    amiFamily: Bottlerocket
     instanceType: t3.xlarge
     instancePrefix: ruzickap
     desiredCapacity: 3
@@ -813,6 +815,8 @@ managedNodeGroups:
     volumeEncrypted: true
     volumeKmsKeyID: ${KMS_KEY_ID}
     disableIMDSv1: true
+    bottlerocket:
+      enableAdminContainer: true
 fargateProfiles:
   - name: fp-fgtest
     selectors:

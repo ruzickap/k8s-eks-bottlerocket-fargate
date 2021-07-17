@@ -8,13 +8,14 @@ Install `clusterctl`:
 set -x
 
 CLUSTERAPI_VERSION="0.3.17"
-if [[ ! -f /usr/local/bin/clusterctl ]]; then
+
+if ! command -v clusterctl &> /dev/null; then
   curl -s -L "https://github.com/kubernetes-sigs/cluster-api/releases/download/v${CLUSTERAPI_VERSION}/clusterctl-$(uname | sed "s/./\L&/g" )-amd64" -o /usr/local/bin/clusterctl
   chmod +x /usr/local/bin/clusterctl
 fi
 
 CLUSTERAWSADM_VERSION="0.6.6"
-if [[ ! -f /usr/local/bin/clusterawsadm ]]; then
+if ! command -v clusterawsadm &> /dev/null; then
   curl -s -L "https://github.com/kubernetes-sigs/cluster-api-provider-aws/releases/download/v${CLUSTERAWSADM_VERSION}/clusterawsadm-$(uname | sed "s/./\L&/g" )-amd64" -o /usr/local/bin/clusterawsadm
   chmod +x /usr/local/bin/clusterawsadm
 fi
