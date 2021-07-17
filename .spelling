@@ -16,6 +16,7 @@ ClusterIssuer
 ClusterIssuers
 ClusterPolicy
 ConfigMap
+Descheduler
 Dex
 Drupal
 Drupal2

@@ -23,6 +23,5 @@ jobs:
         uses: ibiqlik/action-yamllint@v3
         config_data: |
           extends: default
-          rules:
           line-length:
             level: warning

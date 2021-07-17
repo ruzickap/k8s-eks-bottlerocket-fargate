@@ -296,7 +296,7 @@ Download `istioctl`:
 ```bash
 ISTIO_VERSION="1.10.2"
 
-if [[ ! -f /usr/local/bin/istioctl ]]; then
+if ! command -v istioctl &> /dev/null; then
   if [[ $(uname) == "Darwin" ]]; then
     ISTIOCTL_URL="https://github.com/istio/istio/releases/download/${ISTIO_VERSION}/istioctl-${ISTIO_VERSION}-osx.tar.gz"
   else
