@@ -21,7 +21,9 @@ jobs:
 
       - name: yamllint
         uses: ibiqlik/action-yamllint@v3
-        config_data: |
-          extends: default
-          line-length:
-            level: warning
+        with:
+          config_data: |
+            extends: default
+            rules:
+              line-length:
+                level: warning
