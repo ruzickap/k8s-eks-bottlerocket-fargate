@@ -134,7 +134,7 @@ EOF
 done
 
 if [[ ! -x /usr/local/bin/calicoctl ]]; then
-  sudo curl -s -Lo /usr/local/bin/calicoctl https://github.com/projectcalico/calicoctl/releases/download/v3.18.1/calicoctl
+  sudo curl -s -Lo /usr/local/bin/calicoctl https://github.com/projectcalico/calicoctl/releases/download/v3.20.0/calicoctl
   sudo chmod a+x /usr/local/bin/calicoctl
 fi
 
