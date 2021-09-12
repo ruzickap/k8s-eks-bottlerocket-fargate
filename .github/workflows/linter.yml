@@ -39,6 +39,19 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v2
 
+      - name: Extract commands from markdown files
+        run: |
+          set -eux
+          echo '#!/usr/bin/env bash' > README.sh
+          find . -name '*.md' -print0 | while IFS= read -r -d '' FILE ; do
+            sed -n "/^\`\`\`\(bash\|shell\).*/,/^\`\`\`$/p" "${FILE}" \
+            | \
+            sed \
+              -e 's/^```\(bash\|shell\).*/\n/' \
+              -e 's/^```$//' \
+            >> README.sh
+          done
+
       ################################
       # Run Linter against code base #
       ################################
@@ -47,3 +60,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           FILTER_REGEX_EXCLUDE: CHANGELOG.md
+          USE_FIND_ALGORITHM: true
