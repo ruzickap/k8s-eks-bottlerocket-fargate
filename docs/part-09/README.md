@@ -112,7 +112,7 @@ Resources:
             Action:
               - sts:AssumeRole
   RdsInstance:
-    Type: "AWS::RDS::DBInstance"
+    Type: AWS::RDS::DBInstance
     DependsOn:
       - DbSecurityGroup
       - RdsInstanceSubnetGroup
@@ -210,7 +210,7 @@ RDS_DB_RESOURCE_ID=$(aws rds describe-db-instances --query "DBInstances[?DBInsta
 Initialize database:
 
 ```bash
-kubectl get pods mysql-client-drupal || kubectl run --env MYSQL_PWD=${MY_PASSWORD} --image=mysql:8.0 --restart=Never mysql-client-drupal -- \
+kubectl get pods mysql-client-drupal || kubectl run --env MYSQL_PWD="${MY_PASSWORD}" --image=mysql:8.0 --restart=Never mysql-client-drupal -- \
   mysql -h "${RDS_DB_HOST}" -u "${RDS_DB_USERNAME}" -e "
     CREATE USER \"exporter\"@\"%\" IDENTIFIED BY \"${MY_PASSWORD}\" WITH MAX_USER_CONNECTIONS 3;
     CREATE USER \"drupal\"@\"%\" IDENTIFIED BY \"${MY_PASSWORD}\";
@@ -257,7 +257,7 @@ and modify the
 [default values](https://github.com/bitnami/charts/blob/master/bitnami/phpmyadmin/values.yaml).
 
 ```bash
-helm upgrade --install --version 8.2.8 --namespace phpmyadmin --create-namespace --values - phpmyadmin bitnami/phpmyadmin << EOF
+helm upgrade --install --version 8.2.11 --namespace phpmyadmin --create-namespace --values - phpmyadmin bitnami/phpmyadmin << EOF
 ingress:
   enabled: true
   hostname: phpmyadmin.${CLUSTER_FQDN}
@@ -319,7 +319,7 @@ spec:
   serviceAccountName: rds-sa
   containers:
   - name: ubuntu
-    image: ubuntu:latest
+    image: ubuntu:20.04
     command:
       - /bin/bash
       - -c
@@ -345,7 +345,7 @@ spec:
         cpu: "500m"
   restartPolicy: Never
 EOF
-sleep 30
+sleep 50
 ```
 
 Check the logs:
@@ -357,6 +357,29 @@ kubectl logs mysql-iam-test --tail=5
 Output:
 
 ```text
++ aws sts get-caller-identity
+{
+    "UserId": "xxxxxxxxxxxxxxxxxxxxx:botocore-session-1638296138",
+    "Account": "7xxxxxxxxxx7",
+    "Arn": "arn:aws:sts::7xxxxxxxxxx7:assumed-role/eksctl-kube1-addon-iamserviceaccount-default-Role1-ZOKCKAOF74H0/botocore-session-1638296138"
+}
++ wget -q https://s3.amazonaws.com/rds-downloads/rds-ca-2019-root.pem
+++ aws rds generate-db-auth-token --hostname kube1db.cbpu7ikafk2a.eu-west-1.rds.amazonaws.com --port 3306 --region eu-west-1 --username iamtest
++ TOKEN='kube1db.cbpu7ikafk2a.eu-west-1.rds.amazonaws.com:3306/?Action=connect&DBUser=iamtest&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=xxxxxxxxxxxxxxxxxxxx%2F20211130%2Feu-west-1%2Frds-db%2Faws4_request&X-Amz-Date=20211130T181540Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&X-Amz-Security-Token=IQo...6e917'
++ mysql -h kube1db.cbpu7ikafk2a.eu-west-1.rds.amazonaws.com -u iamtest --password=MyAdmin123,. -e 'show databases;'
+mysql: [Warning] Using a password on the command line interface can be insecure.
+ERROR 2059 (HY000): Authentication plugin 'mysql_clear_password' cannot be loaded: plugin not enabled
++ mysql -h kube1db.cbpu7ikafk2a.eu-west-1.rds.amazonaws.com -u iamtest '--password=kube1db.cbpu7ikafk2a.eu-west-1.rds.amazonaws.com:3306/?Action=connect&DBUser=iamtest&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=xxxxxxxxxxxxxxxxxxxx%2F20211130%2Feu-west-1%2Frds-db%2Faws4_request&X-Amz-Date=20211130T181540Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&X-Amz-Security-Token=IQoJb3J...e917' --enable-cleartext-plugin --ssl-ca=rds-ca-2019-root.pem -e 'show databases;'
+mysql: [Warning] Using a password on the command line interface can be insecure.
+Database
+iamtest
+information_schema
++ mysql -h kube1db.cbpu7ikafk2a.eu-west-1.rds.amazonaws.com -u iamtest '--password=kube1db.cbpu7ikafk2a.eu-west-1.rds.amazonaws.com:3306/?Action=connect&DBUser=iamtest&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=xxxxxxxxxxxxxxxxxxxx%2F20211130%2Feu-west-1%2Frds-db%2Faws4_request&X-Amz-Date=20211130T181540Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&X-Amz-Security-Token=IQo...6e917' --enable-cleartext-plugin --ssl-ca=amazon-root-CA-1.pem --ssl-mode=REQUIRED -e 'show databases;'
+mysql: [Warning] Using a password on the command line interface can be insecure.
+WARNING: no verification of server certificate will be done. Use --ssl-mode=VERIFY_CA or VERIFY_IDENTITY.
+Database
+iamtest
+information_schema
 ```
 
 ### Install Drupal
@@ -407,8 +430,8 @@ and modify the
 [default values](https://github.com/bitnami/charts/blob/master/bitnami/drupal/values.yaml).
 
 ```bash
-helm repo add bitnami https://charts.bitnami.com/bitnami
-helm upgrade --install --version 10.2.26 --namespace drupal --values - drupal bitnami/drupal << EOF
+helm repo add --force-update bitnami https://charts.bitnami.com/bitnami
+helm upgrade --install --version 10.2.24 --namespace drupal --values - drupal bitnami/drupal << EOF
 replicaCount: 2
 drupalUsername: admin
 drupalPassword: ${MY_PASSWORD}
@@ -499,7 +522,7 @@ kubectl label namespace drupal2 istio-injection=enabled kiali.io/member-of=kiali
 Install `drupal2`:
 
 ```bash
-helm upgrade --install --version 10.2.26 --namespace drupal2 --values - drupal2 bitnami/drupal << EOF
+helm upgrade --install --version 10.2.24 --namespace drupal2 --values - drupal2 bitnami/drupal << EOF
 replicaCount: 2
 drupalUsername: admin
 drupalPassword: ${MY_PASSWORD}

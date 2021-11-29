@@ -13,24 +13,23 @@ and modify the
 Service account `external-dns` was created by `eksctl`.
 
 ```bash
-helm repo add jetstack https://charts.jetstack.io
-helm upgrade --install --version v1.4.0 --namespace cert-manager --wait --values - cert-manager jetstack/cert-manager << EOF
+helm repo add --force-update jetstack https://charts.jetstack.io
+helm upgrade --install --version v1.5.3 --namespace cert-manager --wait --values - cert-manager jetstack/cert-manager << EOF
 installCRDs: true
 serviceAccount:
   create: false
   name: cert-manager
 extraArgs:
   - --enable-certificate-owner-ref=true
-securityContext:
-  enabled: true
 prometheus:
   servicemonitor:
     enabled: true
 webhook:
-  # Needed for calico
+  # Needed for Calico
   securePort: 10251
   hostNetwork: true
 EOF
+sleep 10
 ```
 
 Add ClusterIssuers for Let's Encrypt staging and production:
@@ -76,6 +75,8 @@ spec:
           route53:
             region: ${AWS_DEFAULT_REGION}
 EOF
+
+kubectl wait --namespace cert-manager --timeout=10m --for=condition=Ready clusterissuer --all
 ```
 
 Create wildcard certificate using `cert-manager`:
@@ -89,11 +90,9 @@ metadata:
   namespace: cert-manager
 spec:
   secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
-  # https://github.com/jetstack/cert-manager/pull/3537
-  # This will start working in cert-manager 1.15
-  # secretTemplate:
-  #   annotations:
-  #     kubed.appscode.com/sync: ""
+  secretTemplate:
+    annotations:
+      kubed.appscode.com/sync: ""
   issuerRef:
     name: letsencrypt-${LETSENCRYPT_ENVIRONMENT}-dns
     kind: ClusterIssuer
@@ -102,6 +101,8 @@ spec:
     - "*.${CLUSTER_FQDN}"
     - "${CLUSTER_FQDN}"
 EOF
+
+kubectl wait --namespace cert-manager --for=condition=Ready --timeout=20m certificate "ingress-cert-${LETSENCRYPT_ENVIRONMENT}"
 ```
 
 ## kubed
@@ -120,20 +121,12 @@ and modify the
 [default values](https://github.com/appscode/kubed/blob/master/charts/kubed/values.yaml).
 
 ```bash
-helm repo add appscode https://charts.appscode.com/stable/
+helm repo add --force-update appscode https://charts.appscode.com/stable/
 helm upgrade --install --version v0.12.0 --namespace kubed --create-namespace --values - kubed appscode/kubed << EOF
 imagePullPolicy: Always
 config:
   clusterName: ${CLUSTER_FQDN}
 EOF
-```
-
-Annotate the wildcard certificate secret. It will allow `kubed` to distribute
-it to all namespaces.
-
-```bash
-kubectl wait --namespace cert-manager --for=condition=Ready --timeout=20m certificate "ingress-cert-${LETSENCRYPT_ENVIRONMENT}"
-kubectl annotate secret "ingress-cert-${LETSENCRYPT_ENVIRONMENT}" -n cert-manager --overwrite kubed.appscode.com/sync=""
 ```
 
 ## ingress-nginx
@@ -144,10 +137,10 @@ and modify the
 [default values](https://github.com/kubernetes/ingress-nginx/blob/master/charts/ingress-nginx/values.yaml).
 
 ```bash
-helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-helm upgrade --install --version 3.34.0 --namespace ingress-nginx --create-namespace --wait --values - ingress-nginx ingress-nginx/ingress-nginx << EOF
+helm repo add --force-update ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm upgrade --install --version 3.35.0 --namespace ingress-nginx --create-namespace --wait --values - ingress-nginx ingress-nginx/ingress-nginx << EOF
 controller:
-  # Needed for calico
+  # Needed for Calico
   hostNetwork: true
   replicaCount: 1
   service:
@@ -207,8 +200,8 @@ and modify the
 [default values](https://github.com/jaegertracing/helm-charts/blob/master/charts/jaeger-operator/values.yaml).
 
 ```bash
-helm repo add jaegertracing https://jaegertracing.github.io/helm-charts
-helm upgrade --install --version 2.22.0 --namespace jaeger-operator --create-namespace --values - jaeger-operator jaegertracing/jaeger-operator << EOF
+helm repo add --force-update jaegertracing https://jaegertracing.github.io/helm-charts
+helm upgrade --install --version 2.23.0 --namespace jaeger-operator --create-namespace --values - jaeger-operator jaegertracing/jaeger-operator << EOF
 rbac:
   clusterRole: true
 EOF
@@ -351,7 +344,7 @@ spec:
           serviceAnnotations:
             service.beta.kubernetes.io/aws-load-balancer-backend-protocol: tcp
             service.beta.kubernetes.io/aws-load-balancer-type: nlb
-            service.beta.kubernetes.io/aws-load-balancer-additional-resource-tags: "$(echo "${TAGS}" | tr " " ,)"
+            service.beta.kubernetes.io/aws-load-balancer-additional-resource-tags: "${TAGS// /,}"
     pilot:
       k8s:
         overlays:
@@ -377,12 +370,6 @@ Enable Prometheus monitoring:
 kubectl apply -f "https://raw.githubusercontent.com/istio/istio/${ISTIO_VERSION}/samples/addons/extras/prometheus-operator.yaml"
 ```
 
-Label the `default` namespace with `istio-injection=enabled`:
-
-```shell
-kubectl label namespace default istio-injection=enabled --overwrite
-```
-
 ### Kiali
 
 Install `kiali-operator`
@@ -391,8 +378,8 @@ and modify the
 [default values](https://github.com/kiali/helm-charts/blob/master/kiali-operator/values.yaml).
 
 ```bash
-helm repo add kiali https://kiali.org/helm-charts
-helm upgrade --install --version 1.36.1 --namespace kiali-operator --create-namespace kiali-operator kiali/kiali-operator
+helm repo add --force-update kiali https://kiali.org/helm-charts
+helm upgrade --install --version 1.38.1 --namespace kiali-operator --create-namespace kiali-operator kiali/kiali-operator
 ```
 
 Install Kiali CR:
@@ -465,8 +452,8 @@ and modify the
 Service account `external-dns` was created by `eksctl`.
 
 ```bash
-helm repo add bitnami https://charts.bitnami.com/bitnami
-helm upgrade --install --version 5.1.4 --namespace external-dns --values - external-dns bitnami/external-dns << EOF
+helm repo add --force-update bitnami https://charts.bitnami.com/bitnami
+helm upgrade --install --version 5.4.1 --namespace external-dns --values - external-dns bitnami/external-dns << EOF
 sources:
   - ingress
   - istio-gateway
@@ -476,7 +463,7 @@ aws:
   region: ${AWS_DEFAULT_REGION}
 domainFilters:
   - ${CLUSTER_FQDN}
-interval: 10s
+interval: 20s
 policy: sync
 serviceAccount:
   create: false
@@ -495,8 +482,8 @@ Install `mailhog`
 and modify the
 [default values](https://github.com/codecentric/helm-charts/blob/master/charts/mailhog/values.yaml).
 
-```shell
-helm repo add codecentric https://codecentric.github.io/helm-charts
+```bash
+helm repo add --force-update codecentric https://codecentric.github.io/helm-charts
 helm upgrade --install --version 4.1.0 --namespace mailhog --create-namespace --values - mailhog codecentric/mailhog << EOF
 ingress:
   enabled: true
@@ -522,8 +509,8 @@ and modify the
 
 Details: [Kubernetes Event Notifications to a Slack Channel](https://www.powerupcloud.com/kubernetes-event-notifications-to-a-slack-channel-part-v/)
 
-```shell
-helm upgrade --install --version 3.2.6 --namespace kubewatch --create-namespace --values - kubewatch bitnami/kubewatch << EOF
+```bash
+helm upgrade --install --version 3.2.13 --namespace kubewatch --create-namespace --values - kubewatch bitnami/kubewatch << EOF
 slack:
   enabled: true
   channel: "#${SLACK_CHANNEL}"
@@ -534,6 +521,7 @@ smtp:
   from: "kubewatch@${CLUSTER_FQDN}"
   smarthost: "mailhog.mailhog.svc.cluster.local:1025"
   subject: "kubewatch"
+  requireTLS: false
 resourcesToWatch:
   deployment: false
   pod: false
@@ -547,7 +535,7 @@ EOF
 Create `ClusterRole` and `ClusterRoleBinding` to allow `kubewatch` to access
 necessary resources:
 
-```shell
+```bash
 kubectl apply -f - << EOF
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRole
@@ -581,29 +569,29 @@ EOF
 
 ## Calico commands
 
-```shell
-calicoctl ipam show --show-block
+```bash
+calicoctl --allow-version-mismatch ipam show --show-block
 ```
 
 Output:
 
 ```text
-+----------+------------------+-----------+------------+--------------+
-| GROUPING |       CIDR       | IPS TOTAL | IPS IN USE |   IPS FREE   |
-+----------+------------------+-----------+------------+--------------+
-| IP Pool  | 172.16.0.0/16    |     65536 | 15 (0%)    | 65521 (100%) |
-| Block    | 172.16.31.64/26  |        64 | 4 (6%)     | 60 (94%)     |
-| Block    | 172.16.71.192/26 |        64 | 6 (9%)     | 58 (91%)     |
-| Block    | 172.16.82.192/26 |        64 | 5 (8%)     | 59 (92%)     |
-+----------+------------------+-----------+------------+--------------+
++----------+-------------------+-----------+------------+--------------+
+| GROUPING |       CIDR        | IPS TOTAL | IPS IN USE |   IPS FREE   |
++----------+-------------------+-----------+------------+--------------+
+| IP Pool  | 172.16.0.0/16     |     65536 | 42 (0%)    | 65494 (100%) |
+| Block    | 172.16.166.128/26 |        64 | 14 (22%)   | 50 (78%)     |
+| Block    | 172.16.2.128/26   |        64 | 13 (20%)   | 51 (80%)     |
+| Block    | 172.16.3.64/26    |        64 | 15 (23%)   | 49 (77%)     |
++----------+-------------------+-----------+------------+--------------+
 ```
 
 Block outgoing traffic form `calico-test-1` namespace:
 
-```shell
-kubectl create namespace calico-test-1
+```bash
+kubectl get namespace calico-test-1 &> /dev/null || kubectl create namespace calico-test-1
 
-calicoctl apply -f - << EOF
+calicoctl --allow-version-mismatch apply -f - << EOF
 apiVersion: projectcalico.org/v3
 kind: GlobalNetworkPolicy
 metadata:
@@ -629,7 +617,7 @@ spec:
       - 53
 EOF
 
-kubectl run curl-test-1 --namespace calico-test-1 --image=radial/busyboxplus:curl --rm -it -- ping -c 3 -w 50 www.google.com
+kubectl run curl-test-1 --timeout=10m --namespace calico-test-1 --image=radial/busyboxplus:curl --rm -it -- ping -c 3 -w 50 www.google.com
 ```
 
 Output:
@@ -641,8 +629,8 @@ Output:
 
 Try the same in `calico-test-2`, but allow traffic to `1.1.1.1`:
 
-```shell
-kubectl create namespace calico-test-2
+```bash
+kubectl get namespace calico-test-2 &> /dev/null || kubectl create namespace calico-test-2
 
 kubectl apply -f - << EOF
 apiVersion: networking.k8s.io/v1
@@ -670,13 +658,13 @@ Output:
 
 --- 1.1.1.1 ping statistics ---
 3 packets transmitted, 3 packets received, 0% packet loss
-round-trip min/avg/max = 1.333/1.863/2.795 ms
+round-trip min/avg/max = 1.309/1.348/1.399 ms
 ```
 
 Ping should be working fine in namespaces which doesn't start with `calico-test`
 (like `default`):
 
-```shell
+```bash
 kubectl run curl-test --namespace default --image=radial/busyboxplus:curl --rm -it -- ping -c 3 -w 50 www.google.com
 ```
 
@@ -685,5 +673,5 @@ Output:
 ```text
 --- www.google.com ping statistics ---
 3 packets transmitted, 3 packets received, 0% packet loss
-round-trip min/avg/max = 1.523/1.653/1.729 ms
+round-trip min/avg/max = 1.398/1.417/1.430 ms
 ```

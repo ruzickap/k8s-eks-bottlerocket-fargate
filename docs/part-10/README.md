@@ -11,18 +11,15 @@ Install `harbor`
 and modify the
 [default values](https://github.com/goharbor/harbor-helm/blob/master/values.yaml).
 
-```shell
-HARBOR_ADMIN_PASSWORD="${MY_PASSWORD}"
-
-helm repo add harbor https://helm.goharbor.io
-helm upgrade --install --version 1.6.2 --namespace harbor --wait --values - harbor harbor/harbor << EOF
-# https://github.com/goharbor/harbor-helm/blob/master/values.yaml
+```bash
+helm repo add --force-update harbor https://helm.goharbor.io
+helm upgrade --install --version 1.7.2 --namespace harbor --wait --values - harbor harbor/harbor << EOF
 expose:
   tls:
     certSource: secret
-  secret:
-    secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
-    notarySecretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
+    secret:
+      secretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
+      notarySecretName: ingress-cert-${LETSENCRYPT_ENVIRONMENT}
   ingress:
     hosts:
       core: harbor.${CLUSTER_FQDN}
@@ -30,14 +27,6 @@ expose:
 externalURL: https://harbor.${CLUSTER_FQDN}
 persistence:
   enabled: false
-  # resourcePolicy: delete
-  # persistentVolumeClaim:
-  #   registry:
-  #     size: 1Gi
-  #   chartmuseum:
-  #     size: 1Gi
-  #   trivy:
-  #     size: 1Gi
   imageChartStorage:
     type: s3
     s3:
@@ -49,15 +38,17 @@ persistence:
       secretkey: ${AWS_SECRET_ACCESS_KEY}
       rootdirectory: /harbor
       storageclass: REDUCED_REDUNDANCY
-harborAdminPassword: ${HARBOR_ADMIN_PASSWORD}
+harborAdminPassword: ${MY_PASSWORD}
 metrics:
   enabled: true
+  serviceMonitor:
+    enabled: true
 EOF
 ```
 
 Create ServiceMonitor to allow Prometheus to get metric data:
 
-```shell
+```bash
 kubectl apply -f - << EOF
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
@@ -78,32 +69,41 @@ spec:
 EOF
 ```
 
+Wait for Harbor DNS to be ready:
+
+```bash
+while [[ -z "$(dig +nocmd +noall +answer +ttlid a "harbor.${CLUSTER_FQDN}")" ]]; do
+  date
+  sleep 5
+done
+```
+
 Configure OIDC for Harbor:
 
-```shell
-curl -sk -u "admin:${HARBOR_ADMIN_PASSWORD}" -X PUT "https://harbor.${CLUSTER_FQDN}/api/v2.0/configurations" -H "Content-Type: application/json" -d \
+```bash
+curl -sk -u "admin:${MY_PASSWORD}" -X PUT "https://harbor.${CLUSTER_FQDN}/api/v2.0/configurations" -H "Content-Type: application/json" -d \
 "{
   \"auth_mode\": \"oidc_auth\",
   \"email_from\": \"harbor@${CLUSTER_FQDN}\",
   \"email_host\": \"mailhog.mailhog.svc.cluster.local\",
-  \"email_port\": \"1025\",
-  \"self_registration\": \"false\",
+  \"email_port\": 1025,
+  \"self_registration\": false,
   \"oidc_name\": \"Dex\",
   \"oidc_endpoint\": \"https://dex.${CLUSTER_FQDN}\",
   \"oidc_client_id\": \"harbor.${CLUSTER_FQDN}\",
   \"oidc_client_secret\": \"${MY_PASSWORD}\",
-  \"oidc_verify_cert\": \"false\",
+  \"oidc_verify_cert\": false,
   \"oidc_scope\": \"openid,profile,email\",
-  \"oidc_auto_onboard\": \"true\"
+  \"oidc_auto_onboard\": true
 }"
 ```
 
 Enable automated vulnerability scan after each "image push" to the project:
 `library`:
 
-```shell
-PROJECT_ID=$(curl -sk -u "admin:${HARBOR_ADMIN_PASSWORD}" -X GET "https://harbor.${CLUSTER_FQDN}/api/v2.0/projects?name=library" | jq ".[].project_id")
-curl -sk -u "admin:${HARBOR_ADMIN_PASSWORD}" -X PUT "https://harbor.${CLUSTER_FQDN}/api/v2.0/projects/${PROJECT_ID}" -H  "Content-Type: application/json" -d \
+```bash
+PROJECT_ID=$(curl -sk -u "admin:${MY_PASSWORD}" -X GET "https://harbor.${CLUSTER_FQDN}/api/v2.0/projects?name=library" | jq ".[].project_id")
+curl -sk -u "admin:${MY_PASSWORD}" -X PUT "https://harbor.${CLUSTER_FQDN}/api/v2.0/projects/${PROJECT_ID}" -H  "Content-Type: application/json" -d \
 "{
   \"metadata\": {
     \"auto_scan\": \"true\"
@@ -113,8 +113,8 @@ curl -sk -u "admin:${HARBOR_ADMIN_PASSWORD}" -X PUT "https://harbor.${CLUSTER_FQ
 
 Create new Registry Endpoint:
 
-```shell
-curl -sk -X POST -H "Content-Type: application/json" -u "admin:${HARBOR_ADMIN_PASSWORD}" "https://harbor.${CLUSTER_FQDN}/api/v2.0/registries" -d \
+```bash
+curl -sk -X POST -H "Content-Type: application/json" -u "admin:${MY_PASSWORD}" "https://harbor.${CLUSTER_FQDN}/api/v2.0/registries" -d \
 "{
   \"name\": \"Docker Hub\",
   \"type\": \"docker-hub\",
@@ -133,12 +133,12 @@ because I'm going to replicate everything into `library` project which has
 
 Create new Replication Rule and initiate replication:
 
-```shell
+```bash
 COUNTER=0
 for DOCKER_HUB_REPOSITORY in istio/examples-bookinfo-details-v1 istio/examples-bookinfo-ratings-v1; do
   COUNTER=$((COUNTER+1))
   echo "Replicating (${COUNTER}): ${DOCKER_HUB_REPOSITORY}"
-  curl -sk -X POST -H "Content-Type: application/json" -u "admin:${HARBOR_ADMIN_PASSWORD}" "https://harbor.${CLUSTER_FQDN}/api/v2.0/replication/policies" -d \
+  curl -sk -X POST -H "Content-Type: application/json" -u "admin:${MY_PASSWORD}" "https://harbor.${CLUSTER_FQDN}/api/v2.0/replication/policies" -d \
     "{
       \"name\": \"Replication of ${DOCKER_HUB_REPOSITORY}\",
       \"type\": \"docker-hub\",
@@ -161,8 +161,8 @@ for DOCKER_HUB_REPOSITORY in istio/examples-bookinfo-details-v1 istio/examples-b
         \"type\": \"manual\"
       }
     }"
-  POLICY_ID=$(curl -sk -H "Content-Type: application/json" -u "admin:${HARBOR_ADMIN_PASSWORD}" "https://harbor.${CLUSTER_FQDN}/api/v2.0/replication/policies" | jq ".[] | select (.filters[].value==\"${DOCKER_HUB_REPOSITORY}\") .id")
-  curl -sk -X POST -H "Content-Type: application/json" -u "admin:${HARBOR_ADMIN_PASSWORD}" "https://harbor.${CLUSTER_FQDN}/api/v2.0/replication/executions" -d "{ \"policy_id\": ${POLICY_ID} }"
+  POLICY_ID=$(curl -sk -H "Content-Type: application/json" -u "admin:${MY_PASSWORD}" "https://harbor.${CLUSTER_FQDN}/api/v2.0/replication/policies" | jq ".[] | select (.filters[].value==\"${DOCKER_HUB_REPOSITORY}\") .id")
+  curl -sk -X POST -H "Content-Type: application/json" -u "admin:${MY_PASSWORD}" "https://harbor.${CLUSTER_FQDN}/api/v2.0/replication/executions" -d "{ \"policy_id\": ${POLICY_ID} }"
 done
 ```
 
