@@ -12,7 +12,7 @@ on:
       - package-lock.json
   push:
     branches:
-      - master
+      - main
     paths:
       - .github/workflows/vuepress-build-check-deploy.yml
       - docs/**
@@ -67,20 +67,20 @@ jobs:
           npm install
           npm run build
           cp LICENSE docs/.vuepress/dist
-          sed -e "s@(part-@(https://github.com/${{ github.repository }}/tree/master/docs/part-@" -e 's@.\/.vuepress\/public\/@./@' docs/README.md > docs/.vuepress/dist/README.md
+          sed -e "s@(part-@(https://github.com/${{ github.repository }}/tree/main/docs/part-@" -e 's@.\/.vuepress\/public\/@./@' docs/README.md > docs/.vuepress/dist/README.md
 
       - name: Check broken links
         env:
           INPUT_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
           INPUT_PAGES_PATH: .
-          INPUT_CMD_PARAMS: --buffer-size=8192 --max-connections=10 --color=always --skip-tls-verification --exclude=(mylabs.dev|https://github.com/.*/edit/master/)
+          INPUT_CMD_PARAMS: --buffer-size=8192 --max-connections=10 --color=always --skip-tls-verification --exclude=(mylabs.dev|https://github.com/.*/edit/main/)
         run: |
           ln -s docs/.vuepress/dist ${{ github.event.repository.name }}
           wget -qO- https://raw.githubusercontent.com/ruzickap/action-my-broken-link-checker/v2/entrypoint.sh | bash
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./docs/.vuepress/dist
