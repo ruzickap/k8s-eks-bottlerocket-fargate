@@ -8,7 +8,7 @@ on:
       - docs/part**
   push:
     branches:
-      - master
+      - main
     paths:
       - .github/workflows/kube-linter.yml
       - docs/part**
