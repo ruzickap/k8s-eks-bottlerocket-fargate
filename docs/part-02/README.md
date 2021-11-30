@@ -3,7 +3,7 @@
 Add EKS helm repository:
 
 ```bash
-helm repo add eks https://aws.github.io/eks-charts
+helm repo add --force-update eks https://aws.github.io/eks-charts
 ```
 
 ## Fargate
@@ -11,14 +11,14 @@ helm repo add eks https://aws.github.io/eks-charts
 Attach the policy to the [pod execution role](https://docs.aws.amazon.com/eks/latest/userguide/pod-execution-role.html)
 of your EKS on Fargate cluster:
 
-```shell
+```bash
 FARGATE_POD_EXECUTION_ROLE_ARN=$(eksctl get iamidentitymapping --cluster="${CLUSTER_NAME}" -o json | jq -r ".[] | select (.rolearn | contains(\"FargatePodExecutionRole\")) .rolearn")
 aws iam attach-role-policy --policy-arn "${CLOUDWATCH_POLICY_ARN}" --role-name "${FARGATE_POD_EXECUTION_ROLE_ARN#*/}"
 ```
 
 Create the dedicated `aws-observability` namespace and the ConfigMap for Fluent Bit:
 
-```shell
+```bash
 kubectl apply -f - << EOF
 kind: Namespace
 apiVersion: v1
@@ -40,7 +40,7 @@ data:
         region ${AWS_DEFAULT_REGION}
         log_group_name /aws/eks/${CLUSTER_FQDN}/logs
         log_stream_prefix fluentbit-
-        auto_create_group On
+        auto_create_group true
 EOF
 ```
 
@@ -54,7 +54,7 @@ and modify the
 [default values](https://github.com/aws/eks-charts/blob/master/stable/aws-load-balancer-controller/values.yaml).
 
 ```shell
-helm upgrade --install --version 1.2.0 --namespace kube-system --values - aws-load-balancer-controller eks/aws-load-balancer-controller << EOF
+helm upgrade --install --version 1.2.6 --namespace kube-system --values - aws-load-balancer-controller eks/aws-load-balancer-controller << EOF
 clusterName: ${CLUSTER_NAME}
 serviceAccount:
   create: false
@@ -62,6 +62,8 @@ serviceAccount:
 enableShield: false
 enableWaf: false
 enableWafv2: false
+# Needed for Calico
+hostNetwork: true
 defaultTags:
 $(echo "${TAGS}" | sed "s/ /\\n  /g; s/^/  /g; s/=/: /g")
 EOF
@@ -81,7 +83,7 @@ Install `aws-for-fluent-bit`
 and modify the
 [default values](https://github.com/aws/eks-charts/blob/master/stable/aws-for-fluent-bit/values.yaml).
 
-```shell
+```bash
 helm upgrade --install --version 0.1.11 --namespace kube-system --values - aws-for-fluent-bit eks/aws-for-fluent-bit << EOF
 cloudWatch:
   region: ${AWS_DEFAULT_REGION}
@@ -105,7 +107,7 @@ Install `aws-cloudwatch-metrics`
 and modify the
 [default values](https://github.com/aws/eks-charts/blob/master/stable/aws-cloudwatch-metrics/values.yaml).
 
-```shell
+```bash
 helm upgrade --install --version 0.0.5 --namespace amazon-cloudwatch --create-namespace --values - aws-cloudwatch-metrics eks/aws-cloudwatch-metrics << EOF
 clusterName: ${CLUSTER_FQDN}
 EOF
@@ -398,8 +400,8 @@ and modify the
 [default values](https://github.com/kubernetes-sigs/aws-efs-csi-driver/blob/master/charts/aws-efs-csi-driver/values.yaml):
 
 ```bash
-helm repo add aws-efs-csi-driver https://kubernetes-sigs.github.io/aws-efs-csi-driver/
-helm upgrade --install --version 2.1.3 --namespace kube-system --values - aws-efs-csi-driver aws-efs-csi-driver/aws-efs-csi-driver << EOF
+helm repo add --force-update aws-efs-csi-driver https://kubernetes-sigs.github.io/aws-efs-csi-driver/
+helm upgrade --install --version 2.1.5 --namespace kube-system --values - aws-efs-csi-driver aws-efs-csi-driver/aws-efs-csi-driver << EOF
 controller:
   serviceAccount:
     create: false
@@ -471,52 +473,7 @@ spec:
 EOF
 ```
 
-## aws-ebs-csi-driver
-
-Install Amazon EBS CSI Driver `aws-ebs-csi-driver`
-[helm chart](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/tree/master/charts/aws-ebs-csi-driver)
-and modify the
-[default values](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/blob/master/charts/aws-ebs-csi-driver/values.yaml):
-The ServiceAccount `ebs-csi-controller` was created by `eksctl`.
-
-```bash
-
-helm repo add aws-ebs-csi-driver https://kubernetes-sigs.github.io/aws-ebs-csi-driver
-helm upgrade --install --version 1.2.4 --namespace kube-system --values - aws-ebs-csi-driver aws-ebs-csi-driver/aws-ebs-csi-driver << EOF
-enableVolumeScheduling: true
-enableVolumeResizing: true
-enableVolumeSnapshot: true
-k8sTagClusterId: ${CLUSTER_FQDN}
-controller:
-  extraVolumeTags:
-  $(echo "${TAGS}" | sed "s/ /\\n    /g; s/^/  /g; s/=/: /g")
-serviceAccount:
-  controller:
-    create: false
-    name: ebs-csi-controller
-  snapshot:
-    create: false
-    name: ebs-csi-controller
-  node:
-    create: false
-    name: ebs-csi-controller
-storageClasses:
-- name: gp3
-  annotations:
-    storageclass.kubernetes.io/is-default-class: "true"
-  parameters:
-    type: "gp3"
-    encrypted: "true"
-EOF
-```
-
-Unset `gp2` as default StorageClass annotation:
-
-```bash
-kubectl patch storageclass gp2 -p "{\"metadata\": {\"annotations\":{\"storageclass.kubernetes.io/is-default-class\":\"false\"}}}"
-```
-
-## external-snapshotter CRDs
+## Install external-snapshotter
 
 Details about EKS and external-snapshotter can be found here: [https://aws.amazon.com/blogs/containers/using-ebs-snapshots-for-persistent-storage-with-your-eks-cluster](https://aws.amazon.com/blogs/containers/using-ebs-snapshots-for-persistent-storage-with-your-eks-cluster)
 
@@ -528,10 +485,51 @@ kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snaps
 kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/master/client/config/crd/snapshot.storage.k8s.io_volumesnapshots.yaml
 ```
 
+Install Common Snapshot Controller:
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/master/deploy/kubernetes/snapshot-controller/rbac-snapshot-controller.yaml
+kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/master/deploy/kubernetes/snapshot-controller/setup-snapshot-controller.yaml
+```
+
+## aws-ebs-csi-driver
+
+Install Amazon EBS CSI Driver `aws-ebs-csi-driver`
+[helm chart](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/tree/master/charts/aws-ebs-csi-driver)
+and modify the
+[default values](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/blob/master/charts/aws-ebs-csi-driver/values.yaml):
+The ServiceAccount `ebs-csi-controller-sa` was created by `eksctl`.
+
+```bash
+helm repo add --force-update aws-ebs-csi-driver https://kubernetes-sigs.github.io/aws-ebs-csi-driver
+helm upgrade --install --version 2.4.0 --namespace kube-system --values - aws-ebs-csi-driver aws-ebs-csi-driver/aws-ebs-csi-driver << EOF
+controller:
+  extraVolumeTags:
+    Cluster: ${CLUSTER_FQDN}
+    $(echo "${TAGS}" | sed "s/ /\\n    /g; s/=/: /g")
+  serviceAccount:
+    create: false
+    name: ebs-csi-controller-sa
+  region: ${AWS_DEFAULT_REGION}
+storageClasses:
+- name: gp3
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "true"
+  parameters:
+    encrypted: "true"
+EOF
+```
+
+Unset `gp2` as default StorageClass annotation:
+
+```bash
+kubectl patch storageclass gp2 -p "{\"metadata\": {\"annotations\":{\"storageclass.kubernetes.io/is-default-class\":\"false\"}}}"
+```
+
 Create the Volume Snapshot Class:
 
 ```bash
-kubectl apply -f - << EOF
+kubectl apply -f - << \EOF
 apiVersion: snapshot.storage.k8s.io/v1
 kind: VolumeSnapshotClass
 metadata:
@@ -559,7 +557,7 @@ I would like to put some notes here how this can be tested...
 Start the EKS cluster with `t2.micro` where you can run max 4 pods per node:
 
 ```shell
-eksctl create cluster --name test-max-pod --region ${AWS_DEFAULT_REGION} --node-type=t2.micro --nodes=2 --node-volume-size=4 --kubeconfig "kubeconfig-test-max-pod.conf" --max-pods-per-node 100
+eksctl create cluster --name test-max-pod --region "${AWS_DEFAULT_REGION}" --node-type=t2.micro --nodes=2 --node-volume-size=4 --kubeconfig "kubeconfig-test-max-pod.conf" --max-pods-per-node 100
 ```
 
 Show the limits of the node, which can not be fulfilled due to IP limitations:
@@ -597,16 +595,16 @@ Output:
 Delete the cluster:
 
 ```shell
-eksctl delete cluster --name test-max-pod --region ${AWS_DEFAULT_REGION}
+eksctl delete cluster --name test-max-pod --region "${AWS_DEFAULT_REGION}"
 ```
 
 Do the same with Amazon EKS + Calico:
 
 ```shell
-eksctl create cluster --name test-max-pod --region ${AWS_DEFAULT_REGION}  --without-nodegroup --kubeconfig "kubeconfig-test-max-pod.conf"
+eksctl create cluster --name test-max-pod --region "${AWS_DEFAULT_REGION}"  --without-nodegroup --kubeconfig "kubeconfig-test-max-pod.conf"
 kubectl delete daemonset -n kube-system aws-node
 kubectl apply -f https://docs.projectcalico.org/manifests/calico-vxlan.yaml
-eksctl create nodegroup --cluster test-max-pod --region ${AWS_DEFAULT_REGION} --node-type=t2.micro --nodes=2 --node-volume-size=4 --max-pods-per-node 100
+eksctl create nodegroup --cluster test-max-pod --region "${AWS_DEFAULT_REGION}" --node-type=t2.micro --nodes=2 --node-volume-size=4 --max-pods-per-node 100
 kubectl apply -f https://k8s.io/examples/controllers/nginx-deployment.yaml
 kubectl scale --replicas=10 deployment nginx-deployment
 ```
@@ -670,12 +668,12 @@ eksctl get iamidentitymapping --cluster="${CLUSTER_NAME}"
 Output:
 
 ```text
-ARN                       USERNAME        GROUPS
-arn:aws:iam::7xxxxxxxxxxxx7:role/AVM-OIDC-ADMIN             admin         system:masters
-arn:aws:iam::7xxxxxxxxxxxx7:role/eksctl-kube1-cluster-FargatePodExecutionRole-V6D382FKHGRL  system:node:{{SessionName}}   system:bootstrappers,system:nodes,system:node-proxier
-arn:aws:iam::7xxxxxxxxxxxx7:role/eksctl-kube1-nodegroup-managed-ng-NodeInstanceRole-BUBT3FN0WIJS  system:node:{{EC2PrivateDNSName}} system:bootstrappers,system:nodes
-arn:aws:iam::7xxxxxxxxxxxx7:role/myuser1-kube1              myuser1         capsule.clastix.io
-arn:aws:iam::7xxxxxxxxxxxx7:role/myuser2-kube1              myuser2         capsule.clastix.io
+ARN            USERNAME    GROUPS     ACCOUNT
+arn:aws:iam::7xxxxxxxxxx7:role/AVM-OIDC-ADMIN       admin     system:masters
+arn:aws:iam::7xxxxxxxxxx7:role/eksctl-kube1-cluster-FargatePodExecutionRole-PL4ECOM50EOZ system:node:{{SessionName}}  system:bootstrappers,system:nodes,system:node-proxier
+arn:aws:iam::7xxxxxxxxxx7:role/eksctl-kube1-nodegroup-managed-ng-NodeInstanceRole-1NX0EE7ROG5CJ system:node:{{EC2PrivateDNSName}} system:bootstrappers,system:nodes
+arn:aws:iam::7xxxxxxxxxx7:role/myuser1-kube1       myuser1     capsule.clastix.io
+arn:aws:iam::7xxxxxxxxxx7:role/myuser2-kube1       myuser2     capsule.clastix.io
 ```
 
 Create `config` and `credentials` files and set the environment variables
@@ -744,14 +742,14 @@ Output:
 
 ```json
 {
-  "UserId": "AROA2TXJQ2JHRZM5JQPOL:botocore-session-1624817597",
-  "Account": "7xxxxxxxxxxxx7",
-  "Arn": "arn:aws:sts::7xxxxxxxxxxxx7:assumed-role/myuser1-kube1/botocore-session-1624817597"
+  "UserId": "AxxxxxxxxxxxxxxxxxxxxE:botocore-session-1638206808",
+  "Account": "7xxxxxxxxxx7",
+  "Arn": "arn:aws:sts::7xxxxxxxxxx7:assumed-role/myuser1-kube1/botocore-session-1638206808"
 }
 {
-  "UserId": "AROA2TXJQ2JH4OJAVYJD5:botocore-session-1624817602",
-  "Account": "7xxxxxxxxxxxx7",
-  "Arn": "arn:aws:sts::7xxxxxxxxxxxx7:assumed-role/myuser2-kube1/botocore-session-1624817602"
+  "UserId": "AxxxxxxxxxxxxxxxxxxxxD:botocore-session-1638206812",
+  "Account": "7xxxxxxxxxx7",
+  "Arn": "arn:aws:sts::7xxxxxxxxxx7:assumed-role/myuser2-kube1/botocore-session-1638206812"
 }
 ```
 
@@ -762,12 +760,14 @@ Install Capsule
 and modify the
 [default values](https://github.com/clastix/capsule/blob/master/charts/capsule/values.yaml):
 
+> Note: Helm Chart for Capsule 0.0.19 doesn't work with Calico yet !
+
 ```shell
-helm repo add clastix https://clastix.github.io/charts
+helm repo add --force-update clastix https://clastix.github.io/charts
 helm upgrade --install --version 0.0.19 --namespace capsule-system --create-namespace --wait --values - capsule clastix/capsule << EOF
 serviceMonitor:
   enabled: true
-# Needed for calico
+# Needed for Calico
 manager:
   hostNetwork: true
 EOF

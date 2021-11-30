@@ -56,9 +56,9 @@ Resource                  |Type                                                 
 AWS::IAM::InstanceProfile |control-plane.cluster-api-provider-aws.sigs.k8s.io                                  |CREATE_COMPLETE
 AWS::IAM::InstanceProfile |controllers.cluster-api-provider-aws.sigs.k8s.io                                    |CREATE_COMPLETE
 AWS::IAM::InstanceProfile |nodes.cluster-api-provider-aws.sigs.k8s.io                                          |CREATE_COMPLETE
-AWS::IAM::ManagedPolicy   |arn:aws:iam::729560437327:policy/control-plane.cluster-api-provider-aws.sigs.k8s.io |CREATE_COMPLETE
-AWS::IAM::ManagedPolicy   |arn:aws:iam::729560437327:policy/nodes.cluster-api-provider-aws.sigs.k8s.io         |CREATE_COMPLETE
-AWS::IAM::ManagedPolicy   |arn:aws:iam::729560437327:policy/controllers.cluster-api-provider-aws.sigs.k8s.io   |CREATE_COMPLETE
+AWS::IAM::ManagedPolicy   |arn:aws:iam::7xxxxxxxxxx7:policy/control-plane.cluster-api-provider-aws.sigs.k8s.io |CREATE_COMPLETE
+AWS::IAM::ManagedPolicy   |arn:aws:iam::7xxxxxxxxxx7:policy/nodes.cluster-api-provider-aws.sigs.k8s.io         |CREATE_COMPLETE
+AWS::IAM::ManagedPolicy   |arn:aws:iam::7xxxxxxxxxx7:policy/controllers.cluster-api-provider-aws.sigs.k8s.io   |CREATE_COMPLETE
 AWS::IAM::Role            |control-plane.cluster-api-provider-aws.sigs.k8s.io                                  |CREATE_COMPLETE
 AWS::IAM::Role            |controllers.cluster-api-provider-aws.sigs.k8s.io                                    |CREATE_COMPLETE
 AWS::IAM::Role            |eks-controlplane.cluster-api-provider-aws.sigs.k8s.io                               |CREATE_COMPLETE
@@ -366,7 +366,7 @@ Get kubeconfig for the new EKS cluster:
 clusterctl get kubeconfig "${CLUSTER_NAME}1" -n tenants > "tmp/${CLUSTER_FQDN}/kubeconfig-${CLUSTER_NAME}1.conf"
 ```
 
-Display node details about new cluster `kube11`:
+Display details about all nodes in new cluster `kube11`:
 
 ```shell
 kubectl --kubeconfig="tmp/${CLUSTER_FQDN}/kubeconfig-${CLUSTER_NAME}1.conf" get nodes -L node.kubernetes.io/instance-type -L topology.kubernetes.io/zone
@@ -394,11 +394,10 @@ and modify the
 [default values](https://github.com/hashicorp/vault-helm/blob/master/values.yaml).
 
 ```bash
-helm repo add hashicorp https://helm.releases.hashicorp.com
-helm upgrade --install --version 0.13.0 --namespace vault --wait --values - vault hashicorp/vault << EOF
+helm repo add --force-update hashicorp https://helm.releases.hashicorp.com
+helm upgrade --install --version 0.15.0 --namespace vault --wait --values - vault hashicorp/vault << EOF
 injector:
-  metrics:
-    enabled: false
+  enabled: false
 server:
   ingress:
     enabled: true
@@ -410,6 +409,7 @@ server:
           - vault.${CLUSTER_FQDN}
   dataStorage:
     size: 1Gi
+    storageClass: gp3
   standalone:
     enabled: true
     config: |
@@ -436,12 +436,10 @@ EOF
 Wait for Vault to be ready:
 
 ```bash
-# Wait for DNS vault.${CLUSTER_FQDN} to be ready...
 while [[ -z "$(dig +nocmd +noall +answer +ttlid a "vault.${CLUSTER_FQDN}")" ]] || [[ -z "$(dig +nocmd +noall +answer +ttlid a "dex.${CLUSTER_FQDN}")" ]]; do
   date
   sleep 5
 done
-sleep 5
 ```
 
 Check the status of the vault server - it should be sealed and uninitialized:
@@ -462,7 +460,7 @@ Total Recovery Shares    0
 Threshold                0
 Unseal Progress          0/0
 Unseal Nonce             n/a
-Version                  1.6.2
+Version                  1.8.1
 Storage Type             file
 HA Enabled               false
 ```
@@ -470,7 +468,8 @@ HA Enabled               false
 Initialize the vault server:
 
 ```bash
-test -f "tmp/${CLUSTER_FQDN}/vault_cluster-keys.json" || ( kubectl exec -n vault vault-0 -- vault operator init -format=json | tee "tmp/${CLUSTER_FQDN}/vault_cluster-keys.json" )
+test -f "tmp/${CLUSTER_FQDN}/vault_cluster-keys.json" || ( kubectl exec -n vault vault-0 -- "/bin/sh" "-c" "export VAULT_CLIENT_TIMEOUT=500s && vault operator init -format=json" | tee "tmp/${CLUSTER_FQDN}/vault_cluster-keys.json" )
+sleep 10
 ```
 
 Output:
@@ -482,29 +481,25 @@ Output:
   "unseal_shares": 1,
   "unseal_threshold": 1,
   "recovery_keys_b64": [
-    "NWWBsGaWctRlsMu0fSM73yUU4JcWKhNE94xcmcH8cylo",
-    "TvB5MPu4MUdYBd8/jqETclCX3bGKoan6060oHnANurUt",
-    "p0DFz3mpwYizLk4GYZogq5W8D43k3EHUBk3mRJmkTAND",
-    "xF66v2U6Cx+lulxqPcE5ePBFBHSLOdFys9X1fYfncZbn",
-    "rfLZuSGJJjbhHFIDgo6/MzXbfHotwwLC51UZ9++2LLHy"
+    "AzxM6NE0txz8tGBZYJUYMmkgxf5uNnHn0BNmLFzOnTAp",
+    "...",
+    "5yuvrqORnMRddsRccEixs83IkH4ilJak0h4d3AYytpds"
   ],
   "recovery_keys_hex": [
-    "356581b0669672d465b0cbb47d233bdf2514e097162a1344f78c5c99c1fc732968",
-    "4ef07930fbb831475805df3f8ea113725097ddb18aa1a9fad3ad281e700dbab52d",
-    "a740c5cf79a9c188b32e4e06619a20ab95bc0f8de4dc41d4064de64499a44c0343",
-    "c45ebabf653a0b1fa5ba5c6a3dc13978f04504748b39d172b3d5f57d87e77196e7",
-    "adf2d9b921892636e11c5203828ebf3335db7c7a2dc302c2e75519f7efb62cb1f2"
+    "033c4ce8d134b71cfcb46059609518326920c5fe6e3671e7d013662c5cce9d3029",
+    "...",
+    "e72bafaea3919cc45d76c45c7048b1b3cdc8907e229496a4d21e1ddc0632b6976c"
   ],
   "recovery_keys_shares": 5,
   "recovery_keys_threshold": 3,
-  "root_token": "s.xxGVe7EDNAacwKOGB8DhU7xW"
+  "root_token": "s.p5VhwTEGBJkZb8N30xjEF7U8"
 }
 ```
 
 The vault server should be initialized + unsealed now:
 
 ```bash
-kubectl exec -n vault vault-0 -- vault status || true
+kubectl exec -n vault vault-0 -- vault status
 ```
 
 Output:
@@ -517,16 +512,16 @@ Initialized              true
 Sealed                   false
 Total Recovery Shares    5
 Threshold                3
-Version                  1.6.2
+Version                  1.8.1
 Storage Type             file
-Cluster Name             vault-cluster-683b9d1d
-Cluster ID               eacda9cf-7dab-f8e0-e432-0fbd49a5da7c
+Cluster Name             vault-cluster-35710bf5
+Cluster ID               4b7168eb-6bfc-30fa-8ab9-060477394dc6
 HA Enabled               false
 ```
 
 Configure vault policy + authentication:
 
-```shell
+```bash
 VAULT_ROOT_TOKEN=$(jq -r ".root_token" "tmp/${CLUSTER_FQDN}/vault_cluster-keys.json")
 export VAULT_ROOT_TOKEN
 export VAULT_ADDR="https://vault.${CLUSTER_FQDN}"
@@ -537,7 +532,7 @@ export VAULT_CLUSTER_FQDN
 
 Login to vault as root user:
 
-```shell
+```bash
 vault login "${VAULT_ROOT_TOKEN}"
 ```
 
@@ -550,8 +545,8 @@ again. Future Vault requests will automatically use this token.
 
 Key                  Value
 ---                  -----
-token                s.xxGVe7EDNAacwKOGB8DhU7xW
-token_accessor       W9jB3jeqG5VMIinagrN81OjG
+token                s.p5VhwTEGBJkZb8N30xjEF7U8
+token_accessor       ruDTYdVBePlKKPn8bWVgWzi0
 token_duration       ∞
 token_renewable      false
 token_policies       ["root"]
@@ -561,7 +556,7 @@ policies             ["root"]
 
 Create admin policy:
 
-```shell
+```bash
 cat > "tmp/${CLUSTER_FQDN}/my-admin-policy.hcl" << EOF
 path "*" {
   capabilities = ["create", "read", "update", "delete", "list", "sudo"]
@@ -572,7 +567,7 @@ vault policy write my-admin-policy "tmp/${CLUSTER_FQDN}/my-admin-policy.hcl"
 
 Configure GitHub + Dex OIDC authentication:
 
-```shell
+```bash
 if ! vault auth list | grep -q github ; then
   vault auth enable github
   vault write auth/github/config organization="${MY_GITHUB_ORG_NAME}"
@@ -580,6 +575,7 @@ if ! vault auth list | grep -q github ; then
 
   curl -s "${LETSENCRYPT_CERTIFICATE}" -o "tmp/${CLUSTER_FQDN}/letsencrypt.pem"
   vault auth enable oidc
+  sleep 10
   vault write auth/oidc/config \
     oidc_discovery_ca_pem="@tmp/${CLUSTER_FQDN}/letsencrypt.pem" \
     oidc_discovery_url="https://dex.${CLUSTER_FQDN}" \
@@ -607,7 +603,7 @@ Output:
 ```text
 Complete the login via your OIDC provider. Launching browser to:
 
-    https://dex.kube2.k8s.mylabs.dev/auth?client_id=vault.kube2.k8s.mylabs.dev&nonce=n_vaiwZVJEVlpDheqXUyUJ&redirect_uri=http%3A%2F%2Flocalhost%3A8250%2Foidc%2Fcallback&response_type=code&scope=openid&state=st_g4NPcYQyzjYT7nnoVWsK
+    https://dex.kube1.k8s.mylabs.dev/auth?client_id=vault.kube1.k8s.mylabs.dev&nonce=n_vaiwZVJEVlpDheqXUyUJ&redirect_uri=http%3A%2F%2Flocalhost%3A8250%2Foidc%2Fcallback&response_type=code&scope=openid&state=st_g4NPcYQyzjYT7nnoVWsK
 
 
 Success! You are now authenticated. The token information displayed below
@@ -644,20 +640,22 @@ I used these guides to set it up:
 
 Configure PKI secrets engine:
 
-```shell
-vault secrets enable -path="${VAULT_CLUSTER_FQDN}-pki" pki
+```bash
+if ! vault secrets list | grep "${VAULT_CLUSTER_FQDN}-pki/" ; then
+  vault secrets enable -path="${VAULT_CLUSTER_FQDN}-pki" pki
+fi
 ```
 
 Tune the `${VAULT_CLUSTER_FQDN}-pki` secrets engine to issue certificates with
 a maximum time-to-live (TTL) of 87600 hours:
 
-```shell
+```bash
 vault secrets tune -max-lease-ttl=87600h "${VAULT_CLUSTER_FQDN}-pki"
 ```
 
 Generate the `root` certificate and save the certificate in `CA_cert.crt`:
 
-```shell
+```bash
 vault write -field=certificate "${VAULT_CLUSTER_FQDN}-pki/root/generate/internal" \
   common_name="${CLUSTER_FQDN}" country="CZ" organization="PA" \
   alt_names="${CLUSTER_FQDN},*.${CLUSTER_FQDN}" \
@@ -667,7 +665,7 @@ vault write -field=certificate "${VAULT_CLUSTER_FQDN}-pki/root/generate/internal
 Configure the PKI secrets engine certificate issuing and certificate revocation
 list (CRL) endpoints to use the Vault service in the `vault` namespace:
 
-```shell
+```bash
 vault write "${VAULT_CLUSTER_FQDN}-pki/config/urls" \
   issuing_certificates="https://vault.${CLUSTER_FQDN}/v1/pki/ca" \
   crl_distribution_points="https://vault.${CLUSTER_FQDN}/v1/pki/crl"
@@ -677,21 +675,21 @@ vault write "${VAULT_CLUSTER_FQDN}-pki/config/urls" \
 
 Enable the `pki` secrets engine at the `${VAULT_CLUSTER_FQDN}-pki_int` path:
 
-```shell
+```bash
 vault secrets enable -path="${VAULT_CLUSTER_FQDN}-pki_int" pki
 ```
 
 Tune the `${VAULT_CLUSTER_FQDN}-pki_int` secrets engine to issue certificates
 with a maximum time-to-live (TTL) of 43800 hours:
 
-```shell
+```bash
 vault secrets tune -max-lease-ttl=43800h "${VAULT_CLUSTER_FQDN}-pki_int"
 ```
 
 Execute the following command to generate an intermediate and save the
 CSR as `pki_intermediate.csr`:
 
-```shell
+```bash
 vault write -format=json "${VAULT_CLUSTER_FQDN}-pki_int/intermediate/generate/internal" \
   common_name="${CLUSTER_FQDN}" country="CZ" organization="PA2" \
   alt_names="${CLUSTER_FQDN},*.${CLUSTER_FQDN}" \
@@ -701,7 +699,7 @@ vault write -format=json "${VAULT_CLUSTER_FQDN}-pki_int/intermediate/generate/in
 Sign the intermediate certificate with the root certificate and save the
 generated certificate as `intermediate.cert.pem`:
 
-```shell
+```bash
 vault write -format=json "${VAULT_CLUSTER_FQDN}-pki/root/sign-intermediate" csr="@tmp/${CLUSTER_FQDN}/pki_intermediate.csr" \
   format=pem_bundle ttl="43800h" \
   | jq -r ".data.certificate" > "tmp/${CLUSTER_FQDN}/intermediate.cert.pem"
@@ -710,7 +708,7 @@ vault write -format=json "${VAULT_CLUSTER_FQDN}-pki/root/sign-intermediate" csr=
 Once the CSR is signed and the root CA returns a certificate, it can be
 imported back into Vault:
 
-```shell
+```bash
 vault write "${VAULT_CLUSTER_FQDN}-pki_int/intermediate/set-signed" certificate="@tmp/${CLUSTER_FQDN}/intermediate.cert.pem"
 ```
 
@@ -724,13 +722,13 @@ to simulate "external vault access".
 
 Enable the AppRole auth method:
 
-```shell
+```bash
 vault auth enable approle
 ```
 
 Create a policy that enables read access to the PKI secrets engine paths:
 
-```shell
+```bash
 cat > "tmp/${CLUSTER_FQDN}/pki_int_policy.hcl" << EOF
 path "${VAULT_CLUSTER_FQDN}-pki_int*"                                              { capabilities = ["read", "list"] }
 path "${VAULT_CLUSTER_FQDN}-pki_int/roles/cert-manager-role-${VAULT_CLUSTER_FQDN}" { capabilities = ["create", "update"] }
@@ -742,14 +740,14 @@ vault policy write "cert-manager-policy-${VAULT_CLUSTER_FQDN}" "tmp/${CLUSTER_FQ
 
 Create a named role:
 
-```shell
+```bash
 vault write "auth/approle/role/cert-manager-role-${VAULT_CLUSTER_FQDN}" policies="cert-manager-policy-${VAULT_CLUSTER_FQDN}"
 ```
 
 Configure a role that enables the creation of certificates for domain with any
 subdomains:
 
-```shell
+```bash
 vault write "${VAULT_CLUSTER_FQDN}-pki_int/roles/cert-manager-role-${VAULT_CLUSTER_FQDN}" \
   allowed_domains="${CLUSTER_FQDN}" \
   allow_subdomains=true \
@@ -759,14 +757,14 @@ vault write "${VAULT_CLUSTER_FQDN}-pki_int/roles/cert-manager-role-${VAULT_CLUST
 
 Get `secretId` and `roleId`:
 
-```shell
+```bash
 VAULT_CERT_MANAGER_ROLE_ID=$(vault read "auth/approle/role/cert-manager-role-${VAULT_CLUSTER_FQDN}/role-id" --format=json | jq -r ".data.role_id")
 VAULT_CERT_MANAGER_SECRET_ID=$(vault write -f "auth/approle/role/cert-manager-role-${VAULT_CLUSTER_FQDN}/secret-id" --format=json | jq -r ".data.secret_id")
 ```
 
 Create K8s secret with `secretId`:
 
-```shell
+```bash
 kubectl apply -f - << EOF
 apiVersion: v1
 kind: Secret
@@ -782,7 +780,7 @@ EOF
 Create an Issuer, named vault-issuer, that defines Vault as a certificate
 issuer:
 
-```shell
+```bash
 kubectl apply -f - << EOF
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
@@ -806,7 +804,7 @@ EOF
 
 Generate test certificate:
 
-```shell
+```bash
 kubectl get namespace podinfo-vault &> /dev/null || kubectl create namespace podinfo-vault
 kubectl apply -f - << EOF
 apiVersion: cert-manager.io/v1
@@ -830,14 +828,100 @@ spec:
   - "*.vault-test-crt.${CLUSTER_FQDN}"
   - "vault-test-crt.${CLUSTER_FQDN}"
 EOF
+sleep 5
 ```
 
 Check the certificates:
 
-```shell
+```bash
 kubectl get secrets -n podinfo-vault podinfo-vault-certificate-tls --output=jsonpath="{.data.ca\\.crt}"| base64 --decode | openssl x509 -text -noout
 kubectl get secrets -n podinfo-vault podinfo-vault-certificate-tls --output=jsonpath="{.data.tls\\.crt}" | base64 --decode | openssl x509 -text -noout
 kubectl get secrets -n podinfo-vault podinfo-vault-certificate-tls --output=jsonpath="{.data.tls\\.key}" | base64 --decode | openssl rsa -check
+```
+
+Output:
+
+```text
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number:
+            55:67:74:42:21:45:0d:a7:9c:c0:b1:0e:b0:f4:6c:83:f2:7d:06:cc
+    Signature Algorithm: sha256WithRSAEncryption
+        Issuer: C=CZ, O=PA, CN=kube1.k8s.mylabs.dev
+        Validity
+            Not Before: Nov 29 18:03:20 2021 GMT
+            Not After : Nov 28 18:03:50 2026 GMT
+        Subject: CN=kube1.k8s.mylabs.dev
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                Public-Key: (2048 bit)
+                Modulus:
+                    00:d9:e4:54:d5:4a:61:29:32:d4:83:eb:bf:02:eb:
+...
+                    97:7d
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Key Usage: critical
+                Certificate Sign, CRL Sign
+            X509v3 Basic Constraints: critical
+                CA:TRUE
+            X509v3 Subject Key Identifier:
+                EC:BA:5D:62:E3:85:5E:42:DA:C4:AA:91:A0:9E:8A:0D:7D:27:22:B4
+            X509v3 Authority Key Identifier:
+                keyid:D7:E5:2D:A4:BE:E2:EA:8B:AF:50:21:A2:B6:58:B7:3B:05:22:06:3C
+
+            Authority Information Access:
+                CA Issuers - URI:https://vault.kube1.k8s.mylabs.dev/v1/pki/ca
+
+            X509v3 Subject Alternative Name:
+                DNS:kube1.k8s.mylabs.dev
+            X509v3 CRL Distribution Points:
+
+                Full Name:
+                  URI:https://vault.kube1.k8s.mylabs.dev/v1/pki/crl
+
+    Signature Algorithm: sha256WithRSAEncryption
+         3f:61:24:e2:57:65:ea:41:1a:d6:1b:b0:8c:ef:85:51:41:0d:
+...
+         a6:72:d2:e7
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number:
+            30:f9:ca:e3:67:78:84:45:0e:0f:8b:05:bc:b3:9f:19:5c:ae:eb
+    Signature Algorithm: sha256WithRSAEncryption
+        Issuer: CN=kube1.k8s.mylabs.dev
+        Validity
+            Not Before: Nov 29 18:03:42 2021 GMT
+            Not After : Dec 10 04:04:12 2021 GMT
+        Subject: CN=*.vault-test-crt.kube1.k8s.mylabs.dev
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                Public-Key: (2048 bit)
+                Modulus:
+                    00:d9:4a:61:0e:41:67:ed:46:f6:32:8c:9b:b1:ab:
+...
+                    79:ab
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Key Usage: critical
+                Digital Signature, Key Encipherment, Key Agreement
+            X509v3 Extended Key Usage:
+                TLS Web Server Authentication, TLS Web Client Authentication
+            X509v3 Subject Key Identifier:
+                88:5A:17:7D:0D:D8:96:E9:B4:F1:9C:46:2D:A2:44:BE:2F:01:0B:B6
+            X509v3 Authority Key Identifier:
+                keyid:EC:BA:5D:62:E3:85:5E:42:DA:C4:AA:91:A0:9E:8A:0D:7D:27:22:B4
+
+            X509v3 Subject Alternative Name:
+                DNS:*.vault-test-crt.kube1.k8s.mylabs.dev, DNS:vault-test-crt.kube1.k8s.mylabs.dev
+    Signature Algorithm: sha256WithRSAEncryption
+         b4:87:d8:1a:bd:dd:d8:3e:05:92:70:b7:d8:2c:a2:48:82:b3:
+...
+         6e:cc:32:d7
+RSA key ok
+writing RSA key
 ```
 
 ## podinfo with vault certificate
@@ -847,7 +931,7 @@ Install `podinfo`
 and modify the
 [default values](https://github.com/stefanprodan/podinfo/blob/master/charts/podinfo/values.yaml).
 
-```shell
+```bash
 helm upgrade --install --version 6.0.0 --namespace podinfo-vault --values - podinfo sp/podinfo << EOF
 ui:
   message: "Vault Certificate"
@@ -869,8 +953,7 @@ EOF
 
 Wait for the DNS to be resolvable and service accessible:
 
-```shell
-# Wait for DNS vault.${CLUSTER_FQDN} to be ready...
+```bash
 while [[ -z "$(dig +nocmd +noall +answer +ttlid a "podinfo.vault-test-crt.${CLUSTER_FQDN}")" ]]; do
   date
   sleep 5
@@ -879,40 +962,48 @@ done
 
 Check the certificate:
 
-```shell
-openssl s_client -connect "podinfo.vault-test-crt.${CLUSTER_FQDN}:443" < /dev/null 2>/dev/null | sed "/Server certificate/,/-----END CERTIFICATE-----/d"
+```bash
+openssl s_client -connect "podinfo.vault-test-crt.${CLUSTER_FQDN}:443" < /dev/null 2>/dev/null || true | sed "/Server certificate/,/-----END CERTIFICATE-----/d" || true
 ```
 
 Output:
 
 ```text
-CONNECTED(00000003)
+CONNECTED(00000006)
 ---
 Certificate chain
- 0 s:CN = *.vault-test-crt.kube1.k8s.mylabs.dev
-   i:CN = kube1.k8s.mylabs.dev
+ 0 s:/O=Acme Co/CN=Kubernetes Ingress Controller Fake Certificate
+   i:/O=Acme Co/CN=Kubernetes Ingress Controller Fake Certificate
 ---
-subject=CN = *.vault-test-crt.kube1.k8s.mylabs.dev
-
-issuer=CN = kube1.k8s.mylabs.dev
-
+Server certificate
+-----BEGIN CERTIFICATE-----
+MIIDbzCCAlegAwIBAgIQSB8G7xX+h6Td7daLPJ+hMDANBgkqhkiG9w0BAQsFADBL
+...
+MA05y3W7LmkeK0ebK4fr50SLFQ==
+-----END CERTIFICATE-----
+subject=/O=Acme Co/CN=Kubernetes Ingress Controller Fake Certificate
+issuer=/O=Acme Co/CN=Kubernetes Ingress Controller Fake Certificate
 ---
 No client certificate CA names sent
-Peer signing digest: SHA256
-Peer signature type: RSA-PSS
-Server Temp Key: X25519, 253 bits
+Server Temp Key: ECDH, X25519, 253 bits
 ---
-SSL handshake has read 1499 bytes and written 415 bytes
-Verification error: unable to verify the first certificate
+SSL handshake has read 1357 bytes and written 289 bytes
 ---
-New, TLSv1.3, Cipher is TLS_AES_256_GCM_SHA384
+New, TLSv1/SSLv3, Cipher is ECDHE-RSA-AES128-GCM-SHA256
 Server public key is 2048 bit
-Secure Renegotiation IS NOT supported
+Secure Renegotiation IS supported
 Compression: NONE
 Expansion: NONE
 No ALPN negotiated
-Early data was not sent
-Verify return code: 21 (unable to verify the first certificate)
+SSL-Session:
+    Protocol  : TLSv1.2
+    Cipher    : ECDHE-RSA-AES128-GCM-SHA256
+    Session-ID: C53B8D0D70FE1C19FBDF7974A899C7328C42B499706F06F69B822D18426E3733
+    Session-ID-ctx:
+    Master-Key: 5FA5C763F27C10BC68DF1C604586F69DA7B91CC4019642BC21CB8378564D34101EDFBFEB579AF26C81B16C9FE58CD913
+    Start Time: 1638209104
+    Timeout   : 7200 (sec)
+    Verify return code: 21 (unable to verify the first certificate)
 ---
 ```
 
@@ -928,12 +1019,11 @@ and modify the
 [default values](https://github.com/kubernetes-sigs/secrets-store-csi-driver/blob/master/charts/secrets-store-csi-driver/values.yaml).
 
 ```bash
-helm repo add secrets-store-csi-driver https://raw.githubusercontent.com/kubernetes-sigs/secrets-store-csi-driver/master/charts
-helm upgrade --install --version 0.0.23 --namespace kube-system --values - csi-secrets-store secrets-store-csi-driver/secrets-store-csi-driver << EOF
+helm repo add --force-update secrets-store-csi-driver https://raw.githubusercontent.com/kubernetes-sigs/secrets-store-csi-driver/master/charts
+helm upgrade --install --version 0.2.0 --namespace kube-system --values - csi-secrets-store secrets-store-csi-driver/secrets-store-csi-driver << EOF
 syncSecret:
   enabled: true
 enableSecretRotation: true
-rotationPollInterval: 60s
 EOF
 ```
 
@@ -1094,7 +1184,7 @@ Go to these URLs and check see the credentials synced from AWS Secrets Manager:
 
 You should also see it in the `kuard` secret:
 
-```shell
+```bash
 kubectl wait --namespace kuard --for condition=available deployment kuard-deployment
 kubectl get secrets -n kuard mysecret --template="{{.data.username}}" | base64 -d | jq
 ```
@@ -1103,7 +1193,7 @@ Output:
 
 ```json
 {
-  "password": "test1234",
+  "password": "xxxxxx",
   "username": "Administrator"
 }
 ```

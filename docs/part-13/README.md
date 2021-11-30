@@ -44,7 +44,7 @@ Install [eksctl](https://eksctl.io/):
 
 ```bash
 if ! command -v eksctl &> /dev/null; then
-  curl -s -L "https://github.com/weaveworks/eksctl/releases/download/0.55.0/eksctl_$(uname)_amd64.tar.gz" | sudo tar xz -C /usr/local/bin/
+  curl -s -L "https://github.com/weaveworks/eksctl/releases/download/0.60.0/eksctl_$(uname)_amd64.tar.gz" | sudo tar xz -C /usr/local/bin/
 fi
 ```
 
@@ -91,57 +91,9 @@ fi
 Remove EKS cluster:
 
 ```bash
-if eksctl get cluster --name=${CLUSTER_NAME} 2>/dev/null ; then
-  eksctl delete cluster --name=${CLUSTER_NAME}
+if eksctl get cluster --name="${CLUSTER_NAME}" 2>/dev/null ; then
+  eksctl delete cluster --name="${CLUSTER_NAME}"
 fi
-```
-
-Output:
-
-```text
-021-03-20 10:43:18 [ℹ]  eksctl version 0.41.0
-2021-03-20 10:43:18 [ℹ]  using region eu-central-1
-NAME  VERSION STATUS  CREATED      VPC      SUBNETS                         SECURITYGROUPS
-kube1 1.19  ACTIVE  2021-03-20T08:49:00Z  vpc-04b281d5fd7e9bd0b subnet-04da0f0a9da6485e2,subnet-0cc009de72130b4c3,subnet-0d52dc1b7ede44311,subnet-0f7d6d9f948a65fcd sg-065b5eac812787d11
-2021-03-20 10:43:19 [ℹ]  eksctl version 0.41.0
-2021-03-20 10:43:19 [ℹ]  using region eu-central-1
-2021-03-20 10:43:19 [ℹ]  deleting EKS cluster "kube1"
-2021-03-20 10:43:20 [ℹ]  deleting Fargate profile "fp-fgtest"
-2021-03-20 10:47:36 [ℹ]  deleted Fargate profile "fp-fgtest"
-2021-03-20 10:47:36 [ℹ]  deleted 1 Fargate profile(s)
-2021-03-20 10:47:37 [✔]  kubeconfig has been updated
-2021-03-20 10:47:37 [ℹ]  cleaning up AWS load balancers created by Kubernetes objects of Kind Service or Ingress
-2021-03-20 10:48:09 [ℹ]  3 sequential tasks: { delete nodegroup "managed-ng-1", 2 sequential sub-tasks: { 7 parallel sub-tasks: { 2 sequential sub-tasks: { delete IAM role for serviceaccount "external-dns/external-dns", delete serviceaccount "external-dns/external-dns" }, 2 sequential sub-tasks: { delete IAM role for serviceaccount "cert-manager/cert-manager", delete serviceaccount "cert-manager/cert-manager" }, 2 sequential sub-tasks: { delete IAM role for serviceaccount "kube-system/aws-load-balancer-controller", delete serviceaccount "kube-system/aws-load-balancer-controller" }, 2 sequential sub-tasks: { delete IAM role for serviceaccount "kube-system/ebs-csi-controller", delete serviceaccount "kube-system/ebs-csi-controller" }, 2 sequential sub-tasks: { delete IAM role for serviceaccount "harbor/harbor", delete serviceaccount "harbor/harbor" }, 2 sequential sub-tasks: { delete IAM role for serviceaccount "kube-system/cluster-autoscaler", delete serviceaccount "kube-system/cluster-autoscaler" }, 2 sequential sub-tasks: { delete IAM role for serviceaccount "kube-system/aws-node", delete serviceaccount "kube-system/aws-node" } }, delete IAM OIDC provider }, delete cluster control plane "kube1" [async] }
-2021-03-20 10:48:10 [ℹ]  will delete stack "eksctl-kube1-nodegroup-managed-ng-1"
-2021-03-20 10:48:10 [ℹ]  waiting for stack "eksctl-kube1-nodegroup-managed-ng-1" to get deleted
-2021-03-20 10:48:10 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-nodegroup-managed-ng-1"
-...
-2021-03-20 11:00:23 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-nodegroup-managed-ng-1"
-2021-03-20 11:00:23 [ℹ]  will delete stack "eksctl-kube1-addon-iamserviceaccount-kube-system-aws-node"
-2021-03-20 11:00:23 [ℹ]  waiting for stack "eksctl-kube1-addon-iamserviceaccount-kube-system-aws-node" to get deleted
-2021-03-20 11:00:23 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-addon-iamserviceaccount-kube-system-aws-node"
-2021-03-20 11:00:23 [ℹ]  will delete stack "eksctl-kube1-addon-iamserviceaccount-harbor-harbor"
-2021-03-20 11:00:23 [ℹ]  waiting for stack "eksctl-kube1-addon-iamserviceaccount-harbor-harbor" to get deleted
-2021-03-20 11:00:23 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-addon-iamserviceaccount-harbor-harbor"
-2021-03-20 11:00:23 [ℹ]  will delete stack "eksctl-kube1-addon-iamserviceaccount-kube-system-cluster-autoscaler"
-2021-03-20 11:00:23 [ℹ]  waiting for stack "eksctl-kube1-addon-iamserviceaccount-kube-system-cluster-autoscaler" to get deleted
-2021-03-20 11:00:23 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-addon-iamserviceaccount-kube-system-cluster-autoscaler"
-2021-03-20 11:00:23 [ℹ]  will delete stack "eksctl-kube1-addon-iamserviceaccount-kube-system-aws-load-balancer-controller"
-2021-03-20 11:00:23 [ℹ]  waiting for stack "eksctl-kube1-addon-iamserviceaccount-kube-system-aws-load-balancer-controller" to get deleted
-2021-03-20 11:00:23 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-addon-iamserviceaccount-kube-system-aws-load-balancer-controller"
-2021-03-20 11:00:23 [ℹ]  will delete stack "eksctl-kube1-addon-iamserviceaccount-external-dns-external-dns"
-2021-03-20 11:00:23 [ℹ]  waiting for stack "eksctl-kube1-addon-iamserviceaccount-external-dns-external-dns" to get deleted
-2021-03-20 11:00:23 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-addon-iamserviceaccount-external-dns-external-dns"
-2021-03-20 11:00:23 [ℹ]  will delete stack "eksctl-kube1-addon-iamserviceaccount-kube-system-ebs-csi-controller"
-2021-03-20 11:00:23 [ℹ]  waiting for stack "eksctl-kube1-addon-iamserviceaccount-kube-system-ebs-csi-controller" to get deleted
-2021-03-20 11:00:23 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-addon-iamserviceaccount-kube-system-ebs-csi-controller"
-2021-03-20 11:00:23 [ℹ]  will delete stack "eksctl-kube1-addon-iamserviceaccount-cert-manager-cert-manager"
-2021-03-20 11:00:23 [ℹ]  waiting for stack "eksctl-kube1-addon-iamserviceaccount-cert-manager-cert-manager" to get deleted
-2021-03-20 11:00:23 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-addon-iamserviceaccount-cert-manager-cert-manager"
-2021-03-20 11:00:41 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-addon-iamserviceaccount-kube-system-cluster-autoscaler"
-2021-03-20 11:00:41 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-addon-iamserviceaccount-cert-manager-cert-manager"
-2021-03-20 11:00:41 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-addon-iamserviceaccount-harbor-harbor"
-2021-03-20 11:00:41 [ℹ]  waiting for CloudFormation stack "eksctl-kube1-addon-iamserviceaccount-kube-system-aws-load-balancer-controller"
 ```
 
 Remove Route 53 DNS records from DNS Zone:
@@ -163,34 +115,15 @@ Remove all S3 data form the bucket:
 
 ```bash
 if aws s3api head-bucket --bucket "${CLUSTER_FQDN}" 2>/dev/null; then
-  aws s3 rm s3://${CLUSTER_FQDN}/ --recursive
+  aws s3 rm "s3://${CLUSTER_FQDN}/" --recursive
 fi
-```
-
-Output:
-
-```text
-delete: s3://kube1.k8s.mylabs.dev/harbor/docker/registry/v2/blobs/sha256/0f/0f2d0c63fe0b32e5cb326248d96ee59799b6e55c9257f72c556b14a4dced0881/data
-delete: s3://kube1.k8s.mylabs.dev/harbor/docker/registry/v2/blobs/sha256/02/026a6f0bbb704596202b0d24ad1fc1d0d7349cc72e4c89b6438a7aec82b1523c/data
-delete: s3://kube1.k8s.mylabs.dev/harbor/docker/registry/v2/blobs/sha256/00/000eee12ec04cc914bf96e8f5dee7767510c2aca3816af6078bd9fbe3150920c/data
-delete: s3://kube1.k8s.mylabs.dev/harbor/docker/registry/v2/blobs/sha256/15/156d91b88c44fcb49ebd386f213854774ce523a33ff4fab5dac2c403cc6ebeee/data
-delete: s3://kube1.k8s.mylabs.dev/harbor/docker/registry/v2/blobs/sha256/16/162a4534982f0e8b2432dfd48098f0bc74d1aefb23198981a7fb22de243fd8bf/data
-...
-delete: s3://kube1.k8s.mylabs.dev/velero/backups/backup-vault/backup-vault-logs.gz
-delete: s3://kube1.k8s.mylabs.dev/velero/backups/backup-vault/backup-vault-csi-volumesnapshots.json.gz
-delete: s3://kube1.k8s.mylabs.dev/velero/backups/backup-vault/backup-vault-podvolumebackups.json.gz
-delete: s3://kube1.k8s.mylabs.dev/velero/backups/backup-vault/backup-vault-resource-list.json.gz
-delete: s3://kube1.k8s.mylabs.dev/velero/backups/backup-vault/backup-vault-volumesnapshots.json.gz
-delete: s3://kube1.k8s.mylabs.dev/velero/restores/restore-vault/restore-restore-vault-logs.gz
-delete: s3://kube1.k8s.mylabs.dev/velero/backups/backup-vault/backup-vault.tar.gz
-...
 ```
 
 Remove APM:
 
 ```bash
-if aws amp list-workspaces | grep -q ${CLUSTER_FQDN} ; then
-  aws amp delete-workspace --workspace-id="$(aws amp list-workspaces --alias=${CLUSTER_FQDN} | jq .workspaces[0].workspaceId -r)"
+if aws amp list-workspaces | grep -q "${CLUSTER_FQDN}" ; then
+  aws amp delete-workspace --workspace-id="$(aws amp list-workspaces --alias="${CLUSTER_FQDN}" | jq .workspaces[0].workspaceId -r)"
 fi
 ```
 
@@ -209,27 +142,28 @@ aws cloudformation delete-stack --stack-name "cluster-api-provider-aws-sigs-k8s-
 Remove Volumes and Snapshots related to the cluster:
 
 ```bash
-VOLUMES=$(aws ec2 describe-volumes --filter Name=tag:kubernetes.io/cluster/${CLUSTER_FQDN},Values=owned --query 'Volumes[].VolumeId' --output text) && \
+VOLUMES=$(aws ec2 describe-volumes --filter "Name=tag:Cluster,Values=${CLUSTER_FQDN}" --query 'Volumes[].VolumeId' --output text) && \
 for VOLUME in ${VOLUMES}; do
   echo "Removing Volume: ${VOLUME}"
   aws ec2 delete-volume --volume-id "${VOLUME}"
 done
 
-SNAPSHOTS=$(aws ec2 describe-snapshots --filter Name=tag:kubernetes.io/cluster/${CLUSTER_FQDN},Values=owned --query 'Snapshots[].SnapshotId' --output text) && \
+SNAPSHOTS=$(aws ec2 describe-snapshots --filter "Name=tag:Cluster,Values=${CLUSTER_FQDN}" --query 'Snapshots[].SnapshotId' --output text) && \
 for SNAPSHOT in ${SNAPSHOTS}; do
   echo "Removing Snapshot: ${SNAPSHOT}"
   aws ec2 delete-snapshot --snapshot-id "${SNAPSHOT}"
 done
 ```
 
-Output:
+Remove orphan ELBs (if exists):
 
-```text
-Removing Volume: vol-0e14bc9ea5aecf058
-Removing Volume: vol-007e121915a9eb8d8
-Removing Volume: vol-0d1a1a3c740d5a269
-Removing Volume: vol-0436ca80dc2f2b20a
-Removing Snapshot: snap-041cb25d72d64b161
+```bash
+for ELB_ARN in $(aws elbv2 describe-load-balancers --query "LoadBalancers[].LoadBalancerArn" --output=text) ; do
+  if [[ -n "$(aws elbv2 describe-tags --resource-arns "${ELB_ARN}" --query "TagDescriptions[].Tags[?Key == \`kubernetes.io/cluster/${CLUSTER_NAME}\`]" --output text)" ]]; then
+    echo "Deleting ELB: ${ELB_ARN}"
+    aws elbv2 delete-load-balancer --load-balancer-arn "${ELB_ARN}"
+  fi
+done
 ```
 
 Remove CloudWatch log groups:
@@ -270,7 +204,7 @@ rm -rf "tmp/${CLUSTER_FQDN}" &> /dev/null
 Remove other files:
 
 ```bash
-rm /tmp/demo-magic.sh "${KUBECONFIG}" /tmp/README-${CLUSTER_NAME}.sh "kubeconfig-${CLUSTER_NAME}.conf.eksctl.lock" &> /dev/null || true
+rm /tmp/demo-magic.sh "${KUBECONFIG}" "/tmp/README-${CLUSTER_NAME}.sh" "kubeconfig-${CLUSTER_NAME}.conf.eksctl.lock" &> /dev/null || true
 ```
 
 Wait for CloudFormation to be deleted:

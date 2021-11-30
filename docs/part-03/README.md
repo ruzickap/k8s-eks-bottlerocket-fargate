@@ -8,11 +8,11 @@ and modify the
 [default values](https://github.com/bitnami/charts/blob/master/bitnami/metrics-server/values.yaml):
 
 ```bash
-helm repo add bitnami https://charts.bitnami.com/bitnami
-helm upgrade --install --version 5.8.15 --namespace kube-system --values - metrics-server bitnami/metrics-server << EOF
+helm repo add --force-update bitnami https://charts.bitnami.com/bitnami
+helm upgrade --install --version 5.9.2 --namespace kube-system --values - metrics-server bitnami/metrics-server << EOF
 apiService:
   create: true
-# Needed for calico
+# Needed for Calico
 hostNetwork: true
 EOF
 ```
@@ -32,9 +32,9 @@ and modify the
 [default values](https://github.com/prometheus-community/helm-charts/blob/main/charts/prometheus-adapter/values.yaml):
 
 ```shell
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm upgrade --install --version 2.14.2 --namespace prometheus-adapter --values - prometheus-adapter prometheus-community/prometheus-adapter << EOF
-# Needed for calico
+helm repo add --force-update prometheus-community https://prometheus-community.github.io/helm-charts
+helm upgrade --install --version 2.15.2 --namespace prometheus-adapter --values - prometheus-adapter prometheus-community/prometheus-adapter << EOF
+# Needed for Calico
 hostNetwork:
   enabled: true
 EOF
@@ -48,8 +48,8 @@ and modify the
 [default values](https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/values.yaml):
 
 ```bash
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm upgrade --install --version 16.12.2 --namespace kube-prometheus-stack --values - kube-prometheus-stack prometheus-community/kube-prometheus-stack << EOF
+helm repo add --force-update prometheus-community https://prometheus-community.github.io/helm-charts
+helm upgrade --install --version 17.2.1 --namespace kube-prometheus-stack --values - kube-prometheus-stack prometheus-community/kube-prometheus-stack << EOF
 defaultRules:
   rules:
     etcd: false
@@ -234,6 +234,7 @@ alertmanager:
     storage:
       volumeClaimTemplate:
         spec:
+          storageClassName: gp3
           accessModes: ["ReadWriteOnce"]
           resources:
             requests:
@@ -271,17 +272,17 @@ grafana:
         type: loki
         access: proxy
         url: http://loki.loki:3100
-      # - name: CloudWatch
-      #   type: cloudwatch
-      #   jsonData:
-      #     defaultRegion: ${AWS_DEFAULT_REGION}
+      - name: CloudWatch
+        type: cloudwatch
+        jsonData:
+          defaultRegion: ${AWS_DEFAULT_REGION}
       # Automated AMP provisioning as datasource does not work - needs to be done manually
-      # - name: Amazon Managed Prometheus
-      #   type: prometheus
-      #   url: https://aps-workspaces.${AWS_DEFAULT_REGION}.amazonaws.com/workspaces/${AMP_WORKSPACE_ID}
-      #   jsonData:
-      #     sigV4Auth: true
-      #     sigV4Region: ${AWS_DEFAULT_REGION}
+      - name: Amazon Managed Prometheus
+        type: prometheus
+        url: https://aps-workspaces.${AWS_DEFAULT_REGION}.amazonaws.com/workspaces/${AMP_WORKSPACE_ID}
+        jsonData:
+          sigV4Auth: true
+          sigV4Region: ${AWS_DEFAULT_REGION}
   dashboardProviders:
     dashboardproviders.yaml:
       apiVersion: 1
@@ -375,10 +376,10 @@ grafana:
         gnetId: 13968
         revision: 1
         datasource: Prometheus
-      # calico-felix-dashboard:
-      #   gnetId: 12175
-      #   revision: 5
-      #   datasource: Prometheus
+      calico-felix-dashboard:
+        gnetId: 12175
+        revision: 5
+        datasource: Prometheus
       harbor:
         gnetId: 14075
         revision: 2
@@ -505,6 +506,7 @@ prometheus:
     storageSpec:
       volumeClaimTemplate:
         spec:
+          storageClassName: gp3
           accessModes: ["ReadWriteOnce"]
           resources:
             requests:
@@ -535,7 +537,7 @@ EOF
 Enable Felix Prometheus metrics:
 
 ```bash
-# calicoctl patch felixConfiguration default --patch "{\"spec\":{\"prometheusMetricsEnabled\": true}}"
+calicoctl --allow-version-mismatch patch felixConfiguration default --patch "{\"spec\":{\"prometheusMetricsEnabled\": true}}"
 ```
 
 Creating a service to expose Felix metrics according
@@ -624,9 +626,9 @@ Install `loki`
 and modify the
 [default values](https://github.com/grafana/helm-charts/blob/main/charts/loki/values.yaml).
 
-```shell
-helm repo add grafana https://grafana.github.io/helm-charts
-helm upgrade --install --version 2.5.0 --namespace loki --create-namespace --values - loki grafana/loki << EOF
+```bash
+helm repo add --force-update grafana https://grafana.github.io/helm-charts
+helm upgrade --install --version 2.6.0 --namespace loki --create-namespace --values - loki grafana/loki << EOF
 serviceMonitor:
   enabled: true
 EOF
@@ -639,8 +641,8 @@ Install `loki`
 and modify the
 [default values](https://github.com/grafana/helm-charts/blob/main/charts/promtail/values.yaml).
 
-```shell
-helm upgrade --install --version 3.5.1 --namespace promtail --create-namespace --values - promtail grafana/promtail << EOF
+```bash
+helm upgrade --install --version 3.7.0 --namespace promtail --create-namespace --values - promtail grafana/promtail << EOF
 serviceMonitor:
   enabled: true
 config:
@@ -661,7 +663,7 @@ and modify the
 [default values](https://github.com/aws/aws-node-termination-handler/blob/main/config/helm/aws-node-termination-handler/values.yaml).
 
 ```bash
-helm upgrade --install --version 0.15.1 --namespace kube-system --create-namespace --values - aws-node-termination-handler eks/aws-node-termination-handler << EOF
+helm upgrade --install --version 0.15.2 --namespace kube-system --create-namespace --values - aws-node-termination-handler eks/aws-node-termination-handler << EOF
 enableRebalanceMonitoring: true
 awsRegion: ${AWS_DEFAULT_REGION}
 enableSpotInterruptionDraining: true
@@ -679,9 +681,9 @@ Install `kyverno`
 and modify the
 [default values](https://github.com/kyverno/kyverno/blob/main/charts/kyverno/values.yaml).
 
-```shell
-helm repo add kyverno https://kyverno.github.io/kyverno/
-helm upgrade --install --version v1.4.1 --namespace kyverno --create-namespace --values - kyverno kyverno/kyverno << EOF
+```bash
+helm repo add --force-update kyverno https://kyverno.github.io/kyverno/
+helm upgrade --install --version v1.4.2 --namespace kyverno --create-namespace --values - kyverno kyverno/kyverno << EOF
 hostNetwork: true
 EOF
 ```
@@ -691,9 +693,9 @@ Install `policy-reporter`
 and modify the
 [default values](https://github.com/fjogeleit/policy-reporter/blob/main/charts/policy-reporter/values.yaml).
 
-```shell
-helm repo add policy-reporter https://fjogeleit.github.io/policy-reporter
-helm upgrade --install --version 1.7.1 --namespace policy-reporter --create-namespace --values - policy-reporter policy-reporter/policy-reporter << EOF
+```bash
+helm repo add --force-update policy-reporter https://fjogeleit.github.io/policy-reporter
+helm upgrade --install --version 1.8.6 --namespace policy-reporter --create-namespace --values - policy-reporter policy-reporter/policy-reporter << EOF
 ui:
   enabled: true
   ingress:
@@ -716,21 +718,20 @@ target:
     host: http://loki-headless.loki:3100
     minimumPriority: "info"
     skipExistingOnStartup: true
-  # slack:
-  #   webhook: "${SLACK_INCOMING_WEBHOOK_URL}"
-  #   minimumPriority: "warning"
-  #   skipExistingOnStartup: true
+  slack:
+    webhook: "${SLACK_INCOMING_WEBHOOK_URL}"
+    minimumPriority: "warning"
+    skipExistingOnStartup: true
 EOF
 ```
 
 Install kyverno policies:
 
-```shell
+```bash
 mkdir -pv "tmp/${CLUSTER_FQDN}/kyverno-policies"
 cat > "tmp/${CLUSTER_FQDN}/kyverno-policies/kustomization.yaml" << EOF
 resources:
 - github.com/kyverno/policies/pod-security?ref=930b579b1d81be74678045dd3d397f668d321cdf
-
 patches:
   - patch: |-
       - op: replace
@@ -740,11 +741,12 @@ patches:
       kind: ClusterPolicy
 EOF
 kustomize build "tmp/${CLUSTER_FQDN}/kyverno-policies" | kubectl apply -f -
+sleep 30
 ```
 
 Check if all policies are in place in `audit` mode:
 
-```shell
+```bash
 kubectl get clusterpolicies.kyverno.io
 ```
 
@@ -770,7 +772,7 @@ restrict-volume-types            true         audit
 
 Viewing policy report summaries
 
-```shell
+```bash
 kubectl get policyreport -A
 ```
 
@@ -778,10 +780,11 @@ Output:
 
 ```text
 NAMESPACE               NAME                            PASS   FAIL   WARN   ERROR   SKIP   AGE
-amazon-cloudwatch       polr-ns-amazon-cloudwatch       99     6      0      0       0      3h55m
-kube-prometheus-stack   polr-ns-kube-prometheus-stack   261    19     0      0       0      3h55m
-loki                    polr-ns-loki                    34     1      0      0       0      3h55m
-promtail                polr-ns-promtail                96     9      0      0       0      3h55m
+amazon-cloudwatch       polr-ns-amazon-cloudwatch       39     5      0      0       0      23s
+kube-prometheus-stack   polr-ns-kube-prometheus-stack   220    14     0      0       0      21s
+loki                    polr-ns-loki                    37     1      0      0       0      16s
+policy-reporter         polr-ns-policy-reporter         76     0      0      0       0      18s
+promtail                polr-ns-promtail                38     6      0      0       0      25s
 ```
 
 Viewing policy violations:
@@ -793,82 +796,70 @@ kubectl describe policyreport -n amazon-cloudwatch polr-ns-amazon-cloudwatch | g
 Output:
 
 ```text
-  Message:        validation error: Running as root is not allowed. The fields spec.securityContext.runAsNonRoot, spec.containers[*].securityContext.runAsNonRoot, and spec.initContainers[*].securityContext.runAsNonRoot must be `true`. Rule check-containers[0] failed at path /spec/securityContext/runAsNonRoot/. Rule check-containers[1] failed at path /spec/containers/0/securityContext/.
-  Policy:         require-run-as-non-root
-  Resources:
-    API Version:  v1
-    Kind:         Pod
-    Name:         aws-cloudwatch-metrics-ft9fv
-    Namespace:    amazon-cloudwatch
-    UID:          8a520c22-4103-4c47-a0ce-dc0e77c7f4a8
-  Rule:           check-containers
-  Scored:         true
-  Status:         fail
---
-  Message:        validation error: Running as root is not allowed. The fields spec.securityContext.runAsNonRoot, spec.containers[*].securityContext.runAsNonRoot, and spec.initContainers[*].securityContext.runAsNonRoot must be `true`. Rule check-containers[0] failed at path /spec/securityContext/runAsNonRoot/. Rule check-containers[1] failed at path /spec/containers/0/securityContext/.
-  Policy:         require-run-as-non-root
-  Resources:
-    API Version:  v1
-    Kind:         Pod
-    Name:         aws-cloudwatch-metrics-wrqmq
-    Namespace:    amazon-cloudwatch
-    UID:          18c08ec4-6aad-4e82-8a6a-b78ef7c79dd1
-  Rule:           check-containers
-  Scored:         true
-  Status:         fail
---
-  Message:        validation error: HostPath volumes are forbidden. The fields spec.volumes[*].hostPath must not be set. Rule host-path failed at path /spec/volumes/1/hostPath/
   Policy:         disallow-host-path
   Resources:
     API Version:  v1
     Kind:         Pod
-    Name:         aws-cloudwatch-metrics-xzcl2
+    Name:         aws-cloudwatch-metrics-wxzrl
     Namespace:    amazon-cloudwatch
-    UID:          8a1104f8-dc74-4f12-ac21-0939b73aa651
+    UID:          350f1d9e-8924-40fd-a53e-5cebf7c93e6a
   Rule:           host-path
   Scored:         true
+  Severity:       medium
   Status:         fail
 --
-  Message:        validation error: Running as root is not allowed. The fields spec.securityContext.runAsNonRoot, spec.containers[*].securityContext.runAsNonRoot, and spec.initContainers[*].securityContext.runAsNonRoot must be `true`. Rule check-containers[0] failed at path /spec/securityContext/runAsNonRoot/. Rule check-containers[1] failed at path /spec/containers/0/securityContext/.
+  Policy:         disallow-host-path
+  Resources:
+    API Version:  apps/v1
+    Kind:         DaemonSet
+    Name:         aws-cloudwatch-metrics
+    Namespace:    amazon-cloudwatch
+    UID:          436a3635-ec5a-4a35-85e8-48f0922091e0
+  Rule:           autogen-host-path
+  Scored:         true
+  Severity:       medium
+  Status:         fail
+--
+  Policy:         disallow-host-path
+  Resources:
+    API Version:  v1
+    Kind:         Pod
+    Name:         aws-cloudwatch-metrics-5klqf
+    Namespace:    amazon-cloudwatch
+    UID:          911e66b4-1e58-4f30-aff4-64f6779a06c8
+  Rule:           host-path
+  Scored:         true
+  Severity:       medium
+  Status:         fail
+--
+  Message:        validation error: Running as root is not allowed. The fields spec.securityContext.runAsNonRoot, spec.containers[*].securityContext.runAsNonRoot, and spec.initContainers[*].securityContext.runAsNonRoot must be `true`. Rule autogen-check-containers[0] failed at path /spec/template/spec/securityContext/runAsNonRoot/. Rule autogen-check-containers[1] failed at path /spec/template/spec/containers/0/securityContext/.
   Policy:         require-run-as-non-root
   Resources:
-    API Version:  v1
-    Kind:         Pod
-    Name:         aws-cloudwatch-metrics-xzcl2
+    API Version:  apps/v1
+    Kind:         DaemonSet
+    Name:         aws-cloudwatch-metrics
     Namespace:    amazon-cloudwatch
-    UID:          8a1104f8-dc74-4f12-ac21-0939b73aa651
-  Rule:           check-containers
+    UID:          436a3635-ec5a-4a35-85e8-48f0922091e0
+  Rule:           autogen-check-containers
   Scored:         true
   Status:         fail
 --
-  Message:        validation error: HostPath volumes are forbidden. The fields spec.volumes[*].hostPath must not be set. Rule host-path failed at path /spec/volumes/1/hostPath/
   Policy:         disallow-host-path
   Resources:
     API Version:  v1
     Kind:         Pod
-    Name:         aws-cloudwatch-metrics-ft9fv
+    Name:         aws-cloudwatch-metrics-tm2vl
     Namespace:    amazon-cloudwatch
-    UID:          8a520c22-4103-4c47-a0ce-dc0e77c7f4a8
+    UID:          17238c4c-1f90-4ac5-ab1d-6429a6e102f0
   Rule:           host-path
   Scored:         true
-  Status:         fail
---
-  Message:        validation error: HostPath volumes are forbidden. The fields spec.volumes[*].hostPath must not be set. Rule host-path failed at path /spec/volumes/1/hostPath/
-  Policy:         disallow-host-path
-  Resources:
-    API Version:  v1
-    Kind:         Pod
-    Name:         aws-cloudwatch-metrics-wrqmq
-    Namespace:    amazon-cloudwatch
-    UID:          18c08ec4-6aad-4e82-8a6a-b78ef7c79dd1
-  Rule:           host-path
-  Scored:         true
+  Severity:       medium
   Status:         fail
 ```
 
 Create ClusterPolicy to check if `team_name` label is present in namespaces:
 
-```shell
+```bash
 kubectl apply -f - << \EOF
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
@@ -894,7 +885,7 @@ EOF
 
 See the results:
 
-```shell
+```bash
 kubectl get clusterpolicyreport
 ```
 
@@ -913,7 +904,7 @@ and modify the
 [default values](https://github.com/newrelic/helm-charts/blob/master/charts/nri-bundle/values.yaml).
 
 ```shell
-helm repo add newrelic https://helm-charts.newrelic.com
+helm repo add --force-update newrelic https://helm-charts.newrelic.com
 helm upgrade --install --version 2.8.1 --namespace nri-bundle --create-namespace --values - nri-bundle newrelic/nri-bundle << EOF
 prometheus:
   enabled: true
@@ -923,7 +914,7 @@ logging:
   enabled: true
 global:
   licenseKey: ${NEW_RELIC_LICENSE_KEY}
-  cluster: ruzickap-${CLUSTER_FQDN}
+  cluster: ${CLUSTER_FQDN}
 EOF
 ```
 
@@ -935,7 +926,7 @@ and modify the
 [default values](https://github.com/splunk/splunk-connect-for-kubernetes/blob/develop/helm-chart/splunk-connect-for-kubernetes/values.yaml).
 
 ```shell
-helm repo add splunk https://splunk.github.io/splunk-connect-for-kubernetes/
+helm repo add --force-update splunk https://splunk.github.io/splunk-connect-for-kubernetes/
 helm upgrade --install --version 1.4.7 --namespace splunk-connect --create-namespace --values - splunk-connect splunk/splunk-connect-for-kubernetes << EOF
 global:
   splunk:
@@ -944,7 +935,7 @@ global:
       token: ${SPLUNK_TOKEN}
       indexName: ${SPLUNK_INDEX_NAME}
   kubernetes:
-    clusterName: ruzickap-${CLUSTER_FQDN}
+    clusterName: ${CLUSTER_FQDN}
   prometheus_enabled: true
   monitoring_agent_enabled: true
 EOF
@@ -952,23 +943,48 @@ EOF
 
 ## Aqua Security Enforcer
 
+Both `aqua-enforcer` and `kube-enforcer` needs to be installed.
+
 Install `aqua-enforcer`
 [helm chart](https://github.com/aquasecurity/aqua-helm/tree/5.3/enforcer)
 and modify the
-[default values](https://github.com/aquasecurity/aqua-helm/blob/5.3/enforcer/values.yaml).
+[default values](https://github.com/aquasecurity/aqua-helm/blob/6.2/enforcer/values.yaml)
+and [default values](https://github.com/aquasecurity/aqua-helm/blob/6.2/kube-enforcer/values.yaml).
 
 ```shell
-helm repo add aqua-helm https://helm.aquasec.com
-helm upgrade --install --version 5.3.0 --namespace aqua --create-namespace --values - aqua aqua-helm/enforcer << EOF
-multi_cluster: true
+helm repo add --force-update aqua-helm https://helm.aquasec.com
+helm upgrade --install --version 6.2.5 --namespace aqua --create-namespace --values - aqua-enforcer aqua-helm/enforcer << EOF
 imageCredentials:
   create: true
   username: "${AQUA_REGISTRY_USERNAME}"
   password: "${AQUA_REGISTRY_PASSWORD}"
+serviceAccount:
+  create: true
 enforcerToken: "${AQUA_ENFORCER_TOKEN}"
+enforcerLogicalName: ${USER}-test
+extraEnvironmentVars:
+  CLUSTER_NAME: "${USER}-test"
 gate:
   host: "${AQUA_GATE_HOST}"
   port: 443
+EOF
+
+helm upgrade --install --version 6.2.4 --namespace aqua --values - kube-enforcer aqua-helm/kube-enforcer << EOF
+imageCredentials:
+  create: false
+certsSecret:
+  create: true
+  # name: aqua-kube-enforcer-certs # If you're using existing certs change the name to existing secret name
+  serverCertificate: LS0tL...0tLQo=
+  serverKey: LS0tL...0tLQo=
+aquaSecret:
+  kubeEnforcerToken: ${AQUA_KUBE_ENFORCER_TOKEN}
+webhooks:
+  caBundle: LS...0tLQo=
+envs:
+  gatewayAddress: ${AQUA_GATE_HOST}:443
+extraEnvironmentVars:
+  CLUSTER_NAME: "${USER}-test"
 EOF
 ```
 
@@ -980,7 +996,7 @@ and modify the
 [default values](https://github.com/sysdiglabs/charts/blob/master/charts/sysdig/values.yaml).
 
 ```shell
-helm repo add sysdig https://charts.sysdig.com
+helm repo add --force-update sysdig https://charts.sysdig.com
 helm upgrade --install --version 1.11.11 --namespace sysdig-agent --create-namespace --values - sysdig-agent sysdig/sysdig << EOF
 sysdig:
   accessKey: ${SYSDIG_AGENT_ACCESSKEY}

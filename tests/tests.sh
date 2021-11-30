@@ -9,12 +9,10 @@ export LETSENCRYPT_ENVIRONMENT=${LETSENCRYPT_ENVIRONMENT:-staging}
 export LETSENCRYPT_CERTIFICATE="https://letsencrypt.org/certs/staging/letsencrypt-stg-root-x1.pem"
 export MY_EMAIL="petr.ruzicka@gmail.com"
 export AWS_DEFAULT_REGION="eu-west-1"
-declare -A MY_GITHUB_ORG_OAUTH_DEX_CLIENT_ID MY_GITHUB_ORG_OAUTH_DEX_CLIENT_SECRET MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_ID MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_SECRET
-MY_GITHUB_ORG_OAUTH_DEX_CLIENT_ID[${CLUSTER_NAME}]="3xxxxxxxxxxxxxxxxxx3"
-MY_GITHUB_ORG_OAUTH_DEX_CLIENT_SECRET[${CLUSTER_NAME}]="7xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx8"
-MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_ID[${CLUSTER_NAME}]="4xxxxxxxxxxxxxxxxxx4"
-MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_SECRET[${CLUSTER_NAME}]="7xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxa"
-export MY_GITHUB_ORG_OAUTH_DEX_CLIENT_ID MY_GITHUB_ORG_OAUTH_DEX_CLIENT_SECRET MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_ID MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_SECRET
+export MY_GITHUB_ORG_OAUTH_DEX_CLIENT_ID="3xxxxxxxxxxxxxxxxxx3"
+export MY_GITHUB_ORG_OAUTH_DEX_CLIENT_SECRET="7xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx8"
+export MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_ID="4xxxxxxxxxxxxxxxxxx4"
+export MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_SECRET="7xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxa"
 export MY_GITHUB_ORG_NAME="ruzickap-org"
 export KUBECONFIG="${PWD}/kubeconfig-test-${CLUSTER_NAME}.conf"
 
@@ -95,7 +93,7 @@ if [[ ! -x /usr/local/bin/helm ]]; then
 fi
 
 echo -e "\n*** Install MetalLB"
-helm repo add bitnami https://charts.bitnami.com/bitnami
+helm repo add --force-update bitnami https://charts.bitnami.com/bitnami
 helm upgrade --install --version 2.3.1 --namespace metallb --create-namespace --values - metallb bitnami/metallb << EOF
 configInline:
   address-pools:
@@ -151,7 +149,7 @@ export DEMO_PROMPT="${GREEN}➜ ${CYAN}$ "
 
 # Changes to run test in kind like disable vault requests / change StorageClass / remove aws, eksctl commands ...
 # shellcheck disable=SC1004
-sed docs/part-{02..08}/README.md \
+sed docs/part-{02..06}/README.md \
   -e "s/ --wait / --wait --timeout 30m /" \
   -e "s/.*aws /# &/" \
   -e "s/.*eksctl /# &/" \
@@ -160,6 +158,7 @@ sed docs/part-{02..08}/README.md \
   -e "s/vault auth list/echo github/ ; s/^vault /# &/ ; s/.*\$(vault /# &/ ; s/.*kubectl exec -n vault vault-0/# &/ ; s/.*VAULT_ROOT_TOKEN/# &/" \
   -e "s/+ttlid a \".*\${CLUSTER_FQDN}\"/+ttlid a google.com/" \
   -e "s/hostNetwork: true/# &/" \
+  -e "s/^kubectl get secret -n cattle-system tls-rancher-ingress/# &/" \
   -e '/^# Create ClusterIssuer for production/i \
 apiVersion: cert-manager.io/v1 \
 kind: ClusterIssuer \
