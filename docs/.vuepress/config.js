@@ -10,6 +10,7 @@ module.exports = {
     lastUpdated: true,
     repo: 'ruzickap/k8s-eks-bottlerocket-fargate',
     docsDir: 'docs',
+    docsBranch: 'main',
     editLinks: true,
     logo: 'https://kubernetes.io/images/favicon.png',
     nav: [
