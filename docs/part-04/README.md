@@ -507,8 +507,6 @@ Install `kubewatch`
 and modify the
 [default values](https://github.com/bitnami/charts/blob/master/bitnami/kubewatch/values.yaml).
 
-Details: [Kubernetes Event Notifications to a Slack Channel](https://www.powerupcloud.com/kubernetes-event-notifications-to-a-slack-channel-part-v/)
-
 ```bash
 helm upgrade --install --version 3.2.13 --namespace kubewatch --create-namespace --values - kubewatch bitnami/kubewatch << EOF
 slack:
