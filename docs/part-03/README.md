@@ -541,7 +541,7 @@ calicoctl --allow-version-mismatch patch felixConfiguration default --patch "{\"
 ```
 
 Creating a service to expose Felix metrics according
-[Monitor Calico component metrics](https://docs.projectcalico.org/maintenance/monitor/monitor-component-metrics):
+[Monitor Calico component metrics](https://projectcalico.docs.tigera.io/maintenance/monitor/monitor-component-metrics):
 
 ```bash
 kubectl apply -f - << EOF

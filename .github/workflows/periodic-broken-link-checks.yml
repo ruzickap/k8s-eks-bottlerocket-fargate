@@ -2,28 +2,33 @@ name: periodic-broken-link-checks
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/periodic-broken-link-checks.yml
   schedule:
-    - cron: '8 8 * * 2'
+    - cron: '3 3 * * 3'
 
 jobs:
   broken-link-checker:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-        with:
-          ref: gh-pages
 
-      - name: Broken link checker
-        env:
-          EXCLUDE: |
-            mylabs.dev
-        run: |
-          if [ -s CNAME ]; then
-            INPUT_URL="https://$(cat CNAME)"
-          else
-            INPUT_URL="https://${GITHUB_REPOSITORY%/*}.github.io/${GITHUB_REPOSITORY##*/}"
-          fi
-          export INPUT_URL
-          INPUT_CMD_PARAMS="--buffer-size=8192 --max-connections=10 --color=always --exclude=($( echo "${EXCLUDE}" | tr '\n' '|' ))"
-          export INPUT_CMD_PARAMS
-          wget -qO- https://raw.githubusercontent.com/ruzickap/action-my-broken-link-checker/v2/entrypoint.sh | bash
+      - name: Get GH Pages URL
+        id: gh_pages_url
+        uses: actions/github-script@v5
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            let result = await github.request('GET /repos/:owner/:repo/pages', {
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            });
+            console.log(result.data.html_url);
+            return result.data.html_url
+          result-encoding: string
+
+      - name: Check broken links
+        uses: ruzickap/action-my-broken-link-checker@v2
+        with:
+          url: ${{ steps.gh_pages_url.outputs.result }}
+          cmd_params: '--exclude=(mylabs.dev) --buffer-size=8192 --max-connections=10 --color=always --header="User-Agent:curl/7.54.0" --timeout=20'
