@@ -500,69 +500,66 @@ ingress:
 EOF
 ```
 
-## kubewatch
+## kubewatch - obsolete
 
-Install `kubewatch`
-[helm chart](https://artifacthub.io/packages/helm/bitnami/kubewatch)
-and modify the
-[default values](https://github.com/bitnami/charts/blob/master/bitnami/kubewatch/values.yaml).
+Install `kubewatch`:
 
 ```bash
-helm upgrade --install --version 3.2.13 --namespace kubewatch --create-namespace --values - kubewatch bitnami/kubewatch << EOF
-slack:
-  enabled: true
-  channel: "#${SLACK_CHANNEL}"
-  token: ${SLACK_BOT_API_TOKEN}
-smtp:
-  enabled: true
-  to: "notification@${CLUSTER_FQDN}"
-  from: "kubewatch@${CLUSTER_FQDN}"
-  smarthost: "mailhog.mailhog.svc.cluster.local:1025"
-  subject: "kubewatch"
-  requireTLS: false
-resourcesToWatch:
-  deployment: false
-  pod: false
-  persistentvolume: true
-  namespace: true
-rbac:
-  create: false
-EOF
+# helm upgrade --install --version 3.2.13 --namespace kubewatch --create-namespace --values - kubewatch bitnami/kubewatch << EOF
+# slack:
+#   enabled: true
+#   channel: "#${SLACK_CHANNEL}"
+#   token: ${SLACK_BOT_API_TOKEN}
+# smtp:
+#   enabled: true
+#   to: "notification@${CLUSTER_FQDN}"
+#   from: "kubewatch@${CLUSTER_FQDN}"
+#   smarthost: "mailhog.mailhog.svc.cluster.local:1025"
+#   subject: "kubewatch"
+#   requireTLS: false
+# resourcesToWatch:
+#   deployment: false
+#   pod: false
+#   persistentvolume: true
+#   namespace: true
+# rbac:
+#   create: false
+# EOF
 ```
 
 Create `ClusterRole` and `ClusterRoleBinding` to allow `kubewatch` to access
 necessary resources:
 
 ```bash
-kubectl apply -f - << EOF
-apiVersion: rbac.authorization.k8s.io/v1beta1
-kind: ClusterRole
-metadata:
-  name: system:kubewatch
-rules:
-- apiGroups:
-  - ""
-  resources:
-  - namespaces
-  - persistentvolumes
-  verbs:
-  - list
-  - watch
-  - get
----
-apiVersion: rbac.authorization.k8s.io/v1beta1
-kind: ClusterRoleBinding
-metadata:
-  name: system:kubewatch
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: system:kubewatch
-subjects:
-- kind: ServiceAccount
-  name: kubewatch
-  namespace: kubewatch
-EOF
+# kubectl apply -f - << EOF
+# apiVersion: rbac.authorization.k8s.io/v1beta1
+# kind: ClusterRole
+# metadata:
+#   name: system:kubewatch
+# rules:
+# - apiGroups:
+#   - ""
+#   resources:
+#   - namespaces
+#   - persistentvolumes
+#   verbs:
+#   - list
+#   - watch
+#   - get
+# ---
+# apiVersion: rbac.authorization.k8s.io/v1beta1
+# kind: ClusterRoleBinding
+# metadata:
+#   name: system:kubewatch
+# roleRef:
+#   apiGroup: rbac.authorization.k8s.io
+#   kind: ClusterRole
+#   name: system:kubewatch
+# subjects:
+# - kind: ServiceAccount
+#   name: kubewatch
+#   namespace: kubewatch
+# EOF
 ```
 
 ## Calico commands

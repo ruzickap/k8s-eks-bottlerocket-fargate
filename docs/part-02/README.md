@@ -669,7 +669,6 @@ Output:
 
 ```text
 ARN            USERNAME    GROUPS     ACCOUNT
-arn:aws:iam::7xxxxxxxxxx7:role/AVM-OIDC-ADMIN       admin     system:masters
 arn:aws:iam::7xxxxxxxxxx7:role/eksctl-kube1-cluster-FargatePodExecutionRole-PL4ECOM50EOZ system:node:{{SessionName}}  system:bootstrappers,system:nodes,system:node-proxier
 arn:aws:iam::7xxxxxxxxxx7:role/eksctl-kube1-nodegroup-managed-ng-NodeInstanceRole-1NX0EE7ROG5CJ system:node:{{EC2PrivateDNSName}} system:bootstrappers,system:nodes
 arn:aws:iam::7xxxxxxxxxx7:role/myuser1-kube1       myuser1     capsule.clastix.io
@@ -864,7 +863,7 @@ spec:
         claimName: efs-myuser1-pvc
   containers:
     - name: myuser1-container
-      image: alpine
+      image: alpine:3
       command: ["dd"]
       args: ["if=/dev/zero", "of=/mnt/myuser1-file", "bs=1M", "count=10"]
       resources:
@@ -961,7 +960,7 @@ spec:
         claimName: efs-myuser2-pvc
   containers:
     - name: myuser2-container
-      image: alpine
+      image: alpine:3
       command: ["dd"]
       args: ["if=/dev/zero", "of=/mnt/myuser2-file", "bs=1M", "count=20"]
       resources:
