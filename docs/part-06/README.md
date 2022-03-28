@@ -61,7 +61,7 @@ spec:
                 app: pause
       containers:
       - name: pause
-        image: k8s.gcr.io/pause
+        image: k8s.gcr.io/pause:3.6
         resources:
           requests:
             cpu: 100m

@@ -259,7 +259,7 @@ spec:
   serviceAccountName: s3-test
   containers:
   - name: aws-cli
-    image: amazon/aws-cli
+    image: amazon/aws-cli:2.4.29
     securityContext:
       runAsUser: 1000
       runAsGroup: 3000

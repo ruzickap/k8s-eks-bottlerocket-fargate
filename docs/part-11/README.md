@@ -655,7 +655,7 @@ metadata:
 spec:
   containers:
   - name: app
-    image: alpine
+    image: alpine:3
     securityContext:
       runAsUser: 1000
       runAsGroup: 3000
