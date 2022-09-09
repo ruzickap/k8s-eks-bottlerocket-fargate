@@ -1,19 +1,20 @@
 name: command
 
 on:
-  pull_request:
-    types: [opened, synchronize]
-    paths:
-      - .github/workflows/command.yml
-      - docs/**
-      - tests/**
-  push:
-    branches:
-      - main
-    paths:
-      - .github/workflows/command.yml
-      - docs/**
-      - tests/**
+  workflow_dispatch:
+  # pull_request:
+  #   types: [opened, synchronize]
+  #   paths:
+  #     - .github/workflows/command.yml
+  #     - docs/**
+  #     - tests/**
+  # push:
+  #   branches:
+  #     - main
+  #   paths:
+  #     - .github/workflows/command.yml
+  #     - docs/**
+  #     - tests/**
 
 jobs:
   command-check:
