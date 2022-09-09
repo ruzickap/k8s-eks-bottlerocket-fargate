@@ -624,7 +624,7 @@ EOF
 Install `loki`
 [helm chart](https://artifacthub.io/packages/helm/grafana/loki)
 and modify the
-[default values](https://github.com/grafana/helm-charts/blob/main/charts/loki/values.yaml).
+[default values](https://github.com/grafana/helm-charts/blob/2657a57258bfcfec62a3a611209638a1ca2542ec/charts/loki/values.yaml).
 
 ```bash
 helm repo add --force-update grafana https://grafana.github.io/helm-charts
