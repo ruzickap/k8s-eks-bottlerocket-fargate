@@ -10,7 +10,7 @@
 * [awscli](https://aws.amazon.com/cli/)
 * [AWS IAM Authenticator for Kubernetes](https://github.com/kubernetes-sigs/aws-iam-authenticator)
 * [AWS account](https://aws.amazon.com/account/)
-* [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
+* [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl)
 * [Helm](https://helm.sh/)
 * [eksctl](https://eksctl.io/)
 * Kubernetes and AWS knowledge required

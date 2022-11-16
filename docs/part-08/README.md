@@ -492,7 +492,7 @@ Output:
   ],
   "recovery_keys_shares": 5,
   "recovery_keys_threshold": 3,
-  "root_token": "s.p5VhwTEGBJkZb8N30xjEF7U8"
+  "root_token": "s.pxxxxxxxxxxxxxxxxxxxxxxU8"
 }
 ```
 
@@ -1000,7 +1000,7 @@ SSL-Session:
     Cipher    : ECDHE-RSA-AES128-GCM-SHA256
     Session-ID: C53B8D0D70FE1C19FBDF7974A899C7328C42B499706F06F69B822D18426E3733
     Session-ID-ctx:
-    Master-Key: 5FA5C763F27C10BC68DF1C604586F69DA7B91CC4019642BC21CB8378564D34101EDFBFEB579AF26C81B16C9FE58CD913
+    Master-Key: 5xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx3
     Start Time: 1638209104
     Timeout   : 7200 (sec)
     Verify return code: 21 (unable to verify the first certificate)
