@@ -118,7 +118,7 @@ See the details:
 Install `kubed`
 [helm chart](https://artifacthub.io/packages/helm/appscode/kubed)
 and modify the
-[default values](https://github.com/appscode/kubed/blob/master/charts/kubed/values.yaml).
+[default values](https://github.com/kubeops/config-syncer/blob/2310687a9ee63ba22ef272cbaaef8f7f89314183/charts/kubed/values.yaml).
 
 ```bash
 helm repo add --force-update appscode https://charts.appscode.com/stable/
