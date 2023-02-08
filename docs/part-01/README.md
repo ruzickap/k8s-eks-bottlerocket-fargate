@@ -206,7 +206,7 @@ if ! command -v flux &> /dev/null; then
 fi
 ```
 
-Install [calicoctl](https://projectcalico.docs.tigera.io/maintenance/clis/calicoctl/install):
+Install `calicoctl`:
 
 ```bash
 if ! command -v calicoctl &> /dev/null; then
