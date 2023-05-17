@@ -847,7 +847,6 @@ managedNodeGroups:
     maxPodsPerNode: 1000
     volumeEncrypted: true
     volumeKmsKeyID: ${KMS_KEY_ID}
-    disableIMDSv1: true
 fargateProfiles:
   - name: fp-fgtest
     selectors:

@@ -286,7 +286,7 @@ EOF
 
 Try to connect to the MySQL database from Kubernetes pod using IAM role:
 
-* [How do I allow users to authenticate to an Amazon RDS MySQL DB instance using their IAM credentials?](https://aws.amazon.com/premiumsupport/knowledge-center/users-connect-rds-iam/)
+* [How do I allow users to authenticate to an Amazon RDS MySQL DB instance using their IAM credentials?](https://repost.aws/knowledge-center/users-connect-rds-iam)
 * [AWS/EKS: Support for IAM authentication](https://github.com/prometheus-community/postgres_exporter/issues/326)
 
 Create Service Account `rds-sa` for accessing the MySQL RDS DB :
