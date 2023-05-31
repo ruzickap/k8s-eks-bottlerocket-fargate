@@ -31,4 +31,4 @@ jobs:
         uses: ruzickap/action-my-broken-link-checker@v2
         with:
           url: ${{ steps.gh_pages_url.outputs.result }}
-          cmd_params: '--exclude=(mylabs.dev) --max-connections=10 --color=always --header="User-Agent:curl/7.54.0"'
+          cmd_params: '--exclude=(mylabs.dev) --max-connections=10 --color=always --header="User-Agent:Mozilla"'
