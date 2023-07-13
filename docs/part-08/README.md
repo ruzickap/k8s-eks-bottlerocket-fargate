@@ -545,7 +545,7 @@ again. Future Vault requests will automatically use this token.
 
 Key                  Value
 ---                  -----
-token                s.p5VhwTEGBJkZb8N30xjEF7U8
+token                s.pxxxxxxxxxxxxxxxxxxxxxx8
 token_accessor       ruDTYdVBePlKKPn8bWVgWzi0
 token_duration       ∞
 token_renewable      false
@@ -612,7 +612,7 @@ again. Future Vault requests will automatically use this token.
 
 Key                  Value
 ---                  -----
-token                s.9VAADnJCWKJuXtfkSRDfNE9H
+token                s.9xxxxxxxxxxxxxxxxxxxxxxH
 token_accessor       BXl2rAkOfDGLbH7y1Zu0Zmw3
 token_duration       768h
 token_renewable      true
