@@ -12,23 +12,12 @@ jobs:
   broken-link-checker:
     runs-on: ubuntu-latest
     steps:
-
-      - name: Get GH Pages URL
-        id: gh_pages_url
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            let result = await github.request('GET /repos/:owner/:repo/pages', {
-              owner: context.repo.owner,
-              repo: context.repo.repo
-            });
-            console.log(result.data.html_url);
-            return result.data.html_url
-          result-encoding: string
+      - name: Setup Pages
+        id: pages
+        uses: actions/configure-pages@v3
 
       - name: Check broken links
         uses: ruzickap/action-my-broken-link-checker@v2
         with:
-          url: ${{ steps.gh_pages_url.outputs.result }}
+          url: ${{ steps.pages.outputs.base_url }}
           cmd_params: '--exclude=(mylabs.dev) --max-connections=10 --color=always --header="User-Agent:Mozilla"'

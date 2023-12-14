@@ -113,7 +113,7 @@ namespaces.
 See the details:
 
 * [https://cert-manager.io/docs/faq/kubed/](https://cert-manager.io/docs/faq/kubed/)
-* [https://appscode.com/products/kubed/v0.12.0/guides/config-syncer/intra-cluster/](https://appscode.com/products/kubed/v0.12.0/guides/config-syncer/intra-cluster/)
+* [https://web.archive.org/web/20230605162825/https://appscode.com/products/kubed/v0.12.0/guides/config-syncer/intra-cluster/](https://web.archive.org/web/20230605162825/https://appscode.com/products/kubed/v0.12.0/guides/config-syncer/intra-cluster/)
 
 Install `kubed`
 [helm chart](https://artifacthub.io/packages/helm/appscode/kubed)
