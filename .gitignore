@@ -1,9 +1,6 @@
 # pre-commit configuration file
 .pre-commit-config.yaml
 
-# release-it configuration file
-.release-it.yml
-
 # Kubernetes kubeconfig file
 kubeconfig*.conf*
 

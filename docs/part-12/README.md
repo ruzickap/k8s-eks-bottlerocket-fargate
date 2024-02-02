@@ -197,7 +197,7 @@ gpg: revocation certificate stored as '/Users/ruzickap/git/k8s-eks-bottlerocket-
 Store the key fingerprint as an environment variable:
 
 ```bash
-KEY_FP=$(gpg --list-secret-keys --with-colons "${CLUSTER_FQDN}" | awk  -F: "NR == 2 { print \$10 }")
+KEY_FP=$(gpg --list-secret-keys --with-colons "${CLUSTER_FQDN}" | awk -F: "NR == 2 { print \$10 }")
 export KEY_FP
 ```
 
@@ -214,16 +214,16 @@ a Kubernetes secret named `sops-gpg` in the `flux-system` namespace:
 
 ```bash
 gpg --export-secret-keys --armor "${KEY_FP}" |
-kubectl create secret generic sops-gpg \
-  --namespace=flux-system --from-file=sops.asc=/dev/stdin \
-  --save-config --dry-run=client -o yaml |
-kubectl apply -f -
+  kubectl create secret generic sops-gpg \
+    --namespace=flux-system --from-file=sops.asc=/dev/stdin \
+    --save-config --dry-run=client -o yaml |
+  kubectl apply -f -
 ```
 
 Configure Git:
 
 ```bash
-grep -q "github.com" ~/.ssh/known_hosts || ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
+grep -q "github.com" ~/.ssh/known_hosts || ssh-keyscan github.com >> ~/.ssh/known_hosts 2> /dev/null
 test -f ~/.gitconfig || git config --global user.email "${MY_EMAIL}"
 ```
 

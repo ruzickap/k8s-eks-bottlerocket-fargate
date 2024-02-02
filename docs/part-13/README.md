@@ -26,7 +26,7 @@ Install [kubectl](https://github.com/kubernetes/kubectl) binary:
 
 ```bash
 if ! command -v kubectl &> /dev/null; then
-  sudo curl -s -Lo /usr/local/bin/kubectl "https://storage.googleapis.com/kubernetes-release/release/v1.21.1/bin/$(uname | sed "s/./\L&/g" )/amd64/kubectl"
+  sudo curl -s -Lo /usr/local/bin/kubectl "https://storage.googleapis.com/kubernetes-release/release/v1.21.1/bin/$(uname | sed "s/./\L&/g")/amd64/kubectl"
   sudo chmod a+x /usr/local/bin/kubectl
 fi
 ```
@@ -91,7 +91,7 @@ fi
 Remove EKS cluster:
 
 ```bash
-if eksctl get cluster --name="${CLUSTER_NAME}" 2>/dev/null ; then
+if eksctl get cluster --name="${CLUSTER_NAME}" 2> /dev/null; then
   eksctl delete cluster --name="${CLUSTER_NAME}"
 fi
 ```
@@ -102,19 +102,19 @@ Remove Route 53 DNS records from DNS Zone:
 CLUSTER_FQDN_ZONE_ID=$(aws route53 list-hosted-zones --query "HostedZones[?Name==\`${CLUSTER_FQDN}.\`].Id" --output text)
 if [[ -n "${CLUSTER_FQDN_ZONE_ID}" ]]; then
   aws route53 list-resource-record-sets --hosted-zone-id "${CLUSTER_FQDN_ZONE_ID}" | jq -c '.ResourceRecordSets[] | select (.Type != "SOA" and .Type != "NS")' |
-  while read -r RESOURCERECORDSET; do
-    aws route53 change-resource-record-sets \
-      --hosted-zone-id "${CLUSTER_FQDN_ZONE_ID}" \
-      --change-batch '{"Changes":[{"Action":"DELETE","ResourceRecordSet": '"${RESOURCERECORDSET}"' }]}' \
-      --output text --query 'ChangeInfo.Id'
-  done
+    while read -r RESOURCERECORDSET; do
+      aws route53 change-resource-record-sets \
+        --hosted-zone-id "${CLUSTER_FQDN_ZONE_ID}" \
+        --change-batch '{"Changes":[{"Action":"DELETE","ResourceRecordSet": '"${RESOURCERECORDSET}"' }]}' \
+        --output text --query 'ChangeInfo.Id'
+    done
 fi
 ```
 
 Remove all S3 data form the bucket:
 
 ```bash
-if aws s3api head-bucket --bucket "${CLUSTER_FQDN}" 2>/dev/null; then
+if aws s3api head-bucket --bucket "${CLUSTER_FQDN}" 2> /dev/null; then
   aws s3 rm "s3://${CLUSTER_FQDN}/" --recursive
 fi
 ```
@@ -122,7 +122,7 @@ fi
 Remove APM:
 
 ```bash
-if aws amp list-workspaces | grep -q "${CLUSTER_FQDN}" ; then
+if aws amp list-workspaces | grep -q "${CLUSTER_FQDN}"; then
   aws amp delete-workspace --workspace-id="$(aws amp list-workspaces --alias="${CLUSTER_FQDN}" | jq .workspaces[0].workspaceId -r)"
 fi
 ```
@@ -142,23 +142,23 @@ aws cloudformation delete-stack --stack-name "cluster-api-provider-aws-sigs-k8s-
 Remove Volumes and Snapshots related to the cluster:
 
 ```bash
-VOLUMES=$(aws ec2 describe-volumes --filter "Name=tag:Cluster,Values=${CLUSTER_FQDN}" --query 'Volumes[].VolumeId' --output text) && \
-for VOLUME in ${VOLUMES}; do
-  echo "Removing Volume: ${VOLUME}"
-  aws ec2 delete-volume --volume-id "${VOLUME}"
-done
+VOLUMES=$(aws ec2 describe-volumes --filter "Name=tag:Cluster,Values=${CLUSTER_FQDN}" --query 'Volumes[].VolumeId' --output text) &&
+  for VOLUME in ${VOLUMES}; do
+    echo "Removing Volume: ${VOLUME}"
+    aws ec2 delete-volume --volume-id "${VOLUME}"
+  done
 
-SNAPSHOTS=$(aws ec2 describe-snapshots --filter "Name=tag:Cluster,Values=${CLUSTER_FQDN}" --query 'Snapshots[].SnapshotId' --output text) && \
-for SNAPSHOT in ${SNAPSHOTS}; do
-  echo "Removing Snapshot: ${SNAPSHOT}"
-  aws ec2 delete-snapshot --snapshot-id "${SNAPSHOT}"
-done
+SNAPSHOTS=$(aws ec2 describe-snapshots --filter "Name=tag:Cluster,Values=${CLUSTER_FQDN}" --query 'Snapshots[].SnapshotId' --output text) &&
+  for SNAPSHOT in ${SNAPSHOTS}; do
+    echo "Removing Snapshot: ${SNAPSHOT}"
+    aws ec2 delete-snapshot --snapshot-id "${SNAPSHOT}"
+  done
 ```
 
 Remove orphan ELBs (if exists):
 
 ```bash
-for ELB_ARN in $(aws elbv2 describe-load-balancers --query "LoadBalancers[].LoadBalancerArn" --output=text) ; do
+for ELB_ARN in $(aws elbv2 describe-load-balancers --query "LoadBalancers[].LoadBalancerArn" --output=text); do
   if [[ -n "$(aws elbv2 describe-tags --resource-arns "${ELB_ARN}" --query "TagDescriptions[].Tags[?Key == \`kubernetes.io/cluster/${CLUSTER_NAME}\`]" --output text)" ]]; then
     echo "Deleting ELB: ${ELB_ARN}"
     aws elbv2 delete-load-balancer --load-balancer-arn "${ELB_ARN}"

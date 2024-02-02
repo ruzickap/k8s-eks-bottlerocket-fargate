@@ -21,6 +21,9 @@ on:
       - package.json
       - package-lock.json
 
+permissions:
+  contents: write
+
 jobs:
   markdownlint-check:
     runs-on: ubuntu-latest
@@ -77,7 +80,7 @@ jobs:
         with:
           url: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
           pages_path: .
-          cmd_params: '--exclude=(mylabs.dev|https://github.com/.*/edit/) --max-connections-per-host=5 --color=always --rate-limit=5 --header="User-Agent:Mozilla" --skip-tls-verification'
+          cmd_params: '--exclude=(mylabs.dev) --max-connections-per-host=5 --color=always --rate-limit=5 --header="User-Agent:Mozilla" --skip-tls-verification'
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3

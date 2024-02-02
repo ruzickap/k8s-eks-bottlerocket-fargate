@@ -38,13 +38,12 @@ export README_NAME="${CLUSTER_NAME:-kube1}"
 # hide the evidence
 clear
 
-sed -n "/^\`\`\`bash.*/,/^\`\`\`$/p;/^-----$/p" docs/part-{01..12}/README.md \
-| \
-sed \
-  -e 's/^-----$/\np  ""\np  "################################################################################################### Press <ENTER> to continue"\nwait\n/' \
-  -e 's/^```bash.*/\npe '"'"'/' \
-  -e 's/^```$/'"'"'/' \
-> "/tmp/README-${README_NAME}.sh"
+sed -n "/^\`\`\`bash.*/,/^\`\`\`$/p;/^-----$/p" docs/part-{01..12}/README.md |
+  sed \
+    -e 's/^-----$/\np  ""\np  "################################################################################################### Press <ENTER> to continue"\nwait\n/' \
+    -e 's/^```bash.*/\npe '"'"'/' \
+    -e 's/^```$/'"'"'/' \
+    > "/tmp/README-${README_NAME}.sh"
 
 if [ "$#" -eq 0 ]; then
   # shellcheck disable=SC1090,SC1091

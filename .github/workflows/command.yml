@@ -16,6 +16,8 @@ on:
   #     - docs/**
   #     - tests/**
 
+permissions: read-all
+
 jobs:
   command-check:
     runs-on: ubuntu-22.04

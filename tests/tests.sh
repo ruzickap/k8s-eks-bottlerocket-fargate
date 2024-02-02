@@ -53,10 +53,13 @@ export SLACK_INCOMING_WEBHOOK_URL="https://hooks.slack.com/services/YOUR/SLACK/W
 export SLACK_CHANNEL="mylabs"
 export AMP_WORKSPACE_ID="amp-workspace-id"
 
-test -d tests || ( echo -e "\n*** Run in top level of git repository\n"; exit 1 )
+test -d tests || (
+  echo -e "\n*** Run in top level of git repository\n"
+  exit 1
+)
 
 if [[ ! -x /usr/local/bin/kind ]]; then
-  sudo curl -s -Lo /usr/local/bin/kind "https://kind.sigs.k8s.io/dl/v0.10.0/kind-$(uname | sed "s/./\L&/g" )-amd64"
+  sudo curl -s -Lo /usr/local/bin/kind "https://kind.sigs.k8s.io/dl/v0.10.0/kind-$(uname | sed "s/./\L&/g")-amd64"
   sudo chmod a+x /usr/local/bin/kind
 fi
 
@@ -112,7 +115,7 @@ kubectl create namespace vault
 
 # Create ServiceAccounts - they are originally created by eksctl
 for SA in aws-load-balancer-controller cluster-autoscaler ebs-csi-controller; do
-kubectl apply -f - << EOF
+  kubectl apply -f - << EOF
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -122,7 +125,7 @@ EOF
 done
 
 for SA in cert-manager external-dns; do
-kubectl apply -f - << EOF
+  kubectl apply -f - << EOF
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -168,14 +171,12 @@ metadata: \
 spec: \
   selfSigned: {} \
 ---' \
-  -e "s/letsencrypt-\${LETSENCRYPT_ENVIRONMENT}-dns/selfsigned/" \
-| \
-sed -n "/^\`\`\`bash.*/,/^\`\`\`$/p" \
-| \
-sed \
-  -e 's/^```bash.*/\npe '"'"'/' \
-  -e 's/^```$/'"'"'/' \
-> /tmp/README-test.sh
+  -e "s/letsencrypt-\${LETSENCRYPT_ENVIRONMENT}-dns/selfsigned/" |
+  sed -n "/^\`\`\`bash.*/,/^\`\`\`$/p" |
+  sed \
+    -e 's/^```bash.*/\npe '"'"'/' \
+    -e 's/^```$/'"'"'/' \
+    > /tmp/README-test.sh
 
 test -d "tmp/${CLUSTER_FQDN}/" && rm -rf "tmp/${CLUSTER_FQDN}/"
 mkdir -vp "tmp/${CLUSTER_FQDN}"
