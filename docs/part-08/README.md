@@ -10,13 +10,13 @@ set -x
 CLUSTERAPI_VERSION="0.3.17"
 
 if ! command -v clusterctl &> /dev/null; then
-  curl -s -L "https://github.com/kubernetes-sigs/cluster-api/releases/download/v${CLUSTERAPI_VERSION}/clusterctl-$(uname | sed "s/./\L&/g" )-amd64" -o /usr/local/bin/clusterctl
+  curl -s -L "https://github.com/kubernetes-sigs/cluster-api/releases/download/v${CLUSTERAPI_VERSION}/clusterctl-$(uname | sed "s/./\L&/g")-amd64" -o /usr/local/bin/clusterctl
   chmod +x /usr/local/bin/clusterctl
 fi
 
 CLUSTERAWSADM_VERSION="0.6.6"
 if ! command -v clusterawsadm &> /dev/null; then
-  curl -s -L "https://github.com/kubernetes-sigs/cluster-api-provider-aws/releases/download/v${CLUSTERAWSADM_VERSION}/clusterawsadm-$(uname | sed "s/./\L&/g" )-amd64" -o /usr/local/bin/clusterawsadm
+  curl -s -L "https://github.com/kubernetes-sigs/cluster-api-provider-aws/releases/download/v${CLUSTERAWSADM_VERSION}/clusterawsadm-$(uname | sed "s/./\L&/g")-amd64" -o /usr/local/bin/clusterawsadm
   chmod +x /usr/local/bin/clusterawsadm
 fi
 ```
@@ -224,7 +224,7 @@ Warning: resource clusterroles/capa-eks-control-plane-system-capa-eks-control-pl
 Create cluster:
 
 ```shell
-AWS_SSH_KEY_NAME=eksctl-${CLUSTER_NAME}-nodegroup-ng01-$(ssh-keygen -f ~/.ssh/id_rsa.pub -e -m PKCS8 | openssl pkey -pubin -outform DER | openssl md5 -c)
+AWS_SSH_KEY_NAME=eksctl-${CLUSTER_NAME}-nodegroup-ng01-$(ssh-keygen -f ~/.ssh/id_rsa.pub -e -m PKCS8 | openssl pkey -pubin -outform DER | openssl md5 -c) # DevSkim: ignore DS126858
 export AWS_SSH_KEY_NAME
 
 kubectl get namespace tenants &> /dev/null || kubectl create namespace tenants
@@ -468,7 +468,7 @@ HA Enabled               false
 Initialize the vault server:
 
 ```bash
-test -f "tmp/${CLUSTER_FQDN}/vault_cluster-keys.json" || ( kubectl exec -n vault vault-0 -- "/bin/sh" "-c" "export VAULT_CLIENT_TIMEOUT=500s && vault operator init -format=json" | tee "tmp/${CLUSTER_FQDN}/vault_cluster-keys.json" )
+test -f "tmp/${CLUSTER_FQDN}/vault_cluster-keys.json" || (kubectl exec -n vault vault-0 -- "/bin/sh" "-c" "export VAULT_CLIENT_TIMEOUT=500s && vault operator init -format=json" | tee "tmp/${CLUSTER_FQDN}/vault_cluster-keys.json")
 sleep 10
 ```
 
@@ -568,7 +568,7 @@ vault policy write my-admin-policy "tmp/${CLUSTER_FQDN}/my-admin-policy.hcl"
 Configure GitHub + Dex OIDC authentication:
 
 ```bash
-if ! vault auth list | grep -q github ; then
+if ! vault auth list | grep -q github; then
   vault auth enable github
   vault write auth/github/config organization="${MY_GITHUB_ORG_NAME}"
   vault write auth/github/map/teams/cluster-admin value=my-admin-policy
@@ -641,7 +641,7 @@ I used these guides to set it up:
 Configure PKI secrets engine:
 
 ```bash
-if ! vault secrets list | grep "${VAULT_CLUSTER_FQDN}-pki/" ; then
+if ! vault secrets list | grep "${VAULT_CLUSTER_FQDN}-pki/"; then
   vault secrets enable -path="${VAULT_CLUSTER_FQDN}-pki" pki
 fi
 ```
@@ -658,8 +658,7 @@ Generate the `root` certificate and save the certificate in `CA_cert.crt`:
 ```bash
 vault write -field=certificate "${VAULT_CLUSTER_FQDN}-pki/root/generate/internal" \
   common_name="${CLUSTER_FQDN}" country="CZ" organization="PA" \
-  alt_names="${CLUSTER_FQDN},*.${CLUSTER_FQDN}" \
-  ttl=87600h > "tmp/${CLUSTER_FQDN}/CA_cert.crt"
+  alt_names="${CLUSTER_FQDN},*.${CLUSTER_FQDN}" ttl=87600h > "tmp/${CLUSTER_FQDN}/CA_cert.crt"
 ```
 
 Configure the PKI secrets engine certificate issuing and certificate revocation
@@ -692,8 +691,8 @@ CSR as `pki_intermediate.csr`:
 ```bash
 vault write -format=json "${VAULT_CLUSTER_FQDN}-pki_int/intermediate/generate/internal" \
   common_name="${CLUSTER_FQDN}" country="CZ" organization="PA2" \
-  alt_names="${CLUSTER_FQDN},*.${CLUSTER_FQDN}" \
-  | jq -r ".data.csr" > "tmp/${CLUSTER_FQDN}/pki_intermediate.csr"
+  alt_names="${CLUSTER_FQDN},*.${CLUSTER_FQDN}" |
+  jq -r ".data.csr" > "tmp/${CLUSTER_FQDN}/pki_intermediate.csr"
 ```
 
 Sign the intermediate certificate with the root certificate and save the
@@ -701,8 +700,8 @@ generated certificate as `intermediate.cert.pem`:
 
 ```bash
 vault write -format=json "${VAULT_CLUSTER_FQDN}-pki/root/sign-intermediate" csr="@tmp/${CLUSTER_FQDN}/pki_intermediate.csr" \
-  format=pem_bundle ttl="43800h" \
-  | jq -r ".data.certificate" > "tmp/${CLUSTER_FQDN}/intermediate.cert.pem"
+  format=pem_bundle ttl="43800h" |
+  jq -r ".data.certificate" > "tmp/${CLUSTER_FQDN}/intermediate.cert.pem"
 ```
 
 Once the CSR is signed and the root CA returns a certificate, it can be
@@ -834,7 +833,7 @@ sleep 5
 Check the certificates:
 
 ```bash
-kubectl get secrets -n podinfo-vault podinfo-vault-certificate-tls --output=jsonpath="{.data.ca\\.crt}"| base64 --decode | openssl x509 -text -noout
+kubectl get secrets -n podinfo-vault podinfo-vault-certificate-tls --output=jsonpath="{.data.ca\\.crt}" | base64 --decode | openssl x509 -text -noout
 kubectl get secrets -n podinfo-vault podinfo-vault-certificate-tls --output=jsonpath="{.data.tls\\.crt}" | base64 --decode | openssl x509 -text -noout
 kubectl get secrets -n podinfo-vault podinfo-vault-certificate-tls --output=jsonpath="{.data.tls\\.key}" | base64 --decode | openssl rsa -check
 ```
@@ -963,7 +962,7 @@ done
 Check the certificate:
 
 ```bash
-openssl s_client -connect "podinfo.vault-test-crt.${CLUSTER_FQDN}:443" < /dev/null 2>/dev/null || true | sed "/Server certificate/,/-----END CERTIFICATE-----/d" || true
+openssl s_client -connect "podinfo.vault-test-crt.${CLUSTER_FQDN}:443" < /dev/null 2> /dev/null || true | sed "/Server certificate/,/-----END CERTIFICATE-----/d" || true
 ```
 
 Output:

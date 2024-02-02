@@ -278,7 +278,7 @@ db:
   enableSsl: true
   ssl:
     caCertificate: |-
-$(curl -s "https://s3.amazonaws.com/rds-downloads/rds-ca-2019-root.pem" | sed  "s/^/      /" )
+$(curl -s "https://s3.amazonaws.com/rds-downloads/rds-ca-2019-root.pem" | sed "s/^/      /")
 EOF
 ```
 

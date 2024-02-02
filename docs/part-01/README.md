@@ -84,21 +84,21 @@ Verify if all the necessary variables were set:
 
 ```bash
 case "${CLUSTER_NAME}" in
-  kube1)
-    MY_GITHUB_ORG_OAUTH_DEX_CLIENT_ID=${MY_GITHUB_ORG_OAUTH_DEX_CLIENT_ID:-${MY_GITHUB_ORG_OAUTH_DEX_CLIENT_ID_KUBE1}}
-    MY_GITHUB_ORG_OAUTH_DEX_CLIENT_SECRET=${MY_GITHUB_ORG_OAUTH_DEX_CLIENT_SECRET:-${MY_GITHUB_ORG_OAUTH_DEX_CLIENT_SECRET_KUBE1}}
-    MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_ID=${MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_ID:-${MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_ID_KUBE1}}
-    MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_SECRET=${MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_SECRET:-${MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_SECRET_KUBE1}}
+kube1)
+  MY_GITHUB_ORG_OAUTH_DEX_CLIENT_ID=${MY_GITHUB_ORG_OAUTH_DEX_CLIENT_ID:-${MY_GITHUB_ORG_OAUTH_DEX_CLIENT_ID_KUBE1}}
+  MY_GITHUB_ORG_OAUTH_DEX_CLIENT_SECRET=${MY_GITHUB_ORG_OAUTH_DEX_CLIENT_SECRET:-${MY_GITHUB_ORG_OAUTH_DEX_CLIENT_SECRET_KUBE1}}
+  MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_ID=${MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_ID:-${MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_ID_KUBE1}}
+  MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_SECRET=${MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_SECRET:-${MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_SECRET_KUBE1}}
   ;;
-  kube2)
-    MY_GITHUB_ORG_OAUTH_DEX_CLIENT_ID=${MY_GITHUB_ORG_OAUTH_DEX_CLIENT_ID:-${MY_GITHUB_ORG_OAUTH_DEX_CLIENT_ID_KUBE2}}
-    MY_GITHUB_ORG_OAUTH_DEX_CLIENT_SECRET=${MY_GITHUB_ORG_OAUTH_DEX_CLIENT_SECRET:-${MY_GITHUB_ORG_OAUTH_DEX_CLIENT_SECRET_KUBE2}}
-    MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_ID=${MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_ID:-${MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_ID_KUBE2}}
-    MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_SECRET=${MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_SECRET:-${MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_SECRET_KUBE2}}
+kube2)
+  MY_GITHUB_ORG_OAUTH_DEX_CLIENT_ID=${MY_GITHUB_ORG_OAUTH_DEX_CLIENT_ID:-${MY_GITHUB_ORG_OAUTH_DEX_CLIENT_ID_KUBE2}}
+  MY_GITHUB_ORG_OAUTH_DEX_CLIENT_SECRET=${MY_GITHUB_ORG_OAUTH_DEX_CLIENT_SECRET:-${MY_GITHUB_ORG_OAUTH_DEX_CLIENT_SECRET_KUBE2}}
+  MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_ID=${MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_ID:-${MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_ID_KUBE2}}
+  MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_SECRET=${MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_SECRET:-${MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_SECRET_KUBE2}}
   ;;
-  *)
-    echo "Unsupported cluster name: ${CLUSTER_NAME} !"
-    exit 1
+*)
+  echo "Unsupported cluster name: ${CLUSTER_NAME} !"
+  exit 1
   ;;
 esac
 
@@ -146,7 +146,7 @@ Install [kubectl](https://github.com/kubernetes/kubectl) binary:
 ```bash
 if ! command -v kubectl &> /dev/null; then
   # https://github.com/kubernetes/kubectl/releases
-  sudo curl -s -Lo /usr/local/bin/kubectl "https://storage.googleapis.com/kubernetes-release/release/v1.21.1/bin/$(uname | sed "s/./\L&/g" )/amd64/kubectl"
+  sudo curl -s -Lo /usr/local/bin/kubectl "https://storage.googleapis.com/kubernetes-release/release/v1.21.1/bin/$(uname | sed "s/./\L&/g")/amd64/kubectl"
   sudo chmod a+x /usr/local/bin/kubectl
 fi
 ```
@@ -698,7 +698,7 @@ EKS cluster and nodes.
 Generate SSH key if not exists:
 
 ```bash
-test -f ~/.ssh/id_rsa.pub || ( install -m 0700 -d ~/.ssh && ssh-keygen -b 2048 -t rsa -f ~/.ssh/id_rsa -q -N "" )
+test -f ~/.ssh/id_rsa.pub || (install -m 0700 -d ~/.ssh && ssh-keygen -b 2048 -t rsa -f ~/.ssh/id_rsa -q -N "")
 ```
 
 Create the Amazon EKS cluster with Calico using `eksctl`:
@@ -860,7 +860,7 @@ cloudWatch:
       - authenticator
 EOF
 
-if ! eksctl get clusters --name="${CLUSTER_NAME}" &> /dev/null ; then
+if ! eksctl get clusters --name="${CLUSTER_NAME}" &> /dev/null; then
   eksctl create cluster --config-file "tmp/${CLUSTER_FQDN}/eksctl.yaml" --kubeconfig "${KUBECONFIG}" --without-nodegroup
   kubectl delete daemonset -n kube-system aws-node
   kubectl apply -f https://docs.projectcalico.org/archive/v3.20/manifests/calico-vxlan.yaml

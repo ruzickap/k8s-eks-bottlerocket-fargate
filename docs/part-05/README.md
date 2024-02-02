@@ -168,7 +168,7 @@ helm upgrade --install --version 4.2.0 --namespace oauth2-proxy-keycloak --creat
 config:
   clientID: oauth2-proxy-keycloak.${CLUSTER_FQDN}
   clientSecret: "${MY_PASSWORD}"
-  cookieSecret: "$(openssl rand -base64 32 | head -c 32 | base64 )"
+  cookieSecret: "$(openssl rand -base64 32 | head -c 32 | base64)"
   configFile: |-
     email_domains = [ "*" ]
     upstreams = [ "file:///dev/null" ]
@@ -306,7 +306,7 @@ helm upgrade --install --version 4.2.0 --namespace oauth2-proxy --create-namespa
 config:
   clientID: oauth2-proxy.${CLUSTER_FQDN}
   clientSecret: "${MY_PASSWORD}"
-  cookieSecret: "$(openssl rand -base64 32 | head -c 32 | base64 )"
+  cookieSecret: "$(openssl rand -base64 32 | head -c 32 | base64)"
   configFile: |-
     email_domains = [ "*" ]
     upstreams = [ "file:///dev/null" ]
@@ -339,7 +339,7 @@ helm repo add --force-update stable https://charts.helm.sh/stable
 helm upgrade --install --version 0.4.5 --namespace gangway --create-namespace --values - gangway stable/gangway << EOF
 # https://github.com/helm/charts/blob/master/stable/gangway/values.yaml
 trustedCACert: |
-$(curl -s "${LETSENCRYPT_CERTIFICATE}" | sed  "s/^/  /" )
+$(curl -s "${LETSENCRYPT_CERTIFICATE}" | sed "s/^/  /")
 gangway:
   clusterName: ${CLUSTER_FQDN}
   authorizeURL: https://dex.${CLUSTER_FQDN}/auth
@@ -381,7 +381,7 @@ oidc:
   issuerUrl: https://dex.${CLUSTER_FQDN}
   usernameClaim: email
   caPEM: |
-$(curl -s "${LETSENCRYPT_CERTIFICATE}" | sed  "s/^/    /" )
+$(curl -s "${LETSENCRYPT_CERTIFICATE}" | sed "s/^/    /")
 ingress:
   annotations:
     nginx.ingress.kubernetes.io/backend-protocol: HTTPS
@@ -456,7 +456,7 @@ The user should be able to read the secrets in `kube-prometheus-stack`
 namespace:
 
 ```shell
-kubectl describe secrets --insecure-skip-tls-verify -n kube-prometheus-stack "ingress-cert-${LETSENCRYPT_ENVIRONMENT}"
+kubectl describe secrets --insecure-skip-tls-verify -n kube-prometheus-stack "ingress-cert-${LETSENCRYPT_ENVIRONMENT}" # DevSkim: ignore DS126188
 ```
 
 Output:
@@ -489,7 +489,7 @@ tls.key:  1679 bytes
 But it's not allowed to delete the secrets for the user:
 
 ```shell
-kubectl delete secrets --insecure-skip-tls-verify -n kube-prometheus-stack "ingress-cert-${LETSENCRYPT_ENVIRONMENT}"
+kubectl delete secrets --insecure-skip-tls-verify -n kube-prometheus-stack "ingress-cert-${LETSENCRYPT_ENVIRONMENT}"   # DevSkim: ignore DS126188
 ```
 
 Output:
@@ -501,7 +501,7 @@ Error from server (Forbidden): secrets "ingress-cert-staging" is forbidden: User
 The user can not read secrets outside the `kube-prometheus-stack`:
 
 ```shell
-kubectl get secrets --insecure-skip-tls-verify -n kube-system
+kubectl get secrets --insecure-skip-tls-verify -n kube-system                                                          # DevSkim: ignore DS126188
 ```
 
 Output:
@@ -513,7 +513,7 @@ Error from server (Forbidden): secrets is forbidden: User "petr.ruzicka@gmail.co
 You can see the pods "everywhere":
 
 ```shell
-kubectl get pods --insecure-skip-tls-verify -n kube-system
+kubectl get pods --insecure-skip-tls-verify -n kube-system                                                             # DevSkim: ignore DS126188
 ```
 
 Output:
@@ -538,7 +538,7 @@ kube-proxy-pdmv9                                             1/1     Running   0
 But you can not delete them:
 
 ```shell
-kubectl delete pods --insecure-skip-tls-verify -n kube-oidc-proxy --all
+kubectl delete pods --insecure-skip-tls-verify -n kube-oidc-proxy --all                                                # DevSkim: ignore DS126188
 ```
 
 Output:

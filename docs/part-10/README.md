@@ -82,20 +82,20 @@ Configure OIDC for Harbor:
 
 ```bash
 curl -sk -u "admin:${MY_PASSWORD}" -X PUT "https://harbor.${CLUSTER_FQDN}/api/v2.0/configurations" -H "Content-Type: application/json" -d \
-"{
-  \"auth_mode\": \"oidc_auth\",
-  \"email_from\": \"harbor@${CLUSTER_FQDN}\",
-  \"email_host\": \"mailhog.mailhog.svc.cluster.local\",
-  \"email_port\": 1025,
-  \"self_registration\": false,
-  \"oidc_name\": \"Dex\",
-  \"oidc_endpoint\": \"https://dex.${CLUSTER_FQDN}\",
-  \"oidc_client_id\": \"harbor.${CLUSTER_FQDN}\",
-  \"oidc_client_secret\": \"${MY_PASSWORD}\",
-  \"oidc_verify_cert\": false,
-  \"oidc_scope\": \"openid,profile,email\",
-  \"oidc_auto_onboard\": true
-}"
+  "{
+    \"auth_mode\": \"oidc_auth\",
+    \"email_from\": \"harbor@${CLUSTER_FQDN}\",
+    \"email_host\": \"mailhog.mailhog.svc.cluster.local\",
+    \"email_port\": 1025,
+    \"self_registration\": false,
+    \"oidc_name\": \"Dex\",
+    \"oidc_endpoint\": \"https://dex.${CLUSTER_FQDN}\",
+    \"oidc_client_id\": \"harbor.${CLUSTER_FQDN}\",
+    \"oidc_client_secret\": \"${MY_PASSWORD}\",
+    \"oidc_verify_cert\": false,
+    \"oidc_scope\": \"openid,profile,email\",
+    \"oidc_auto_onboard\": true
+  }"
 ```
 
 Enable automated vulnerability scan after each "image push" to the project:
@@ -103,24 +103,24 @@ Enable automated vulnerability scan after each "image push" to the project:
 
 ```bash
 PROJECT_ID=$(curl -sk -u "admin:${MY_PASSWORD}" -X GET "https://harbor.${CLUSTER_FQDN}/api/v2.0/projects?name=library" | jq ".[].project_id")
-curl -sk -u "admin:${MY_PASSWORD}" -X PUT "https://harbor.${CLUSTER_FQDN}/api/v2.0/projects/${PROJECT_ID}" -H  "Content-Type: application/json" -d \
-"{
-  \"metadata\": {
-    \"auto_scan\": \"true\"
-  }
-}"
+curl -sk -u "admin:${MY_PASSWORD}" -X PUT "https://harbor.${CLUSTER_FQDN}/api/v2.0/projects/${PROJECT_ID}" -H "Content-Type: application/json" -d \
+  "{
+    \"metadata\": {
+      \"auto_scan\": \"true\"
+    }
+  }"
 ```
 
 Create new Registry Endpoint:
 
 ```bash
 curl -sk -X POST -H "Content-Type: application/json" -u "admin:${MY_PASSWORD}" "https://harbor.${CLUSTER_FQDN}/api/v2.0/registries" -d \
-"{
-  \"name\": \"Docker Hub\",
-  \"type\": \"docker-hub\",
-  \"url\": \"https://hub.docker.com\",
-  \"description\": \"Docker Hub Registry Endpoint\"
-}"
+  "{
+    \"name\": \"Docker Hub\",
+    \"type\": \"docker-hub\",
+    \"url\": \"https://hub.docker.com\",
+    \"description\": \"Docker Hub Registry Endpoint\"
+  }"
 ```
 
 Create new Replication Rule:
@@ -136,7 +136,7 @@ Create new Replication Rule and initiate replication:
 ```bash
 COUNTER=0
 for DOCKER_HUB_REPOSITORY in istio/examples-bookinfo-details-v1 istio/examples-bookinfo-ratings-v1; do
-  COUNTER=$((COUNTER+1))
+  COUNTER=$((COUNTER + 1))
   echo "Replicating (${COUNTER}): ${DOCKER_HUB_REPOSITORY}"
   curl -sk -X POST -H "Content-Type: application/json" -u "admin:${MY_PASSWORD}" "https://harbor.${CLUSTER_FQDN}/api/v2.0/replication/policies" -d \
     "{

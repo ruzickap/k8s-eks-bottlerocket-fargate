@@ -601,7 +601,7 @@ eksctl delete cluster --name test-max-pod --region "${AWS_DEFAULT_REGION}"
 Do the same with Amazon EKS + Calico:
 
 ```shell
-eksctl create cluster --name test-max-pod --region "${AWS_DEFAULT_REGION}"  --without-nodegroup --kubeconfig "kubeconfig-test-max-pod.conf"
+eksctl create cluster --name test-max-pod --region "${AWS_DEFAULT_REGION}" --without-nodegroup --kubeconfig "kubeconfig-test-max-pod.conf"
 kubectl delete daemonset -n kube-system aws-node
 kubectl apply -f https://docs.projectcalico.org/manifests/calico-vxlan.yaml
 eksctl create nodegroup --cluster test-max-pod --region "${AWS_DEFAULT_REGION}" --node-type=t2.micro --nodes=2 --node-volume-size=4 --max-pods-per-node 100
@@ -639,7 +639,7 @@ example.
 Create AMP Workspace
 
 ```bash
-if ! aws amp list-workspaces | grep -q "${CLUSTER_FQDN}" ; then aws amp create-workspace --alias="${CLUSTER_FQDN}" | jq ; fi
+if ! aws amp list-workspaces | grep -q "${CLUSTER_FQDN}"; then aws amp create-workspace --alias="${CLUSTER_FQDN}" | jq; fi
 AMP_WORKSPACE_ID=$(aws amp list-workspaces --alias "${CLUSTER_FQDN}" | jq -r ".workspaces[0].workspaceId")
 ```
 

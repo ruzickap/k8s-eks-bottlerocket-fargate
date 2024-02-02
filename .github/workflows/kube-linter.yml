@@ -13,6 +13,8 @@ on:
       - .github/workflows/kube-linter.yml
       - docs/part**
 
+permissions: read-all
+
 jobs:
   command-check:
     runs-on: ubuntu-latest
@@ -21,7 +23,7 @@ jobs:
 
       - name: Extract yamls from README files
         run: |
-          for FILE in $(find docs/part* -name "*.md" | sort) ; do
+          for FILE in $(find docs/part* -name "*.md" | sort); do
             echo "*** ${FILE}"
             sed -n '/^kubectl apply -f - << EOF/,/^EOF/p' "${FILE}" | sed 's/^EOF/---/;s/^kubectl apply -f - << EOF.*/---/' >> "${FILE}.yml"
           done

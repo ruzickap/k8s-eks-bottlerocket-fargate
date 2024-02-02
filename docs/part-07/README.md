@@ -144,8 +144,8 @@ EOF
 Install [kube-bench](https://github.com/aquasecurity/kube-bench) according the [https://github.com/aquasecurity/kube-bench/blob/main/docs/asff.md](https://github.com/aquasecurity/kube-bench/blob/main/docs/asff.md):
 
 ```bash
-curl -s https://raw.githubusercontent.com/aquasecurity/kube-bench/main/job-eks.yaml | \
-  sed "s@image: .*@image: aquasec/kube-bench:latest@" | \
+curl -s https://raw.githubusercontent.com/aquasecurity/kube-bench/main/job-eks.yaml |
+  sed "s@image: .*@image: aquasec/kube-bench:latest@" |
   kubectl apply -f -
 ```
 
