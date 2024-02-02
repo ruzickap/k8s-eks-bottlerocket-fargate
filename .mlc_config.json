@@ -1,0 +1,7 @@
+{
+  "ignorePatterns": [
+    {
+      "pattern": "kube1.k8s.mylabs.dev"
+    }
+  ]
+}
