@@ -28,10 +28,10 @@ jobs:
   markdownlint-check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
 
       - name: Markdown Lint
-        uses: ruzickap/action-my-markdown-linter@v1
+        uses: ruzickap/action-my-markdown-linter@919d3735df9bbc094d206521a774133ec8f3c4ca # v1
         with:
           exclude: |
             CHANGELOG.md
@@ -39,10 +39,10 @@ jobs:
   markdown-spell-check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
 
       - name: Install Node.js 12
-        uses: actions/setup-node@v4.0.1
+        uses: actions/setup-node@b39b52d1213e96004bfcb1c61a8a6fa8ab84f3e8 # v4.0.1
         with:
           node-version: 12.x
 
@@ -60,10 +60,10 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
 
       - name: Install Node.js 12
-        uses: actions/setup-node@v4.0.1
+        uses: actions/setup-node@b39b52d1213e96004bfcb1c61a8a6fa8ab84f3e8 # v4.0.1
         with:
           node-version: 12.x
 
@@ -76,14 +76,14 @@ jobs:
           ln -s docs/.vuepress/dist ${{ github.event.repository.name }}
 
       - name: Check broken links
-        uses: ruzickap/action-my-broken-link-checker@v2
+        uses: ruzickap/action-my-broken-link-checker@a0895a4cda23b5c90999cb9d3c8a8f44d8a8980d # v2
         with:
           url: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
           pages_path: .
           cmd_params: '--exclude=(mylabs.dev) --max-connections-per-host=5 --color=always --rate-limit=5 --header="User-Agent:Mozilla" --skip-tls-verification'
 
       - name: Deploy
-        uses: peaceiris/actions-gh-pages@v3
+        uses: peaceiris/actions-gh-pages@373f7f263a76c20808c831209c920827a82a2847 # v3
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
