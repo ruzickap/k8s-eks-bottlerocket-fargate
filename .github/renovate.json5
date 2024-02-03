@@ -13,6 +13,10 @@
     "renovate/{{replace '.*/' '' depName}}",
     "renovate/{{updateType}}",
   ],
+  lockFileMaintenance: {
+    enabled: true,
+    schedule: ["before 6am on Sunday"],
+  },
   packageRules: [
     {
       matchUpdateTypes: ["major"],
