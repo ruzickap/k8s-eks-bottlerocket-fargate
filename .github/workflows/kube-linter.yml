@@ -26,10 +26,10 @@ jobs:
           for FILE in $(find docs/part* -name "*.md" | sort); do
             echo "*** ${FILE}"
             sed -n '/^kubectl apply -f - << EOF/,/^EOF/p' "${FILE}" | sed 's/^EOF/---/;s/^kubectl apply -f - << EOF.*/---/' >> "${FILE}.yml"
+            ls -la "${FILE}.yml"
           done
 
       - name: kube-linter
         uses: stackrox/kube-linter-action@ca0d55b925470deb5b04b556e6c4276ea94d03c3 # v1.0.4
         with:
           directory: docs
-          config: .kube-linter/config.yaml
