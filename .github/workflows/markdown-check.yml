@@ -10,6 +10,7 @@ on:
       - .github/workflows/markdown-check.yml
       - .markdownlint.yml
       - .mlc_config.json
+      - .spelling
 
 permissions: read-all
 
