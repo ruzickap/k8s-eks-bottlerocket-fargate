@@ -7,8 +7,6 @@ DISABLE_LINTERS:
   - MARKDOWN_MARKDOWN_LINK_CHECK # Using lychee instead
   - SPELL_CSPELL
   - TERRAFORM_TERRASCAN # Hard to configure - no documentation of the config file
-  - REPOSITORY_TRIVY
-  - REPOSITORY_GRYPE
 
 # Remove: To receive reports as email, please set variable EMAIL_REPORTER_EMAIL
 EMAIL_REPORTER: false

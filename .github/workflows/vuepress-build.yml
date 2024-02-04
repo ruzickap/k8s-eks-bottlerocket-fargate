@@ -28,11 +28,7 @@ jobs:
       - name: Install VuePress and build the document
         run: |
           npm install
-          if grep "vuepress.*1.9" package.json; then
-            npm run build
-          else
-            npm run docs:build
-          fi
+          npm run build
           cp LICENSE docs/.vuepress/dist
           sed -e "s@(part-@(https://github.com/${{ github.repository }}/tree/main/docs/part-@" -e 's@.\/.vuepress\/public\/@./@' docs/README.md > docs/.vuepress/dist/README.md
           ln -s docs/.vuepress/dist ${{ github.event.repository.name }}
