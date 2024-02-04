@@ -8,10 +8,10 @@
   "keywords": [
     "amazon",
     "aws",
-    "kubernetes",
     "bottlerocket",
+    "demo",
     "fargate",
-    "demo"
+    "kubernetes"
   ],
   "main": "index.js",
   "repository": {
@@ -28,9 +28,9 @@
   "dependencies": {
     "@vuepress/plugin-back-to-top": "^1.9.10",
     "@vuepress/plugin-medium-zoom": "^1.9.10",
-    "vuepress": "^1.9.10",
     "vuepress-plugin-reading-progress": "^1.0.10",
     "vuepress-plugin-seo": "^0.2.0",
-    "vuepress-plugin-smooth-scroll": "^0.0.10"
+    "vuepress-plugin-smooth-scroll": "^0.0.10",
+    "vuepress": "^1.9.10"
   }
 }
