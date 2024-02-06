@@ -2,12 +2,17 @@
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
   extends: [
     "config:recommended",
-    ":disableDependencyDashboard",
-    ":disableRateLimiting",
-    ":enableVulnerabilityAlertsWithLabel(security)",
+    "docker:pinDigests",
     "helpers:pinGitHubActionDigestsToSemver",
     "security:openssf-scorecard",
+    ":disableDependencyDashboard",
+    ":docker",
+    ":disableRateLimiting",
+    ":enableVulnerabilityAlertsWithLabel(security)",
   ],
+  "git-submodules": {
+    enabled: true,
+  },
   labels: [
     "renovate",
     "renovate/{{replace '.*/' '' depName}}",
