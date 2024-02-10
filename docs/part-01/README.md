@@ -688,7 +688,7 @@ EOF
 "EKS")
 
 Create [Amazon EKS](https://aws.amazon.com/eks/) in AWS by using [eksctl](https://eksctl.io/).
-It's a tool from [Weaveworks](https://www.weave.works/) based on official
+It's a tool from Weaveworks based on official
 AWS CloudFormation templates which will be used to launch and configure our
 EKS cluster and nodes.
 

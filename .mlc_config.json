@@ -1,7 +1,10 @@
 {
   "ignorePatterns": [
     {
-      "pattern": "kube1.k8s.mylabs.dev"
+      "pattern": "(http|https)://.*mylabs.dev"
+    },
+    {
+      "pattern": "(http|https)://localhost"
     }
   ]
 }
