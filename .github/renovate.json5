@@ -1,15 +1,16 @@
 {
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  // Keep the extends started with ":" at the end of the list to allow overriding
   extends: [
+    "config:recommended",
+    "docker:pinDigests",
+    "helpers:pinGitHubActionDigestsToSemver",
+    "security:openssf-scorecard",
     ":disableDependencyDashboard",
     ":disableRateLimiting",
     ":docker",
     ":enableVulnerabilityAlertsWithLabel(security)",
     ":pinSkipCi",
-    "config:recommended",
-    "docker:pinDigests",
-    "helpers:pinGitHubActionDigestsToSemver",
-    "security:openssf-scorecard",
   ],
   "git-submodules": {
     enabled: true,
