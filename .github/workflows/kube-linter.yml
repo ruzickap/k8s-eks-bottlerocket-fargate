@@ -30,6 +30,6 @@ jobs:
           done
 
       - name: kube-linter
-        uses: stackrox/kube-linter-action@ca0d55b925470deb5b04b556e6c4276ea94d03c3 # v1.0.4
+        uses: stackrox/kube-linter-action@5792edc6a03735d592b13c08201711327a935735 # v1.0.5
         with:
           directory: docs
