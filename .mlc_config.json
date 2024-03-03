@@ -5,6 +5,9 @@
     },
     {
       "pattern": "(http|https)://localhost"
+    },
+    {
+      "pattern": "https://stackoverflow.com"
     }
   ]
 }

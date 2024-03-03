@@ -154,7 +154,7 @@ curl -s https://raw.githubusercontent.com/aquasecurity/kube-bench/main/job-eks.y
 Install `kubernetes-dashboard`
 [helm chart](https://artifacthub.io/packages/helm/k8s-dashboard/kubernetes-dashboard)
 and modify the
-[default values](https://github.com/kubernetes/dashboard/blob/master/charts/helm-chart/kubernetes-dashboard/values.yaml).
+[default values](https://github.com/kubernetes/dashboard/blob/d27d62127573e775b122976eccbc2c8aa94f5f84/charts/helm-chart/kubernetes-dashboard/values.yaml).
 
 ```bash
 helm repo add --force-update kubernetes-dashboard https://kubernetes.github.io/dashboard/
