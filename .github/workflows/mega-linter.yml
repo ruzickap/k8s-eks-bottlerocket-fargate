@@ -41,5 +41,6 @@ jobs:
         uses: oxsecurity/megalinter@190cd0dad6dc52b2de5b810e3b290c3d6bdcc0f2 # v7.9.0
         env:
           GITHUB_COMMENT_REPORTER: false
-          GITHUB_STATUS_REPORTER: true
+          # Disabled due to error: [GitHub Status Reporter] Error posting Status for REPOSITORY with ...: 403
+          GITHUB_STATUS_REPORTER: false
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

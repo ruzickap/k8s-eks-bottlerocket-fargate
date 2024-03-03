@@ -15,6 +15,13 @@ jobs:
   release-please:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/create-github-app-token@e8e39f73bb84fdf315a015fa3104f314c0a258b4 # v1.8.1
+        id: app-token
+        with:
+          app-id: ${{ secrets.MY_RENOVATE_GITHUB_APP_ID }}
+          private-key: ${{ secrets.MY_RENOVATE_GITHUB_PRIVATE_KEY }}
+
       - uses: google-github-actions/release-please-action@cc61a07e2da466bebbc19b3a7dd01d6aecb20d1e # v4.0.2
         with:
           release-type: simple
+          token: ${{ steps.app-token.outputs.token }}
