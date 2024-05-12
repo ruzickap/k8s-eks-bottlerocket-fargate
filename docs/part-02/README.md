@@ -548,7 +548,7 @@ By default, there is certain number of pods which can be run on Amazon EKS
 worker nodes. The "max number of pods" depends on node type an you can read
 about it on these links:
 
-* [https://github.com/awslabs/amazon-eks-ami/blob/master/files/eni-max-pods.txt](https://github.com/awslabs/amazon-eks-ami/blob/master/files/eni-max-pods.txt)
+* [eni-max-pods.txt](https://github.com/awslabs/amazon-eks-ami/blob/e566fe08ea09186120bdaa582d8ccf6461ca66d6/files/eni-max-pods.txt)
 * [Elastic network interfaces](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-eni.html#AvailableIpPerENI)
 * [Pod limit on Node - AWS EKS](https://stackoverflow.com/questions/57970896/pod-limit-on-node-aws-eks/57971006)
 
