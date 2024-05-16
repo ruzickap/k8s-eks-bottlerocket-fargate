@@ -3,7 +3,7 @@ module.exports = {
   description: 'Amazon EKS Bottlerocket and Fargate',
   base: '/k8s-eks-bottlerocket-fargate/',
   head: [
-    ['link', { rel: 'icon', href: 'https://kubernetes.io/images/favicon.png' }]
+    ['link', { rel: 'icon', href: 'https://raw.githubusercontent.com/kubernetes/kubernetes/d9a58a39b69a0eaec5797e0f7a0f9472b4829ab0/logo/logo.svg' }]
   ],
   themeConfig: {
     displayAllHeaders: true,
@@ -12,7 +12,7 @@ module.exports = {
     docsDir: 'docs',
     docsBranch: 'main',
     editLinks: true,
-    logo: 'https://kubernetes.io/images/favicon.png',
+    logo: 'https://raw.githubusercontent.com/kubernetes/kubernetes/d9a58a39b69a0eaec5797e0f7a0f9472b4829ab0/logo/logo.svg',
     nav: [
       { text: 'Home', link: '/' },
       {
