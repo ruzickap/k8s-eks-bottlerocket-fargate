@@ -27,12 +27,15 @@ jobs:
           node-version: 16.x
 
       - name: Install VuePress and build the document
+        env:
+          REPOSITORY_NAME: ${{ github.event.repository.name }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
           npm install
           npm run build
           cp LICENSE docs/.vuepress/dist
-          sed -e "s@(part-@(https://github.com/${{ github.repository }}/tree/main/docs/part-@" -e 's@.\/.vuepress\/public\/@./@' docs/README.md > docs/.vuepress/dist/README.md
-          ln -s docs/.vuepress/dist ${{ github.event.repository.name }}
+          sed -e "s@(part-@(https://github.com/${GITHUB_REPOSITORY}/tree/main/docs/part-@" -e 's@.\/.vuepress\/public\/@./@' docs/README.md > docs/.vuepress/dist/README.md
+          ln -s docs/.vuepress/dist "${REPOSITORY_NAME}"
 
       - name: Setup Pages
         id: pages
