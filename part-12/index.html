@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>GitOps tools | Amazon EKS Bottlerocket and Fargate</title>
+    <meta name="generator" content="VuePress 1.9.10">
+    <link rel="icon" href="https://raw.githubusercontent.com/kubernetes/kubernetes/d9a58a39b69a0eaec5797e0f7a0f9472b4829ab0/logo/logo.svg">
+    <meta name="description" content="Amazon EKS Bottlerocket and Fargate">
+    
+    <link rel="preload" href="/k8s-eks-bottlerocket-fargate/assets/css/0.styles.61693ea3.css" as="style"><link rel="preload" href="/k8s-eks-bottlerocket-fargate/assets/js/app.cd5c61da.js" as="script"><link rel="preload" href="/k8s-eks-bottlerocket-fargate/assets/js/2.a27de003.js" as="script"><link rel="preload" href="/k8s-eks-bottlerocket-fargate/assets/js/1.30a6593f.js" as="script"><link rel="preload" href="/k8s-eks-bottlerocket-fargate/assets/js/34.6e2c7bbd.js" as="script"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/10.340b7a91.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/11.6724c971.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/12.0f6b2c7f.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/13.0f6f4ef5.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/14.28b41666.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/15.d3972987.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/16.4c24402c.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/17.6cd3a12a.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/18.8d7e6487.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/19.78b16bd4.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/20.a3f134b4.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/21.3fb0cd72.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/22.f5ea0076.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/23.a21f8ae6.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/24.c557dbf6.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/25.3d2180e6.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/26.8ac7134b.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/27.050bbf87.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/28.f566dccc.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/29.3e3635d0.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/3.6b4152e0.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/30.7ac4c6d1.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/31.ee8b8daa.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/32.85f54686.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/33.b5ef35a1.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/35.301a3049.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/4.bea5e217.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/5.ac8fedb2.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/6.76ff54c2.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/7.98538131.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/vendors~docsearch.d098b00c.js">
+    <link rel="stylesheet" href="/k8s-eks-bottlerocket-fargate/assets/css/0.styles.61693ea3.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div class="theme-container"><header class="navbar"><div class="sidebar-button"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" viewBox="0 0 448 512" class="icon"><path fill="currentColor" d="M436 124H12c-6.627 0-12-5.373-12-12V80c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12z"></path></svg></div> <a href="/k8s-eks-bottlerocket-fargate/" class="home-link router-link-active"><img src="https://raw.githubusercontent.com/kubernetes/kubernetes/d9a58a39b69a0eaec5797e0f7a0f9472b4829ab0/logo/logo.svg" alt="Amazon EKS Bottlerocket and Fargate" class="logo"> <span class="site-name can-hide">Amazon EKS Bottlerocket and Fargate</span></a> <div class="links"><div class="search-box"><input aria-label="Search" autocomplete="off" spellcheck="false" value=""> <!----></div> <nav class="nav-links can-hide"><div class="nav-item"><a href="/k8s-eks-bottlerocket-fargate/" class="nav-link">
+  Home
+</a></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="Links" class="dropdown-title"><span class="title">Links</span> <span class="arrow down"></span></button> <button type="button" aria-label="Links" class="mobile-dropdown-title"><span class="title">Links</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="https://aws.amazon.com/eks/" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  Amazon EKS
+  <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></li><li class="dropdown-item"><!----> <a href="https://aws.amazon.com/bottlerocket/" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  Bottlerocket
+  <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></li></ul></div></div> <a href="https://github.com/ruzickap/k8s-eks-bottlerocket-fargate" target="_blank" rel="noopener noreferrer" class="repo-link">
+    GitHub
+    <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></nav></div></header> <div class="sidebar-mask"></div> <aside class="sidebar"><nav class="nav-links"><div class="nav-item"><a href="/k8s-eks-bottlerocket-fargate/" class="nav-link">
+  Home
+</a></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="Links" class="dropdown-title"><span class="title">Links</span> <span class="arrow down"></span></button> <button type="button" aria-label="Links" class="mobile-dropdown-title"><span class="title">Links</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="https://aws.amazon.com/eks/" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  Amazon EKS
+  <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></li><li class="dropdown-item"><!----> <a href="https://aws.amazon.com/bottlerocket/" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  Bottlerocket
+  <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></li></ul></div></div> <a href="https://github.com/ruzickap/k8s-eks-bottlerocket-fargate" target="_blank" rel="noopener noreferrer" class="repo-link">
+    GitHub
+    <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></nav>  <ul class="sidebar-links"><li><a href="/k8s-eks-bottlerocket-fargate/" aria-current="page" class="sidebar-link">Amazon EKS Bottlerocket and Fargate</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/#requirements" class="sidebar-link">Requirements</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/#content" class="sidebar-link">Content</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-01/" class="sidebar-link">Amazon EKS Bottlerocket and Fargate</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-01/#requirements" class="sidebar-link">Requirements</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-01/#prepare-the-local-working-environment" class="sidebar-link">Prepare the local working environment</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-01/#configure-aws-route-53-domain-delegation" class="sidebar-link">Configure AWS Route 53 Domain delegation</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-01/#add-new-domain-to-route-53-policies-s3-ebs" class="sidebar-link">Add new domain to Route 53, Policies, S3, EBS</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-01/#create-amazon-eks" class="sidebar-link">Create Amazon EKS</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-02/" class="sidebar-link">AWS</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#fargate" class="sidebar-link">Fargate</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#aws-load-balancer-controller" class="sidebar-link">aws-load-balancer-controller</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#aws-for-fluent-bit" class="sidebar-link">aws-for-fluent-bit</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#aws-cloudwatch-metrics" class="sidebar-link">aws-cloudwatch-metrics</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#aws-efs-csi-driver" class="sidebar-link">aws-efs-csi-driver</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#install-external-snapshotter" class="sidebar-link">Install external-snapshotter</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#aws-ebs-csi-driver" class="sidebar-link">aws-ebs-csi-driver</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#test-amazon-eks-pod-limits" class="sidebar-link">Test Amazon EKS pod limits</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#amazon-managed-prometheus-amazon-managed-grafana" class="sidebar-link">Amazon Managed Prometheus + Amazon Managed Grafana</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#test-eks-access" class="sidebar-link">Test EKS access</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#capsule" class="sidebar-link">Capsule</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-03/" class="sidebar-link">Monitoring and Logging</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#metrics-server" class="sidebar-link">metrics-server</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#prometheus-adapter" class="sidebar-link">prometheus-adapter</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#kube-prometheus-stack" class="sidebar-link">kube-prometheus-stack</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#enable-calico-monitoring" class="sidebar-link">Enable calico monitoring</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#loki" class="sidebar-link">loki</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#aws-node-termination-handler" class="sidebar-link">aws-node-termination-handler</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#kyverno" class="sidebar-link">kyverno</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#nri-bundle" class="sidebar-link">nri-bundle</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#splunk-connect" class="sidebar-link">splunk-connect</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#aqua-security-enforcer" class="sidebar-link">Aqua Security Enforcer</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#sysdig-agent" class="sidebar-link">sysdig-agent</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-04/" class="sidebar-link">DNS, Ingress, Certificates</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#cert-manager" class="sidebar-link">cert-manager</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#kubed" class="sidebar-link">kubed</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#ingress-nginx" class="sidebar-link">ingress-nginx</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#istio-and-related-tools" class="sidebar-link">Istio and related tools</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#external-dns" class="sidebar-link">external-dns</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#mailhog" class="sidebar-link">mailhog</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#kubewatch-obsolete" class="sidebar-link">kubewatch - obsolete</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#calico-commands" class="sidebar-link">Calico commands</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-05/" class="sidebar-link">Authentication</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-05/#keycloak" class="sidebar-link">Keycloak</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-05/#oauth2-proxy-keycloak" class="sidebar-link">oauth2-proxy - Keycloak</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-05/#dex" class="sidebar-link">Dex</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-05/#oauth2-proxy" class="sidebar-link">oauth2-proxy</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-05/#gangway" class="sidebar-link">Gangway</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-05/#kube-oidc-proxy" class="sidebar-link">kube-oidc-proxy</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-06/" class="sidebar-link">Others</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-06/#cluster-autoscaler" class="sidebar-link">cluster-autoscaler</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-06/#descheduler" class="sidebar-link">Descheduler</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-06/#rancher" class="sidebar-link">Rancher</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-07/" class="sidebar-link">Workloads</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#podinfo" class="sidebar-link">podinfo</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#polaris" class="sidebar-link">Polaris</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#kubei" class="sidebar-link">kubei</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#kube-bench" class="sidebar-link">kube-bench</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#kubernetes-dashboard" class="sidebar-link">kubernetes-dashboard</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#kubeview" class="sidebar-link">kubeview</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#kube-ops-view" class="sidebar-link">kube-ops-view</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#s3-upload-test" class="sidebar-link">S3 upload test</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-08/" class="sidebar-link">Other workloads</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-08/#cluster-api" class="sidebar-link">Cluster API</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-08/#hashicorp-vault" class="sidebar-link">HashiCorp Vault</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-08/#podinfo-with-vault-certificate" class="sidebar-link">podinfo with vault certificate</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-08/#secrets-store-csi-driver" class="sidebar-link">secrets-store-csi-driver</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-08/#kuard" class="sidebar-link">kuard</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-09/" class="sidebar-link">Drupal</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-09/#drupal-installation" class="sidebar-link">Drupal installation</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-10/" class="sidebar-link">Harbor</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-10/#cloudwatch-retention" class="sidebar-link">CloudWatch retention</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-11/" class="sidebar-link">Velero</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-11/#backup-vault-using-csi-volume-snapshotting" class="sidebar-link">Backup Vault using CSI Volume Snapshotting</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-11/#delete-restore-vault-using-csi-volume-snapshotting" class="sidebar-link">Delete + Restore Vault using CSI Volume Snapshotting</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-11/#backup-delete-restore-app-with-efs-storage-using-restic" class="sidebar-link">Backup + Delete + Restore app with EFS storage using restic</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-12/" aria-current="page" class="active sidebar-link">GitOps tools</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-12/#argocd" class="sidebar-link">ArgoCD</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-12/#flux" class="sidebar-link">Flux</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-13/" class="sidebar-link">Clean-up</a></li></ul> </aside> <main class="page"> <div class="theme-default-content content__default"><h1 id="gitops-tools"><a href="#gitops-tools" class="header-anchor">#</a> GitOps tools</h1> <h2 id="argocd"><a href="#argocd" class="header-anchor">#</a> ArgoCD</h2> <p>Set the <code>ARGOCD_ADMIN_PASSWORD</code> with password:</p> <div class="language-bash extra-class"><pre class="language-bash"><code><span class="token assign-left variable">ARGOCD_ADMIN_PASSWORD</span><span class="token operator">=</span><span class="token variable"><span class="token variable">$(</span>htpasswd <span class="token parameter variable">-nbBC</span> <span class="token number">10</span> <span class="token string">&quot;&quot;</span> <span class="token string">&quot;<span class="token variable">${MY_PASSWORD}</span>&quot;</span> <span class="token operator">|</span> <span class="token function">tr</span> <span class="token parameter variable">-d</span> <span class="token string">&quot;:<span class="token entity" title="\n">\n</span>&quot;</span> <span class="token operator">|</span> <span class="token function">sed</span> <span class="token string">&quot;s/\<span class="token variable">$2y</span>/\<span class="token variable">$2a</span>/&quot;</span><span class="token variable">)</span></span>
+</code></pre></div><p>Install <code>argo-cd</code> <a href="https://artifacthub.io/packages/helm/argo/argo-cd" target="_blank" rel="noopener noreferrer">helm chart<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>
+and modify the
+<a href="https://github.com/argoproj/argo-helm/blob/master/charts/argo-cd/values.yaml" target="_blank" rel="noopener noreferrer">default values<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>.</p> <div class="language-bash extra-class"><pre class="language-bash"><code>helm repo <span class="token function">add</span> --force-update argo https://argoproj.github.io/argo-helm
+helm upgrade <span class="token parameter variable">--install</span> <span class="token parameter variable">--version</span> <span class="token number">3.12</span>.1 <span class="token parameter variable">--namespace</span> argocd --create-namespace <span class="token parameter variable">--values</span> - argocd argo/argo-cd <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+controller:
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+dex:
+  enabled: false
+server:
+  extraArgs:
+    - --insecure
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: false
+  ingress:
+    enabled: true
+    hosts:
+      - argocd.<span class="token variable">${CLUSTER_FQDN}</span>
+    tls:
+      - secretName: ingress-cert-<span class="token variable">${LETSENCRYPT_ENVIRONMENT}</span>
+        hosts:
+          - argocd.<span class="token variable">${CLUSTER_FQDN}</span>
+  config:
+    url: https://argocd.<span class="token variable">${CLUSTER_FQDN}</span>
+    # OIDC does not work for self signed certs: https://github.com/argoproj/argo-cd/issues/4344
+    oidc.config: |
+      name: Dex
+      issuer: https://dex.<span class="token variable">${CLUSTER_FQDN}</span>
+      clientID: argocd.<span class="token variable">${CLUSTER_FQDN}</span>
+      clientSecret: <span class="token variable">${MY_PASSWORD}</span>
+      requestedIDTokenClaims:
+        groups:
+          essential: true
+      requestedScopes:
+        - openid
+        - profile
+        - email
+  rbacConfig:
+    policy.default: role:admin
+repoServer:
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+configs:
+  secret:
+    argocdServerAdminPassword: <span class="token variable">${ARGOCD_ADMIN_PASSWORD}</span>
+EOF</span>
+</code></pre></div><p>Output:</p> <div class="language-text extra-class"><pre class="language-text"><code>&quot;argo&quot; has been added to your repositories
+manifest_sorter.go:192: info: skipping unknown hook: &quot;crd-install&quot;
+manifest_sorter.go:192: info: skipping unknown hook: &quot;crd-install&quot;
+NAME: argocd
+LAST DEPLOYED: Thu Dec 10 16:02:58 2020
+NAMESPACE: argocd
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+In order to access the server UI you have the following options:
+
+1. kubectl port-forward service/argocd-server -n argocd 8080:443
+
+    and then open the browser on http://localhost:8080 and accept the certificate
+
+2. enable ingress in the values file `service.ingress.enabled` and either
+      - Add the annotation for ssl passthrough: https://github.com/argoproj/argo-cd/blob/master/docs/operator-manual/ingress.md#option-1-ssl-passthrough
+      - Add the `--insecure` flag to `server.extraArgs` in the values file and terminate SSL at your ingress: https://github.com/argoproj/argo-cd/blob/master/docs/operator-manual/ingress.md#option-2-multiple-ingress-objects-and-hosts
+
+
+After reaching the UI the first time you can login with username: admin and the password will be the
+name of the server pod. You can get the pod name by running:
+
+kubectl get pods -n argocd -l app.kubernetes.io/name=argocd-server -o name | cut -d'/' -f 2
+</code></pre></div><h2 id="flux"><a href="#flux" class="header-anchor">#</a> Flux</h2> <p>Handy repositories:</p> <ul><li><a href="https://github.com/kingdonb/kccnceu2021" target="_blank" rel="noopener noreferrer">Helm Users! What Flux 2 Can Do For You<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></li> <li><a href="https://github.com/fluxcd/flux2-multi-tenancy" target="_blank" rel="noopener noreferrer">flux2-multi-tenancy<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></li> <li><a href="https://github.com/relu/flux-demo" target="_blank" rel="noopener noreferrer">https://github.com/relu/flux-demo<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></li></ul> <p>Make sure you have the <code>GITHUB_TOKEN</code> configured properly.</p> <p>Install Flux on a Kubernetes cluster and configure it to manage itself from
+a Git repository:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>flux bootstrap github <span class="token parameter variable">--personal</span> <span class="token parameter variable">--owner</span><span class="token operator">=</span><span class="token string">&quot;<span class="token variable">${MY_GITHUB_USERNAME}</span>&quot;</span> <span class="token parameter variable">--repository</span><span class="token operator">=</span><span class="token string">&quot;<span class="token variable">${CLUSTER_NAME}</span>-k8s-clusters&quot;</span> <span class="token parameter variable">--path</span><span class="token operator">=</span><span class="token string">&quot;clusters/<span class="token variable">${CLUSTER_FQDN}</span>&quot;</span> <span class="token parameter variable">--branch</span><span class="token operator">=</span>master
+</code></pre></div><p>Output:</p> <div class="language-text extra-class"><pre class="language-text"><code>► connecting to github.com
+✔ repository &quot;https://github.com/ruzickap/kube1-k8s-clusters&quot; created
+► cloning branch &quot;master&quot; from Git repository &quot;https://github.com/ruzickap/kube1-k8s-clusters.git&quot;
+✔ cloned repository
+► generating component manifests
+✔ generated component manifests
+✔ committed sync manifests to &quot;master&quot; (&quot;14d6ae5fca7dc2edceaa224958ecf6876d4307af&quot;)
+► pushing component manifests to &quot;https://github.com/ruzickap/kube1-k8s-clusters.git&quot;
+✔ installed components
+✔ reconciled components
+► determining if source secret &quot;flux-system/flux-system&quot; exists
+► generating source secret
+✔ public key: ecdsa-sha2-nistp384 AAAAE2VjZHNhLXNoYTItbmlzdHAzODQAAAAIbmlzdHAzODQAAABhBChRlBEwVkTuaBocgPHeCLvRIG8hjfC91/VUVmKqiIGoj69lW09r8kC+TIi5TSKRq/A3Pl2PNxc/tnI4T2EMn7QPSs6wJYrcMP4DMs/BUKLFKASSDz5ovcX+8JPhHYvfWw==
+✔ configured deploy key &quot;flux-system-master-flux-system-./clusters/kube1.k8s.mylabs.dev&quot; for &quot;https://github.com/ruzickap/kube1-k8s-clusters&quot;
+► applying source secret &quot;flux-system/flux-system&quot;
+✔ reconciled source secret
+► generating sync manifests
+✔ generated sync manifests
+✔ committed sync manifests to &quot;master&quot; (&quot;32b36ef8b2b80c8fb97ca5fb7edf5ffd5c7bab4c&quot;)
+► pushing sync manifests to &quot;https://github.com/ruzickap/kube1-k8s-clusters.git&quot;
+► applying sync manifests
+✔ reconciled sync configuration
+◎ waiting for Kustomization &quot;flux-system/flux-system&quot; to be reconciled
+✔ Kustomization reconciled successfully
+► confirming components are healthy
+✔ helm-controller: deployment ready
+✔ kustomize-controller: deployment ready
+✔ notification-controller: deployment ready
+✔ source-controller: deployment ready
+✔ all components are healthy
+</code></pre></div><p>Create GPG key in <code>tmp/${CLUSTER_FQDN}/.gnupg</code> directory:</p> <div class="language-bash extra-class"><pre class="language-bash"><code><span class="token builtin class-name">export</span> <span class="token assign-left variable">GNUPGHOME</span><span class="token operator">=</span><span class="token string">&quot;<span class="token variable">${<span class="token environment constant">PWD</span>}</span>/tmp/<span class="token variable">${CLUSTER_FQDN}</span>/.gnupg&quot;</span>
+<span class="token function">mkdir</span> <span class="token parameter variable">-vp</span> <span class="token string">&quot;<span class="token variable">${GNUPGHOME}</span>&quot;</span> <span class="token operator">&amp;&amp;</span> <span class="token function">chmod</span> 0700 <span class="token string">&quot;<span class="token variable">${GNUPGHOME}</span>&quot;</span>
+
+<span class="token function">cat</span> <span class="token operator">&gt;</span> <span class="token string">&quot;<span class="token variable">${GNUPGHOME}</span>/my_gpg_key&quot;</span> <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+Key-Type: RSA
+Key-Length: 4096
+Subkey-Type: RSA
+Subkey-Length: 4096
+Name-Comment: Flux secrets
+Name-Real: <span class="token variable">${CLUSTER_FQDN}</span>
+Name-Email: <span class="token variable">${MY_EMAIL}</span>
+Expire-Date: 0
+%no-protection
+%commit
+EOF</span>
+
+gpg <span class="token parameter variable">--verbose</span> <span class="token parameter variable">--batch</span> --gen-key <span class="token string">&quot;<span class="token variable">${GNUPGHOME}</span>/my_gpg_key&quot;</span>
+</code></pre></div><p>Output</p> <div class="language-text extra-class"><pre class="language-text"><code>mkdir: created directory '/Users/ruzickap/git/k8s-eks-bottlerocket-fargate/tmp/kube1.k8s.mylabs.dev/.gnupg'
+gpg: Note: RFC4880bis features are enabled.
+gpg: keybox '/Users/ruzickap/git/k8s-eks-bottlerocket-fargate/tmp/kube1.k8s.mylabs.dev/.gnupg/pubring.kbx' created
+gpg: no running gpg-agent - starting '/usr/local/Cellar/gnupg/2.3.3_1/bin/gpg-agent'
+gpg: waiting for the agent to come up ... (5s)
+gpg: connection to the agent established
+gpg: writing self signature
+gpg: RSA/SHA256 signature from: &quot;D2FAC1BD98CDE147 [?]&quot;
+gpg: writing key binding signature
+gpg: RSA/SHA256 signature from: &quot;D2FAC1BD98CDE147 [?]&quot;
+gpg: RSA/SHA256 signature from: &quot;6259C1389B0D69B6 [?]&quot;
+gpg: writing public key to '/Users/ruzickap/git/k8s-eks-bottlerocket-fargate/tmp/kube1.k8s.mylabs.dev/.gnupg/pubring.kbx'
+gpg: /Users/ruzickap/git/k8s-eks-bottlerocket-fargate/tmp/kube1.k8s.mylabs.dev/.gnupg/trustdb.gpg: trustdb created
+gpg: using pgp trust model
+gpg: key D2FAC1BD98CDE147 marked as ultimately trusted
+gpg: directory '/Users/ruzickap/git/k8s-eks-bottlerocket-fargate/tmp/kube1.k8s.mylabs.dev/.gnupg/openpgp-revocs.d' created
+gpg: writing to '/Users/ruzickap/git/k8s-eks-bottlerocket-fargate/tmp/kube1.k8s.mylabs.dev/.gnupg/openpgp-revocs.d/8407817AB5F5627156F3EDA5D2FAC1BD98CDE147.rev'
+gpg: RSA/SHA256 signature from: &quot;D2FAC1BD98CDE147 kube1.k8s.mylabs.dev (Flux secrets) &amp;lt;petr.ruzicka@gmail.com&gt;&quot;
+gpg: revocation certificate stored as '/Users/ruzickap/git/k8s-eks-bottlerocket-fargate/tmp/kube1.k8s.mylabs.dev/.gnupg/openpgp-revocs.d/8407817AB5F5627156F3EDA5D2FAC1BD98CDE147.rev'
+</code></pre></div><p>Store the key fingerprint as an environment variable:</p> <div class="language-bash extra-class"><pre class="language-bash"><code><span class="token assign-left variable">KEY_FP</span><span class="token operator">=</span><span class="token variable"><span class="token variable">$(</span>gpg --list-secret-keys --with-colons <span class="token string">&quot;<span class="token variable">${CLUSTER_FQDN}</span>&quot;</span> <span class="token operator">|</span> <span class="token function">awk</span> -F: <span class="token string">&quot;NR == 2 { print \<span class="token variable">$10</span> }&quot;</span><span class="token variable">)</span></span>
+<span class="token builtin class-name">export</span> KEY_FP
+</code></pre></div><p>Output:</p> <div class="language-text extra-class"><pre class="language-text"><code>gpg: checking the trustdb
+gpg: marginals needed: 3  completes needed: 1  trust model: pgp
+gpg: depth: 0  valid:   1  signed:   0  trust: 0-, 0q, 0n, 0m, 0f, 1u
+</code></pre></div><p>Export the public and private keypair from your local GPG keyring and create
+a Kubernetes secret named <code>sops-gpg</code> in the <code>flux-system</code> namespace:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>gpg --export-secret-keys <span class="token parameter variable">--armor</span> <span class="token string">&quot;<span class="token variable">${KEY_FP}</span>&quot;</span> <span class="token operator">|</span>
+  kubectl create secret generic sops-gpg <span class="token punctuation">\</span>
+    <span class="token parameter variable">--namespace</span><span class="token operator">=</span>flux-system --from-file<span class="token operator">=</span>sops.asc<span class="token operator">=</span>/dev/stdin <span class="token punctuation">\</span>
+    --save-config --dry-run<span class="token operator">=</span>client <span class="token parameter variable">-o</span> yaml <span class="token operator">|</span>
+  kubectl apply <span class="token parameter variable">-f</span> -
+</code></pre></div><p>Configure Git:</p> <div class="language-bash extra-class"><pre class="language-bash"><code><span class="token function">grep</span> <span class="token parameter variable">-q</span> <span class="token string">&quot;github.com&quot;</span> ~/.ssh/known_hosts <span class="token operator">||</span> ssh-keyscan github.com <span class="token operator">&gt;&gt;</span> ~/.ssh/known_hosts <span class="token operator"><span class="token file-descriptor important">2</span>&gt;</span> /dev/null
+<span class="token builtin class-name">test</span> <span class="token parameter variable">-f</span> ~/.gitconfig <span class="token operator">||</span> <span class="token function">git</span> config <span class="token parameter variable">--global</span> user.email <span class="token string">&quot;<span class="token variable">${MY_EMAIL}</span>&quot;</span>
+</code></pre></div><p>Clone git repository created by flux:</p> <div class="language-bash extra-class"><pre class="language-bash"><code><span class="token builtin class-name">test</span> <span class="token parameter variable">-d</span> <span class="token string">&quot;tmp/<span class="token variable">${CLUSTER_FQDN}</span>/<span class="token variable">${CLUSTER_NAME}</span>-k8s-clusters&quot;</span> <span class="token operator">||</span> <span class="token function">git</span> clone <span class="token parameter variable">--quiet</span> <span class="token string">&quot;https://<span class="token variable">${GITHUB_TOKEN}</span>@github.com/<span class="token variable">${MY_GITHUB_USERNAME}</span>/<span class="token variable">${CLUSTER_NAME}</span>-k8s-clusters.git&quot;</span> <span class="token string">&quot;tmp/<span class="token variable">${CLUSTER_FQDN}</span>/<span class="token variable">${CLUSTER_NAME}</span>-k8s-clusters&quot;</span>
+<span class="token builtin class-name">cd</span> <span class="token string">&quot;tmp/<span class="token variable">${CLUSTER_FQDN}</span>/<span class="token variable">${CLUSTER_NAME}</span>-k8s-clusters&quot;</span> <span class="token operator">||</span> <span class="token builtin class-name">exit</span>
+</code></pre></div><p>Export the public key into the Git directory</p> <div class="language-bash extra-class"><pre class="language-bash"><code>gpg <span class="token parameter variable">--export</span> <span class="token parameter variable">--armor</span> <span class="token string">&quot;<span class="token variable">${KEY_FP}</span>&quot;</span> <span class="token operator">&gt;</span> <span class="token string">&quot;clusters/<span class="token variable">${CLUSTER_FQDN}</span>/.sops.pub.asc&quot;</span>
+<span class="token function">git</span> <span class="token function">add</span> <span class="token string">&quot;clusters/<span class="token variable">${CLUSTER_FQDN}</span>/.sops.pub.asc&quot;</span>
+<span class="token function">git</span> commit <span class="token parameter variable">-m</span> <span class="token string">&quot;Share GPG public key for secrets generation&quot;</span> <span class="token operator">||</span> <span class="token boolean">true</span>
+</code></pre></div><p>Configure the Git directory for encryption:</p> <div class="language-bash extra-class"><pre class="language-bash"><code><span class="token function">cat</span> <span class="token operator">&gt;</span> <span class="token string">&quot;clusters/<span class="token variable">${CLUSTER_FQDN}</span>/.sops.yaml&quot;</span> <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+creation_rules:
+  - path_regex: .*.yaml
+    encrypted_regex: ^(data|stringData)$
+    pgp: <span class="token variable">${KEY_FP}</span>
+EOF</span>
+
+<span class="token function">git</span> <span class="token function">add</span> <span class="token string">&quot;clusters/<span class="token variable">${CLUSTER_FQDN}</span>/.sops.yaml&quot;</span>
+<span class="token function">git</span> commit <span class="token parameter variable">-m</span> <span class="token string">&quot;Configure the Git directory for encryption&quot;</span> <span class="token operator">||</span> <span class="token boolean">true</span>
+</code></pre></div><h3 id="helmrepository"><a href="#helmrepository" class="header-anchor">#</a> HelmRepository</h3> <p>HelmRepository definitions should be separated from the applications.
+The main reason is it's definition in HelmRelease depends on
+&quot;namespace&quot;. When <code>HelmRepository</code> is separated, then you can easily change
+namespace for whole application / <code>HelmRelease</code>, because the <code>HelmRepository</code>
+will always be in the <code>flux-system</code> namespace.</p> <div class="language-yaml extra-class"><pre class="language-yaml"><code><span class="token key atrule">kind</span><span class="token punctuation">:</span> HelmRelease
+<span class="token punctuation">...</span>
+      <span class="token key atrule">sourceRef</span><span class="token punctuation">:</span>
+        <span class="token key atrule">kind</span><span class="token punctuation">:</span> HelmRepository
+        <span class="token key atrule">name</span><span class="token punctuation">:</span> podinfo
+        <span class="token key atrule">namespace</span><span class="token punctuation">:</span> flux<span class="token punctuation">-</span>system
+</code></pre></div><p>Create <code>HelmRepository</code> resource files:</p> <div class="language-bash extra-class"><pre class="language-bash"><code><span class="token function">mkdir</span> <span class="token parameter variable">-pv</span> apps/base/helmrepository
+
+<span class="token function">cat</span> <span class="token operator">&gt;</span> apps/base/helmrepository/podinfo.yaml <span class="token operator">&lt;&lt;</span> <span class="token punctuation">\</span>EOF
+apiVersion: source.toolkit.fluxcd.io/v1beta1
+kind: HelmRepository
+metadata:
+  name: podinfo
+spec:
+  interval: 1h
+  url: https://stefanprodan.github.io/podinfo
+EOF
+
+<span class="token function">cat</span> <span class="token operator">&gt;</span> apps/base/helmrepository/bitnami.yaml <span class="token operator">&lt;&lt;</span> <span class="token punctuation">\</span>EOF
+apiVersion: source.toolkit.fluxcd.io/v1beta1
+kind: HelmRepository
+metadata:
+  name: bitnami
+spec:
+  interval: 1h
+  url: https://charts.bitnami.com/bitnami
+EOF
+
+<span class="token function">cat</span> <span class="token operator">&gt;</span> apps/base/helmrepository/kustomization.yaml <span class="token operator">&lt;&lt;</span> <span class="token punctuation">\</span>EOF
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: flux-system
+resources:
+  - podinfo.yaml
+  - bitnami.yaml
+EOF
+
+<span class="token function">git</span> <span class="token function">add</span> apps/base/helmrepository
+<span class="token function">git</span> commit <span class="token parameter variable">-m</span> <span class="token string">&quot;Add HelmRepository files&quot;</span> <span class="token operator">||</span> <span class="token boolean">true</span>
+</code></pre></div><h3 id="application-configuration"><a href="#application-configuration" class="header-anchor">#</a> Application configuration</h3> <h4 id="flux-configuration"><a href="#flux-configuration" class="header-anchor">#</a> Flux configuration</h4> <p>Create Flux configuration for Slack notification + Prometheus monitoring.</p> <p>Providers needs to be configured/installed before the alerts - that is the
+reason why I'm doing the <code>Kustomization</code> which contains <code>dependsOn</code>.</p> <div class="language-bash extra-class"><pre class="language-bash"><code><span class="token function">mkdir</span> <span class="token parameter variable">-pv</span> apps/base/flux/<span class="token punctuation">{</span>providers,alerts<span class="token punctuation">}</span>
+
+<span class="token function">cat</span> <span class="token operator">&gt;</span> apps/base/flux/providers/provider-slack.yaml <span class="token operator">&lt;&lt;</span> <span class="token punctuation">\</span>EOF
+apiVersion: notification.toolkit.fluxcd.io/v1beta1
+kind: Provider
+metadata:
+  name: slack
+  namespace: flux-system
+spec:
+  type: slack
+  channel: <span class="token variable">${slack_channel}</span>
+  secretRef:
+    name: slack-url
+EOF
+
+<span class="token function">cat</span> <span class="token operator">&gt;</span> apps/base/flux/providers/kustomization.yaml <span class="token operator">&lt;&lt;</span> <span class="token punctuation">\</span>EOF
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: flux-system
+resources:
+  - provider-slack.yaml
+EOF
+
+<span class="token function">cat</span> <span class="token operator">&gt;</span> apps/base/flux/providers.yaml <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+apiVersion: kustomize.toolkit.fluxcd.io/v1beta1
+kind: Kustomization
+metadata:
+  name: providers
+  namespace: flux-system
+spec:
+  interval: 1m
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./apps/base/flux/providers/
+  postBuild:
+    substitute:
+      slack_channel: general
+EOF</span>
+
+<span class="token function">cat</span> <span class="token operator">&gt;</span> apps/base/flux/alerts/alert-slack.yaml <span class="token operator">&lt;&lt;</span> <span class="token punctuation">\</span>EOF
+apiVersion: notification.toolkit.fluxcd.io/v1beta1
+kind: Alert
+metadata:
+  name: slack
+  namespace: flux-system
+spec:
+  providerRef:
+    name: slack
+  eventSeverity: error
+  eventSources:
+    - kind: GitRepository
+      name: <span class="token string">&quot;*&quot;</span>
+    - kind: Kustomization
+      name: <span class="token string">&quot;*&quot;</span>
+    - kind: HelmRepository
+      name: <span class="token string">&quot;*&quot;</span>
+    - kind: HelmChart
+      name: <span class="token string">&quot;*&quot;</span>
+    - kind: HelmRelease
+      name: <span class="token string">&quot;*&quot;</span>
+EOF
+
+<span class="token function">cat</span> <span class="token operator">&gt;</span> apps/base/flux/alerts/kustomization.yaml <span class="token operator">&lt;&lt;</span> <span class="token punctuation">\</span>EOF
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: flux-system
+resources:
+  - alert-slack.yaml
+EOF
+
+<span class="token function">cat</span> <span class="token operator">&gt;</span> apps/base/flux/alerts.yaml <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+apiVersion: kustomize.toolkit.fluxcd.io/v1beta1
+kind: Kustomization
+metadata:
+  name: alerts
+  namespace: flux-system
+spec:
+  dependsOn:
+    - name: providers
+  interval: 1m
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./apps/base/flux/alerts/
+EOF</span>
+
+<span class="token function">cat</span> <span class="token operator">&gt;</span> apps/base/flux/monitoring.yaml <span class="token operator">&lt;&lt;</span> <span class="token punctuation">\</span>EOF
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: source-controller
+  namespace: flux-system
+spec:
+  namespaceSelector:
+    matchNames:
+      - flux-system
+  selector:
+    matchLabels:
+      app: source-controller
+  podMetricsEndpoints:
+  - port: http-prom
+EOF
+
+<span class="token function">cat</span> <span class="token operator">&gt;</span> apps/base/flux/github-receiver.yaml <span class="token operator">&lt;&lt;</span> <span class="token punctuation">\</span>EOF
+apiVersion: notification.toolkit.fluxcd.io/v1beta1
+kind: Receiver
+metadata:
+  name: github-receiver
+  namespace: flux-system
+spec:
+  type: github
+  events:
+    - <span class="token string">&quot;ping&quot;</span>
+    - <span class="token string">&quot;push&quot;</span>
+  secretRef:
+    name: github-webhook-token
+  resources:
+    - kind: GitRepository
+      name: flux-system
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: flux-receiver
+  namespace: flux-system
+EOF
+
+<span class="token function">cat</span> <span class="token operator">&gt;</span> apps/base/flux/kustomization.yaml <span class="token operator">&lt;&lt;</span> <span class="token punctuation">\</span>EOF
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: flux-system
+resources:
+  - alerts.yaml
+  - github-receiver.yaml
+  - monitoring.yaml
+  - providers.yaml
+EOF
+
+<span class="token function">git</span> <span class="token function">add</span> apps/base/flux
+<span class="token function">git</span> commit <span class="token parameter variable">-m</span> <span class="token string">&quot;Add podmonitor and configure slack notifications for flux&quot;</span> <span class="token operator">||</span> <span class="token boolean">true</span>
+</code></pre></div><h4 id="podinfo"><a href="#podinfo" class="header-anchor">#</a> podinfo</h4> <p>Add podinfo:</p> <div class="language-bash extra-class"><pre class="language-bash"><code><span class="token function">mkdir</span> <span class="token parameter variable">-pv</span> apps/base/podinfo
+
+<span class="token function">cat</span> <span class="token operator">&gt;</span> apps/base/podinfo/namespace.yaml <span class="token operator">&lt;&lt;</span> <span class="token punctuation">\</span>EOF
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: podinfo
+EOF
+
+<span class="token function">cat</span> <span class="token operator">&gt;</span> apps/base/podinfo/helmrelease.yaml <span class="token operator">&lt;&lt;</span> <span class="token punctuation">\</span>EOF
+<span class="token comment"># https://github.com/stefanprodan/podinfo/blob/master/charts/podinfo/values.yaml</span>
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: podinfo
+  namespace: podinfo
+spec:
+  interval: 1m
+  chart:
+    spec:
+      chart: podinfo
+      <span class="token comment"># Version can be overwritten by values specified in apps/{dev,stage,prod}/podinfo-values.yaml</span>
+      version: <span class="token number">5.2</span>.0
+      sourceRef:
+        kind: HelmRepository
+        name: podinfo
+        namespace: flux-system
+EOF
+
+<span class="token function">cat</span> <span class="token operator">&gt;</span> apps/base/podinfo/kustomization.yaml <span class="token operator">&lt;&lt;</span> <span class="token punctuation">\</span>EOF
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - namespace.yaml
+  - helmrelease.yaml
+EOF
+
+<span class="token function">git</span> <span class="token function">add</span> apps/base/podinfo
+<span class="token function">git</span> commit <span class="token parameter variable">-m</span> <span class="token string">&quot;Add podinfo&quot;</span> <span class="token operator">||</span> <span class="token boolean">true</span>
+</code></pre></div><h4 id="wordpress"><a href="#wordpress" class="header-anchor">#</a> WordPress</h4> <p>Add WordPress:</p> <div class="language-bash extra-class"><pre class="language-bash"><code><span class="token function">mkdir</span> <span class="token parameter variable">-pv</span> apps/base/wordpress
+
+<span class="token function">cat</span> <span class="token operator">&gt;</span> apps/base/wordpress/helmrelease.yaml <span class="token operator">&lt;&lt;</span> <span class="token punctuation">\</span>EOF
+<span class="token comment"># https://github.com/bitnami/charts/blob/master/bitnami/wordpress/values.yaml</span>
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: wordpress
+  namespace: wordpress
+spec:
+  interval: 1m
+  chart:
+    spec:
+      chart: wordpress
+      <span class="token comment"># Version should be overwritten ba values specified in apps/{dev,stage,prod}/wordpress-values.yaml</span>
+      version: <span class="token number">10.8</span>.0
+      sourceRef:
+        kind: HelmRepository
+        name: bitnami
+        namespace: flux-system
+  values:
+    wordpressSkipInstall: <span class="token boolean">false</span>
+    service:
+      type: ClusterIP
+    persistence:
+      enabled: <span class="token boolean">false</span>
+    metrics:
+      enabled: <span class="token boolean">true</span>
+    serviceMonitor:
+      enabled: <span class="token boolean">true</span>
+    mariadb:
+      primary:
+        persistence:
+          enabled: <span class="token boolean">false</span>
+EOF
+
+<span class="token function">cat</span> <span class="token operator">&gt;</span> apps/base/wordpress/kustomization.yaml <span class="token operator">&lt;&lt;</span> <span class="token punctuation">\</span>EOF
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - helmrelease.yaml
+EOF
+
+<span class="token function">git</span> <span class="token function">add</span> apps/base/wordpress
+<span class="token function">git</span> commit <span class="token parameter variable">-m</span> <span class="token string">&quot;Add wordpress&quot;</span> <span class="token operator">||</span> <span class="token boolean">true</span>
+</code></pre></div><h3 id="dev-group-configuration"><a href="#dev-group-configuration" class="header-anchor">#</a> Dev group configuration</h3> <p>Add group of applications which belongs to <code>dev</code> group of K8s clusters:</p> <div class="language-bash extra-class"><pre class="language-bash"><code><span class="token function">mkdir</span> <span class="token parameter variable">-pv</span> apps/dev/helmrepository
+
+<span class="token function">cat</span> <span class="token operator">&gt;</span> apps/dev/helmrepository/kustomization.yaml <span class="token operator">&lt;&lt;</span> <span class="token punctuation">\</span>EOF
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - <span class="token punctuation">..</span>/<span class="token punctuation">..</span>/base/helmrepository
+EOF
+
+<span class="token function">cat</span> <span class="token operator">&gt;</span> apps/dev/kustomization.yaml <span class="token operator">&lt;&lt;</span> <span class="token punctuation">\</span>EOF
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - <span class="token punctuation">..</span>/base/flux
+  - <span class="token punctuation">..</span>/base/podinfo
+  - <span class="token punctuation">..</span>/base/wordpress
+patchesStrategicMerge:
+  - flux-values.yaml
+  - podinfo-values.yaml
+  - wordpress-values.yaml
+EOF
+
+<span class="token function">cat</span> <span class="token operator">&gt;</span> apps/dev/flux-values.yaml <span class="token operator">&lt;&lt;</span> <span class="token punctuation">\</span>EOF
+apiVersion: kustomize.toolkit.fluxcd.io/v1beta1
+kind: Kustomization
+metadata:
+  name: providers
+  namespace: flux-system
+spec:
+  postBuild:
+    substitute:
+      slack_channel: <span class="token variable">${slack_channel}</span>
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: flux-receiver
+  namespace: flux-system
+spec:
+  rules:
+  - host: flux-receiver.<span class="token variable">${cluster_fqdn}</span>
+    http:
+      paths:
+      - path: /
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: webhook-receiver
+            port:
+              name: http
+  tls:
+  - hosts:
+    - flux-receiver.<span class="token variable">${cluster_fqdn}</span>
+    secretName: flux-receiver.<span class="token variable">${cluster_fqdn}</span>
+EOF
+
+<span class="token function">cat</span> <span class="token operator">&gt;</span> apps/dev/podinfo-values.yaml <span class="token operator">&lt;&lt;</span> <span class="token punctuation">\</span>EOF
+<span class="token comment"># https://github.com/stefanprodan/podinfo/blob/master/charts/podinfo/values.yaml</span>
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: podinfo
+  namespace: podinfo
+spec:
+  chart:
+    spec:
+      version: <span class="token number">5.1</span>.0
+  values:
+    serviceMonitor:
+      enabled: <span class="token boolean">true</span>
+    ui:
+      color: <span class="token string">&quot;#577c34&quot;</span>
+      message: <span class="token string">&quot;Environment: dev | Hostname: <span class="token variable">${podinfo_hostname}</span> | Certificate: <span class="token variable">${letsencrypt_environment<span class="token operator">:=</span>staging}</span>&quot;</span>
+    ingress:
+      enabled: <span class="token boolean">true</span>
+      path: /
+      hosts:
+      - <span class="token variable">${podinfo_hostname}</span>
+      tls:
+      - secretName: ingress-cert-<span class="token variable">${letsencrypt_environment<span class="token operator">:=</span>staging}</span>
+        hosts:
+        - <span class="token variable">${podinfo_hostname}</span>
+EOF
+
+<span class="token function">cat</span> <span class="token operator">&gt;</span> apps/dev/wordpress-values.yaml <span class="token operator">&lt;&lt;</span> <span class="token punctuation">\</span>EOF
+<span class="token comment"># https://github.com/bitnami/charts/blob/master/bitnami/wordpress/values.yaml</span>
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: wordpress
+  namespace: wordpress
+spec:
+  chart:
+    spec:
+      version: <span class="token number">10.7</span>.0
+  values:
+    wordpressUsername: admin
+    existingSecret: wordpress-password
+    wordpressEmail: <span class="token variable">${wordpress_email}</span>
+    ingress:
+      enabled: <span class="token boolean">true</span>
+      hostname: <span class="token variable">${wordpress_hostname}</span>
+      annotations:
+        nginx.ingress.kubernetes.io/auth-url: https://oauth2-proxy.<span class="token variable">${cluster_fqdn}</span>/oauth2/auth
+        nginx.ingress.kubernetes.io/auth-signin: https://oauth2-proxy.<span class="token variable">${cluster_fqdn}</span>/oauth2/start?rd<span class="token operator">=</span><span class="token punctuation">\</span><span class="token variable">$scheme</span>://<span class="token punctuation">\</span><span class="token variable">$host</span><span class="token punctuation">\</span><span class="token variable">$request_uri</span>
+      extraTls:
+      - hosts:
+          - <span class="token variable">${wordpress_hostname}</span>
+        secretName: ingress-cert-<span class="token variable">${letsencrypt_environment<span class="token operator">:=</span>staging}</span>
+    mariadb:
+      auth:
+        existingSecret: mariadb-auth-secret
+EOF
+
+<span class="token function">git</span> <span class="token function">add</span> apps/dev
+<span class="token function">git</span> commit <span class="token parameter variable">-m</span> <span class="token string">&quot;Add dev group&quot;</span> <span class="token operator">||</span> <span class="token boolean">true</span>
+</code></pre></div><h3 id="cluster-apps-configuration"><a href="#cluster-apps-configuration" class="header-anchor">#</a> Cluster apps configuration</h3> <p>Configure cluster applications and their variables:</p> <div class="language-bash extra-class"><pre class="language-bash"><code><span class="token function">cat</span> <span class="token operator">&gt;</span> <span class="token string">&quot;clusters/<span class="token variable">${CLUSTER_FQDN}</span>/local.yaml&quot;</span> <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+apiVersion: kustomize.toolkit.fluxcd.io/v1beta1
+kind: Kustomization
+metadata:
+  name: local
+  namespace: flux-system
+spec:
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-gpg
+  interval: 10m
+  path: ./clusters/<span class="token variable">${CLUSTER_FQDN}</span>/local
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+EOF</span>
+
+<span class="token comment"># This customization is needed to force flux to work with specific</span>
+<span class="token comment"># files/directories and not go to &quot;unwanted&quot; directories</span>
+<span class="token comment"># (like local without proper SOPS confoguration)</span>
+<span class="token function">cat</span> <span class="token operator">&gt;</span> <span class="token string">&quot;clusters/<span class="token variable">${CLUSTER_FQDN}</span>/kustomization.yaml&quot;</span> <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- flux-system
+- local.yaml
+EOF</span>
+
+<span class="token function">mkdir</span> <span class="token parameter variable">-pv</span> <span class="token string">&quot;clusters/<span class="token variable">${CLUSTER_FQDN}</span>/local&quot;</span>
+<span class="token function">cat</span> <span class="token operator">&gt;</span> <span class="token string">&quot;clusters/<span class="token variable">${CLUSTER_FQDN}</span>/local/helmrepository.yaml&quot;</span> <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+apiVersion: kustomize.toolkit.fluxcd.io/v1beta1
+kind: Kustomization
+metadata:
+  name: helmrepository-dev
+  namespace: flux-system
+spec:
+  interval: 1m
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  validation: client
+  path: ./apps/dev/helmrepository
+EOF</span>
+
+<span class="token function">cat</span> <span class="token operator">&gt;</span> <span class="token string">&quot;clusters/<span class="token variable">${CLUSTER_FQDN}</span>/local/apps.yaml&quot;</span> <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+apiVersion: kustomize.toolkit.fluxcd.io/v1beta1
+kind: Kustomization
+metadata:
+  name: apps
+  namespace: flux-system
+spec:
+  dependsOn:
+    - name: helmrepository-dev
+  interval: 1m
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  validation: client
+  path: ./apps/dev
+  postBuild:
+    substitute:
+      cluster_fqdn: &quot;<span class="token variable">${CLUSTER_FQDN}</span>&quot;
+      letsencrypt_environment: &quot;<span class="token variable">${LETSENCRYPT_ENVIRONMENT}</span>&quot;
+      podinfo_hostname: flux-dev-podinfo.<span class="token variable">${CLUSTER_FQDN}</span>
+      slack_channel: <span class="token variable">${SLACK_CHANNEL}</span>
+      wordpress_email: <span class="token variable">${MY_EMAIL}</span>
+      wordpress_hostname: flux-dev-wordpress.<span class="token variable">${CLUSTER_FQDN}</span>
+EOF</span>
+
+<span class="token comment"># Namespaces needs to be created before the flux+sops will decrypt the secrets</span>
+<span class="token comment"># `secret-wordpress-password.yaml` into it</span>
+<span class="token function">cat</span> <span class="token operator">&gt;</span> <span class="token string">&quot;clusters/<span class="token variable">${CLUSTER_FQDN}</span>/local/namespace-wordpress.yaml&quot;</span> <span class="token operator">&lt;&lt;</span> <span class="token punctuation">\</span>EOF
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: wordpress
+EOF
+
+kubectl create secret generic wordpress-password <span class="token parameter variable">--namespace</span> wordpress --from-literal<span class="token operator">=</span>wordpress-password<span class="token operator">=</span><span class="token string">&quot;<span class="token variable">${MY_PASSWORD}</span>&quot;</span> --dry-run<span class="token operator">=</span>client <span class="token parameter variable">-o</span> yaml <span class="token operator">&gt;</span> <span class="token string">&quot;clusters/<span class="token variable">${CLUSTER_FQDN}</span>/local/secret-wordpress-password.yaml&quot;</span>
+sops <span class="token parameter variable">--encrypt</span> --in-place <span class="token parameter variable">--config</span> <span class="token string">&quot;clusters/<span class="token variable">${CLUSTER_FQDN}</span>/.sops.yaml&quot;</span> <span class="token string">&quot;clusters/<span class="token variable">${CLUSTER_FQDN}</span>/local/secret-wordpress-password.yaml&quot;</span>
+
+kubectl create secret generic mariadb-auth-secret <span class="token parameter variable">--namespace</span> wordpress --from-literal<span class="token operator">=</span>mariadb-root-password<span class="token operator">=</span><span class="token string">&quot;<span class="token variable">${MY_PASSWORD}</span>&quot;</span> --from-literal<span class="token operator">=</span>mariadb-password<span class="token operator">=</span><span class="token string">&quot;<span class="token variable">${MY_PASSWORD}</span>&quot;</span> --dry-run<span class="token operator">=</span>client <span class="token parameter variable">-o</span> yaml <span class="token operator">&gt;</span> <span class="token string">&quot;clusters/<span class="token variable">${CLUSTER_FQDN}</span>/local/secret-mariadb-auth.yaml&quot;</span>
+sops <span class="token parameter variable">--encrypt</span> --in-place <span class="token parameter variable">--config</span> <span class="token string">&quot;clusters/<span class="token variable">${CLUSTER_FQDN}</span>/.sops.yaml&quot;</span> <span class="token string">&quot;clusters/<span class="token variable">${CLUSTER_FQDN}</span>/local/secret-mariadb-auth.yaml&quot;</span>
+
+kubectl <span class="token parameter variable">-n</span> flux-system create secret generic slack-url --from-literal<span class="token operator">=</span>address<span class="token operator">=</span><span class="token string">&quot;<span class="token variable">${SLACK_INCOMING_WEBHOOK_URL}</span>&quot;</span> --dry-run<span class="token operator">=</span>client <span class="token parameter variable">-o</span> yaml <span class="token operator">&gt;</span> <span class="token string">&quot;clusters/<span class="token variable">${CLUSTER_FQDN}</span>/local/secret-slack-url.yaml&quot;</span>
+sops <span class="token parameter variable">--encrypt</span> --in-place <span class="token parameter variable">--config</span> <span class="token string">&quot;clusters/<span class="token variable">${CLUSTER_FQDN}</span>/.sops.yaml&quot;</span> <span class="token string">&quot;clusters/<span class="token variable">${CLUSTER_FQDN}</span>/local/secret-slack-url.yaml&quot;</span>
+
+<span class="token assign-left variable">GITHUB_WEBHOOK_SECRET</span><span class="token operator">=</span><span class="token variable"><span class="token variable">$(</span><span class="token function">head</span> <span class="token parameter variable">-c</span> <span class="token number">12</span> /dev/urandom <span class="token operator">|</span> shasum <span class="token operator">|</span> <span class="token function">cut</span> <span class="token parameter variable">-d</span> <span class="token string">&quot; &quot;</span> <span class="token parameter variable">-f1</span><span class="token variable">)</span></span>
+kubectl <span class="token parameter variable">-n</span> flux-system create secret generic github-webhook-token --from-literal<span class="token operator">=</span>token<span class="token operator">=</span><span class="token string">&quot;<span class="token variable">${GITHUB_WEBHOOK_SECRET}</span>&quot;</span> --dry-run<span class="token operator">=</span>client <span class="token parameter variable">-o</span> yaml <span class="token operator">&gt;</span> <span class="token string">&quot;clusters/<span class="token variable">${CLUSTER_FQDN}</span>/local/secret-github-webhook-token.yaml&quot;</span>
+sops <span class="token parameter variable">--encrypt</span> --in-place <span class="token parameter variable">--config</span> <span class="token string">&quot;clusters/<span class="token variable">${CLUSTER_FQDN}</span>/.sops.yaml&quot;</span> <span class="token string">&quot;clusters/<span class="token variable">${CLUSTER_FQDN}</span>/local/secret-github-webhook-token.yaml&quot;</span>
+
+<span class="token function">cat</span> <span class="token operator">&gt;</span> <span class="token string">&quot;clusters/<span class="token variable">${CLUSTER_FQDN}</span>/local/kustomization.yaml&quot;</span> <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- apps.yaml
+- helmrepository.yaml
+- namespace-wordpress.yaml
+- secret-mariadb-auth.yaml
+- secret-slack-url.yaml
+- secret-github-webhook-token.yaml
+- secret-wordpress-password.yaml
+EOF</span>
+
+<span class="token function">git</span> <span class="token function">add</span> <span class="token string">&quot;clusters/<span class="token variable">${CLUSTER_FQDN}</span>&quot;</span>
+<span class="token function">git</span> commit <span class="token parameter variable">-m</span> <span class="token string">&quot;Configure cluster applications&quot;</span> <span class="token operator">||</span> <span class="token boolean">true</span>
+<span class="token function">git</span> push <span class="token operator">&amp;&amp;</span> flux reconcile <span class="token builtin class-name">source</span> <span class="token function">git</span> flux-system
+</code></pre></div><p>Output:</p> <div class="language-text extra-class"><pre class="language-text"><code>[master 1546a95] Configure cluster applications
+ 10 files changed, 232 insertions(+)
+ create mode 100644 clusters/kube1.k8s.mylabs.dev/kustomization.yaml
+ create mode 100644 clusters/kube1.k8s.mylabs.dev/local.yaml
+ create mode 100644 clusters/kube1.k8s.mylabs.dev/local/apps.yaml
+ create mode 100644 clusters/kube1.k8s.mylabs.dev/local/helmrepository.yaml
+ create mode 100644 clusters/kube1.k8s.mylabs.dev/local/kustomization.yaml
+ create mode 100644 clusters/kube1.k8s.mylabs.dev/local/namespace-wordpress.yaml
+ create mode 100644 clusters/kube1.k8s.mylabs.dev/local/secret-github-webhook-token.yaml
+ create mode 100644 clusters/kube1.k8s.mylabs.dev/local/secret-mariadb-auth.yaml
+ create mode 100644 clusters/kube1.k8s.mylabs.dev/local/secret-slack-url.yaml
+ create mode 100644 clusters/kube1.k8s.mylabs.dev/local/secret-wordpress-password.yaml
+Enumerating objects: 77, done.
+Counting objects: 100% (77/77), done.
+Delta compression using up to 8 threads
+Compressing objects: 100% (63/63), done.
+Writing objects: 100% (74/74), 16.79 KiB | 781.00 KiB/s, done.
+Total 74 (delta 13), reused 0 (delta 0), pack-reused 0
+remote: Resolving deltas: 100% (13/13), done.
+To https://github.com/ruzickap/kube1-k8s-clusters.git
+   32b36ef..1546a95  master -&gt; master
+► annotating GitRepository flux-system in flux-system namespace
+✔ GitRepository annotated
+◎ waiting for GitRepository reconciliation
+✔ fetched revision master/1546a9590214db9fea0ed9e033d98f6ef8966798
+</code></pre></div><p>Configure GitHub Webhook:</p> <div class="language-bash extra-class"><pre class="language-bash"><code><span class="token function">sleep</span> <span class="token number">100</span>
+<span class="token assign-left variable">FLUX_RECEIVER_URL</span><span class="token operator">=</span><span class="token variable"><span class="token variable">$(</span>kubectl <span class="token parameter variable">-n</span> flux-system get receiver github-receiver <span class="token parameter variable">-o</span> <span class="token assign-left variable">jsonpath</span><span class="token operator">=</span><span class="token string">&quot;{.status.url}&quot;</span><span class="token variable">)</span></span>
+<span class="token function">curl</span> <span class="token parameter variable">-s</span> <span class="token parameter variable">-H</span> <span class="token string">&quot;Authorization: token <span class="token variable">$GITHUB_TOKEN</span>&quot;</span> <span class="token parameter variable">-X</span> POST <span class="token parameter variable">-d</span> <span class="token string">&quot;{<span class="token entity" title="\&quot;">\&quot;</span>active<span class="token entity" title="\&quot;">\&quot;</span>: true, <span class="token entity" title="\&quot;">\&quot;</span>events<span class="token entity" title="\&quot;">\&quot;</span>: [<span class="token entity" title="\&quot;">\&quot;</span>push<span class="token entity" title="\&quot;">\&quot;</span>], <span class="token entity" title="\&quot;">\&quot;</span>config<span class="token entity" title="\&quot;">\&quot;</span>: {<span class="token entity" title="\&quot;">\&quot;</span>url<span class="token entity" title="\&quot;">\&quot;</span>: <span class="token entity" title="\&quot;">\&quot;</span>https://flux-receiver.<span class="token variable">${CLUSTER_FQDN}</span><span class="token variable">${FLUX_RECEIVER_URL}</span><span class="token entity" title="\&quot;">\&quot;</span>, <span class="token entity" title="\&quot;">\&quot;</span>content_type<span class="token entity" title="\&quot;">\&quot;</span>: <span class="token entity" title="\&quot;">\&quot;</span>json<span class="token entity" title="\&quot;">\&quot;</span>, <span class="token entity" title="\&quot;">\&quot;</span>secret<span class="token entity" title="\&quot;">\&quot;</span>: <span class="token entity" title="\&quot;">\&quot;</span><span class="token variable">${GITHUB_WEBHOOK_SECRET}</span><span class="token entity" title="\&quot;">\&quot;</span>, <span class="token entity" title="\&quot;">\&quot;</span>insecure_ssl<span class="token entity" title="\&quot;">\&quot;</span>: <span class="token entity" title="\&quot;">\&quot;</span>1<span class="token entity" title="\&quot;">\&quot;</span>}}&quot;</span> <span class="token string">&quot;https://api.github.com/repos/<span class="token variable">${MY_GITHUB_USERNAME}</span>/<span class="token variable">${CLUSTER_NAME}</span>-k8s-clusters/hooks&quot;</span> <span class="token operator">|</span> jq
+</code></pre></div><p>Output:</p> <div class="language-json extra-class"><pre class="language-json"><code><span class="token punctuation">{</span>
+  <span class="token property">&quot;type&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Repository&quot;</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;id&quot;</span><span class="token operator">:</span> <span class="token number">330855597</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;name&quot;</span><span class="token operator">:</span> <span class="token string">&quot;web&quot;</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;active&quot;</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;events&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token string">&quot;push&quot;</span>
+  <span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;config&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token property">&quot;content_type&quot;</span><span class="token operator">:</span> <span class="token string">&quot;json&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;insecure_ssl&quot;</span><span class="token operator">:</span> <span class="token string">&quot;1&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;secret&quot;</span><span class="token operator">:</span> <span class="token string">&quot;********&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;url&quot;</span><span class="token operator">:</span> <span class="token string">&quot;https://flux-receiver.kube1.k8s.mylabs.dev/hook/42efc6e2c884da9a1d63a24a75a4147f3291935455523b4cb5d2857fba62c09e&quot;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;updated_at&quot;</span><span class="token operator">:</span> <span class="token string">&quot;2021-11-29T18:40:43Z&quot;</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;created_at&quot;</span><span class="token operator">:</span> <span class="token string">&quot;2021-11-29T18:40:43Z&quot;</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;url&quot;</span><span class="token operator">:</span> <span class="token string">&quot;https://api.github.com/repos/ruzickap/kube1-k8s-clusters/hooks/330855597&quot;</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;test_url&quot;</span><span class="token operator">:</span> <span class="token string">&quot;https://api.github.com/repos/ruzickap/kube1-k8s-clusters/hooks/330855597/test&quot;</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;ping_url&quot;</span><span class="token operator">:</span> <span class="token string">&quot;https://api.github.com/repos/ruzickap/kube1-k8s-clusters/hooks/330855597/pings&quot;</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;deliveries_url&quot;</span><span class="token operator">:</span> <span class="token string">&quot;https://api.github.com/repos/ruzickap/kube1-k8s-clusters/hooks/330855597/deliveries&quot;</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;last_response&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token property">&quot;code&quot;</span><span class="token operator">:</span> <span class="token null keyword">null</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;status&quot;</span><span class="token operator">:</span> <span class="token string">&quot;unused&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;message&quot;</span><span class="token operator">:</span> <span class="token null keyword">null</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre></div><p>Check the flux errors:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>flux logs <span class="token parameter variable">--level</span><span class="token operator">=</span>error --all-namespaces
+</code></pre></div><p>Check Kustomization, Helmreleases and Helmrepositories:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>kubectl get kustomizations,helmreleases,helmrepository <span class="token parameter variable">-A</span>
+</code></pre></div><p>Output:</p> <div class="language-text extra-class"><pre class="language-text"><code>NAMESPACE     NAME                                                           READY   STATUS                                                              AGE
+flux-system   kustomization.kustomize.toolkit.fluxcd.io/alerts               True    Applied revision: master/1546a9590214db9fea0ed9e033d98f6ef8966798   56m
+flux-system   kustomization.kustomize.toolkit.fluxcd.io/apps                 True    Applied revision: master/1546a9590214db9fea0ed9e033d98f6ef8966798   56m
+flux-system   kustomization.kustomize.toolkit.fluxcd.io/flux-system          True    Applied revision: master/1546a9590214db9fea0ed9e033d98f6ef8966798   57m
+flux-system   kustomization.kustomize.toolkit.fluxcd.io/helmrepository-dev   True    Applied revision: master/1546a9590214db9fea0ed9e033d98f6ef8966798   56m
+flux-system   kustomization.kustomize.toolkit.fluxcd.io/local                True    Applied revision: master/1546a9590214db9fea0ed9e033d98f6ef8966798   56m
+flux-system   kustomization.kustomize.toolkit.fluxcd.io/providers            True    Applied revision: master/1546a9590214db9fea0ed9e033d98f6ef8966798   56m
+
+NAMESPACE   NAME                                           READY   STATUS                             AGE
+podinfo     helmrelease.helm.toolkit.fluxcd.io/podinfo     True    Release reconciliation succeeded   56m
+wordpress   helmrelease.helm.toolkit.fluxcd.io/wordpress   True    Release reconciliation succeeded   56m
+
+NAMESPACE     NAME                                              URL                                      READY   STATUS                                                                               AGE
+flux-system   helmrepository.source.toolkit.fluxcd.io/bitnami   https://charts.bitnami.com/bitnami       True    Fetched revision: 1092b3963ba377fc4151cf6bff76e9a095868cc2394ac59c9faa815b0c6b172e   56m
+flux-system   helmrepository.source.toolkit.fluxcd.io/podinfo   https://stefanprodan.github.io/podinfo   True    Fetched revision: 83a3c595163a6ff0333e0154c790383b5be441b9db632cb36da11db1c4ece111   56m
+</code></pre></div></div> <footer class="page-edit"><div class="edit-link"><a href="https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/edit/main/docs/part-12/README.md" target="_blank" rel="noopener noreferrer">Edit this page</a> <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></div> <div class="last-updated"><span class="prefix">Last Updated:</span> <span class="time">6/30/2024, 4:19:34 AM</span></div></footer> <div class="page-nav"><p class="inner"><span class="prev">
+      ←
+      <a href="/k8s-eks-bottlerocket-fargate/part-11/" class="prev">
+        Velero
+      </a></span> <span class="next"><a href="/k8s-eks-bottlerocket-fargate/part-13/">
+        Clean-up
+      </a>
+      →
+    </span></p></div> </main></div><div class="global-ui"><!----><!----></div></div>
+    <script src="/k8s-eks-bottlerocket-fargate/assets/js/app.cd5c61da.js" defer></script><script src="/k8s-eks-bottlerocket-fargate/assets/js/2.a27de003.js" defer></script><script src="/k8s-eks-bottlerocket-fargate/assets/js/1.30a6593f.js" defer></script><script src="/k8s-eks-bottlerocket-fargate/assets/js/34.6e2c7bbd.js" defer></script>
+  </body>
+</html>

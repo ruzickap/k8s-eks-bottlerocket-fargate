@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Authentication | Amazon EKS Bottlerocket and Fargate</title>
+    <meta name="generator" content="VuePress 1.9.10">
+    <link rel="icon" href="https://raw.githubusercontent.com/kubernetes/kubernetes/d9a58a39b69a0eaec5797e0f7a0f9472b4829ab0/logo/logo.svg">
+    <meta name="description" content="Amazon EKS Bottlerocket and Fargate">
+    
+    <link rel="preload" href="/k8s-eks-bottlerocket-fargate/assets/css/0.styles.61693ea3.css" as="style"><link rel="preload" href="/k8s-eks-bottlerocket-fargate/assets/js/app.cd5c61da.js" as="script"><link rel="preload" href="/k8s-eks-bottlerocket-fargate/assets/js/2.a27de003.js" as="script"><link rel="preload" href="/k8s-eks-bottlerocket-fargate/assets/js/1.30a6593f.js" as="script"><link rel="preload" href="/k8s-eks-bottlerocket-fargate/assets/js/27.050bbf87.js" as="script"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/10.340b7a91.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/11.6724c971.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/12.0f6b2c7f.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/13.0f6f4ef5.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/14.28b41666.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/15.d3972987.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/16.4c24402c.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/17.6cd3a12a.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/18.8d7e6487.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/19.78b16bd4.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/20.a3f134b4.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/21.3fb0cd72.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/22.f5ea0076.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/23.a21f8ae6.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/24.c557dbf6.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/25.3d2180e6.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/26.8ac7134b.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/28.f566dccc.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/29.3e3635d0.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/3.6b4152e0.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/30.7ac4c6d1.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/31.ee8b8daa.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/32.85f54686.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/33.b5ef35a1.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/34.6e2c7bbd.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/35.301a3049.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/4.bea5e217.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/5.ac8fedb2.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/6.76ff54c2.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/7.98538131.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/vendors~docsearch.d098b00c.js">
+    <link rel="stylesheet" href="/k8s-eks-bottlerocket-fargate/assets/css/0.styles.61693ea3.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div class="theme-container"><header class="navbar"><div class="sidebar-button"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" viewBox="0 0 448 512" class="icon"><path fill="currentColor" d="M436 124H12c-6.627 0-12-5.373-12-12V80c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12z"></path></svg></div> <a href="/k8s-eks-bottlerocket-fargate/" class="home-link router-link-active"><img src="https://raw.githubusercontent.com/kubernetes/kubernetes/d9a58a39b69a0eaec5797e0f7a0f9472b4829ab0/logo/logo.svg" alt="Amazon EKS Bottlerocket and Fargate" class="logo"> <span class="site-name can-hide">Amazon EKS Bottlerocket and Fargate</span></a> <div class="links"><div class="search-box"><input aria-label="Search" autocomplete="off" spellcheck="false" value=""> <!----></div> <nav class="nav-links can-hide"><div class="nav-item"><a href="/k8s-eks-bottlerocket-fargate/" class="nav-link">
+  Home
+</a></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="Links" class="dropdown-title"><span class="title">Links</span> <span class="arrow down"></span></button> <button type="button" aria-label="Links" class="mobile-dropdown-title"><span class="title">Links</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="https://aws.amazon.com/eks/" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  Amazon EKS
+  <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></li><li class="dropdown-item"><!----> <a href="https://aws.amazon.com/bottlerocket/" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  Bottlerocket
+  <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></li></ul></div></div> <a href="https://github.com/ruzickap/k8s-eks-bottlerocket-fargate" target="_blank" rel="noopener noreferrer" class="repo-link">
+    GitHub
+    <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></nav></div></header> <div class="sidebar-mask"></div> <aside class="sidebar"><nav class="nav-links"><div class="nav-item"><a href="/k8s-eks-bottlerocket-fargate/" class="nav-link">
+  Home
+</a></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="Links" class="dropdown-title"><span class="title">Links</span> <span class="arrow down"></span></button> <button type="button" aria-label="Links" class="mobile-dropdown-title"><span class="title">Links</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="https://aws.amazon.com/eks/" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  Amazon EKS
+  <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></li><li class="dropdown-item"><!----> <a href="https://aws.amazon.com/bottlerocket/" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  Bottlerocket
+  <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></li></ul></div></div> <a href="https://github.com/ruzickap/k8s-eks-bottlerocket-fargate" target="_blank" rel="noopener noreferrer" class="repo-link">
+    GitHub
+    <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></nav>  <ul class="sidebar-links"><li><a href="/k8s-eks-bottlerocket-fargate/" aria-current="page" class="sidebar-link">Amazon EKS Bottlerocket and Fargate</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/#requirements" class="sidebar-link">Requirements</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/#content" class="sidebar-link">Content</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-01/" class="sidebar-link">Amazon EKS Bottlerocket and Fargate</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-01/#requirements" class="sidebar-link">Requirements</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-01/#prepare-the-local-working-environment" class="sidebar-link">Prepare the local working environment</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-01/#configure-aws-route-53-domain-delegation" class="sidebar-link">Configure AWS Route 53 Domain delegation</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-01/#add-new-domain-to-route-53-policies-s3-ebs" class="sidebar-link">Add new domain to Route 53, Policies, S3, EBS</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-01/#create-amazon-eks" class="sidebar-link">Create Amazon EKS</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-02/" class="sidebar-link">AWS</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#fargate" class="sidebar-link">Fargate</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#aws-load-balancer-controller" class="sidebar-link">aws-load-balancer-controller</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#aws-for-fluent-bit" class="sidebar-link">aws-for-fluent-bit</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#aws-cloudwatch-metrics" class="sidebar-link">aws-cloudwatch-metrics</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#aws-efs-csi-driver" class="sidebar-link">aws-efs-csi-driver</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#install-external-snapshotter" class="sidebar-link">Install external-snapshotter</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#aws-ebs-csi-driver" class="sidebar-link">aws-ebs-csi-driver</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#test-amazon-eks-pod-limits" class="sidebar-link">Test Amazon EKS pod limits</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#amazon-managed-prometheus-amazon-managed-grafana" class="sidebar-link">Amazon Managed Prometheus + Amazon Managed Grafana</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#test-eks-access" class="sidebar-link">Test EKS access</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#capsule" class="sidebar-link">Capsule</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-03/" class="sidebar-link">Monitoring and Logging</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#metrics-server" class="sidebar-link">metrics-server</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#prometheus-adapter" class="sidebar-link">prometheus-adapter</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#kube-prometheus-stack" class="sidebar-link">kube-prometheus-stack</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#enable-calico-monitoring" class="sidebar-link">Enable calico monitoring</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#loki" class="sidebar-link">loki</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#aws-node-termination-handler" class="sidebar-link">aws-node-termination-handler</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#kyverno" class="sidebar-link">kyverno</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#nri-bundle" class="sidebar-link">nri-bundle</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#splunk-connect" class="sidebar-link">splunk-connect</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#aqua-security-enforcer" class="sidebar-link">Aqua Security Enforcer</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#sysdig-agent" class="sidebar-link">sysdig-agent</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-04/" class="sidebar-link">DNS, Ingress, Certificates</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#cert-manager" class="sidebar-link">cert-manager</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#kubed" class="sidebar-link">kubed</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#ingress-nginx" class="sidebar-link">ingress-nginx</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#istio-and-related-tools" class="sidebar-link">Istio and related tools</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#external-dns" class="sidebar-link">external-dns</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#mailhog" class="sidebar-link">mailhog</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#kubewatch-obsolete" class="sidebar-link">kubewatch - obsolete</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#calico-commands" class="sidebar-link">Calico commands</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-05/" aria-current="page" class="active sidebar-link">Authentication</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-05/#keycloak" class="sidebar-link">Keycloak</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-05/#oauth2-proxy-keycloak" class="sidebar-link">oauth2-proxy - Keycloak</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-05/#dex" class="sidebar-link">Dex</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-05/#oauth2-proxy" class="sidebar-link">oauth2-proxy</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-05/#gangway" class="sidebar-link">Gangway</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-05/#kube-oidc-proxy" class="sidebar-link">kube-oidc-proxy</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-06/" class="sidebar-link">Others</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-06/#cluster-autoscaler" class="sidebar-link">cluster-autoscaler</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-06/#descheduler" class="sidebar-link">Descheduler</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-06/#rancher" class="sidebar-link">Rancher</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-07/" class="sidebar-link">Workloads</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#podinfo" class="sidebar-link">podinfo</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#polaris" class="sidebar-link">Polaris</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#kubei" class="sidebar-link">kubei</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#kube-bench" class="sidebar-link">kube-bench</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#kubernetes-dashboard" class="sidebar-link">kubernetes-dashboard</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#kubeview" class="sidebar-link">kubeview</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#kube-ops-view" class="sidebar-link">kube-ops-view</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#s3-upload-test" class="sidebar-link">S3 upload test</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-08/" class="sidebar-link">Other workloads</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-08/#cluster-api" class="sidebar-link">Cluster API</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-08/#hashicorp-vault" class="sidebar-link">HashiCorp Vault</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-08/#podinfo-with-vault-certificate" class="sidebar-link">podinfo with vault certificate</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-08/#secrets-store-csi-driver" class="sidebar-link">secrets-store-csi-driver</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-08/#kuard" class="sidebar-link">kuard</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-09/" class="sidebar-link">Drupal</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-09/#drupal-installation" class="sidebar-link">Drupal installation</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-10/" class="sidebar-link">Harbor</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-10/#cloudwatch-retention" class="sidebar-link">CloudWatch retention</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-11/" class="sidebar-link">Velero</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-11/#backup-vault-using-csi-volume-snapshotting" class="sidebar-link">Backup Vault using CSI Volume Snapshotting</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-11/#delete-restore-vault-using-csi-volume-snapshotting" class="sidebar-link">Delete + Restore Vault using CSI Volume Snapshotting</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-11/#backup-delete-restore-app-with-efs-storage-using-restic" class="sidebar-link">Backup + Delete + Restore app with EFS storage using restic</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-12/" class="sidebar-link">GitOps tools</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-12/#argocd" class="sidebar-link">ArgoCD</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-12/#flux" class="sidebar-link">Flux</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-13/" class="sidebar-link">Clean-up</a></li></ul> </aside> <main class="page"> <div class="theme-default-content content__default"><h1 id="authentication"><a href="#authentication" class="header-anchor">#</a> Authentication</h1> <h2 id="keycloak"><a href="#keycloak" class="header-anchor">#</a> Keycloak</h2> <p>Install <code>keycloak</code> <a href="https://artifacthub.io/packages/helm/bitnami/keycloak" target="_blank" rel="noopener noreferrer">helm chart<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>
+and modify the
+<a href="https://github.com/bitnami/charts/blob/master/bitnami/keycloak/values.yaml" target="_blank" rel="noopener noreferrer">default values<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>.</p> <div class="language-bash extra-class"><pre class="language-bash"><code>helm repo <span class="token function">add</span> --force-update bitnami https://charts.bitnami.com/bitnami
+helm upgrade <span class="token parameter variable">--install</span> <span class="token parameter variable">--version</span> <span class="token number">5.0</span>.6 <span class="token parameter variable">--namespace</span> keycloak --create-namespace <span class="token parameter variable">--values</span> - keycloak bitnami/keycloak <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+clusterDomain: <span class="token variable">${CLUSTER_FQDN}</span>
+auth:
+  adminUser: admin
+  adminPassword: <span class="token variable">${MY_PASSWORD}</span>
+  managementUser: admin
+  managementPassword: <span class="token variable">${MY_PASSWORD}</span>
+proxyAddressForwarding: true
+# https://stackoverflow.com/questions/51616770/keycloak-restricting-user-management-to-certain-groups-while-enabling-manage-us
+extraStartupArgs: &quot;-Dkeycloak.profile.feature.admin_fine_grained_authz=enabled&quot;
+# keycloakConfigCli:
+#   enabled: true
+#   # Workaround for bug: https://github.com/bitnami/charts/issues/6823
+#   image:
+#     repository: adorsys/keycloak-config-cli
+#     tag: latest-15.0.1
+#   configuration:
+#     myrealm.yaml: |
+#       realm: myrealm
+#       enabled: true
+#       displayName: My Realm
+#       rememberMe: true
+#       userManagedAccessAllowed: true
+#       smtpServer:
+#         from: myrealm-keycloak@<span class="token variable">${CLUSTER_FQDN}</span>
+#         fromDisplayName: Keycloak
+#         host: mailhog.mailhog.svc.cluster.local
+#         port: 1025
+#       clients:
+#       # https://oauth2-proxy.github.io/oauth2-proxy/docs/configuration/oauth_provider/#keycloak-auth-provider
+#       - clientId: oauth2-proxy-keycloak.<span class="token variable">${CLUSTER_FQDN}</span>
+#         name: oauth2-proxy-keycloak.<span class="token variable">${CLUSTER_FQDN}</span>
+#         description: &quot;OAuth2 Proxy for Keycloak&quot;
+#         secret: <span class="token variable">${MY_PASSWORD}</span>
+#         redirectUris:
+#         - &quot;https://oauth2-proxy-keycloak.<span class="token variable">${CLUSTER_FQDN}</span>/oauth2/callback&quot;
+#         protocolMappers:
+#         - name: groupMapper
+#           protocol: openid-connect
+#           protocolMapper: oidc-group-membership-mapper
+#           config:
+#             userinfo.token.claim: &quot;true&quot;
+#             id.token.claim: &quot;true&quot;
+#             access.token.claim: &quot;true&quot;
+#             claim.name: groups
+#             full.path: &quot;true&quot;
+#       identityProviders:
+#       # https://ultimatesecurity.pro/post/okta-oidc/
+#       - alias: keycloak-oidc-okta
+#         displayName: &quot;Okta&quot;
+#         providerId: keycloak-oidc
+#         trustEmail: true
+#         config:
+#           clientId: <span class="token variable">${OKTA_CLIENT_ID}</span>
+#           clientSecret: <span class="token variable">${OKTA_CLIENT_SECRET}</span>
+#           tokenUrl: &quot;<span class="token variable">${OKTA_ISSUER}</span>/oauth2/default/v1/token&quot;
+#           authorizationUrl: &quot;<span class="token variable">${OKTA_ISSUER}</span>/oauth2/default/v1/authorize&quot;
+#           defaultScope: &quot;openid profile email&quot;
+#           syncMode: IMPORT
+#       - alias: dex
+#         displayName: &quot;Dex&quot;
+#         providerId: keycloak-oidc
+#         trustEmail: true
+#         config:
+#           clientId: keycloak.<span class="token variable">${CLUSTER_FQDN}</span>
+#           clientSecret: <span class="token variable">${MY_PASSWORD}</span>
+#           tokenUrl: https://dex.<span class="token variable">${CLUSTER_FQDN}</span>/token
+#           authorizationUrl: https://dex.<span class="token variable">${CLUSTER_FQDN}</span>/auth
+#           syncMode: IMPORT
+#       - alias: github
+#         displayName: &quot;Github&quot;
+#         providerId: github
+#         trustEmail: true
+#         config:
+#           clientId: <span class="token variable">${MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_ID}</span>
+#           clientSecret: <span class="token variable">${MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_SECRET}</span>
+#       users:
+#       - username: myuser1
+#         email: myuser1@<span class="token variable">${CLUSTER_FQDN}</span>
+#         enabled: true
+#         firstName: My Firstname 1
+#         lastName: My Lastname 1
+#         groups:
+#           - group-admins
+#         credentials:
+#         - type: password
+#           value: <span class="token variable">${MY_PASSWORD}</span>
+#       - username: myuser2
+#         email: myuser2@<span class="token variable">${CLUSTER_FQDN}</span>
+#         enabled: true
+#         firstName: My Firstname 2
+#         lastName: My Lastname 2
+#         groups:
+#           - group-admins
+#         credentials:
+#         - type: password
+#           value: <span class="token variable">${MY_PASSWORD}</span>
+#       - username: myuser3
+#         email: myuser3@<span class="token variable">${CLUSTER_FQDN}</span>
+#         enabled: true
+#         firstName: My Firstname 3
+#         lastName: My Lastname 3
+#         groups:
+#           - group-users
+#         credentials:
+#         - type: password
+#           value: <span class="token variable">${MY_PASSWORD}</span>
+#       - username: myuser4
+#         email: myuser4@<span class="token variable">${CLUSTER_FQDN}</span>
+#         enabled: true
+#         firstName: My Firstname 4
+#         lastName: My Lastname 4
+#         groups:
+#           - group-users
+#           - group-test
+#         credentials:
+#         - type: password
+#           value: <span class="token variable">${MY_PASSWORD}</span>
+#       groups:
+#       - name: group-users
+#       - name: group-admins
+#       - name: group-test
+service:
+  type: ClusterIP
+ingress:
+  enabled: true
+  hostname: keycloak.<span class="token variable">${CLUSTER_FQDN}</span>
+  extraTls:
+  - hosts:
+      - keycloak.<span class="token variable">${CLUSTER_FQDN}</span>
+    secretName: ingress-cert-<span class="token variable">${LETSENCRYPT_ENVIRONMENT}</span>
+networkPolicy:
+  enabled: true
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+postgresql:
+  persistence:
+    enabled: false
+EOF</span>
+</code></pre></div><h2 id="oauth2-proxy-keycloak"><a href="#oauth2-proxy-keycloak" class="header-anchor">#</a> oauth2-proxy - Keycloak</h2> <p>Install <a href="https://github.com/oauth2-proxy/oauth2-proxy" target="_blank" rel="noopener noreferrer">oauth2-proxy<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a> to secure
+the endpoints like (<code>prometheus.</code>, <code>alertmanager.</code>).</p> <p>Install <code>oauth2-proxy</code> <a href="https://artifacthub.io/packages/helm/oauth2-proxy/oauth2-proxy" target="_blank" rel="noopener noreferrer">helm chart<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>
+and modify the
+<a href="https://github.com/oauth2-proxy/manifests/blob/main/helm/oauth2-proxy/values.yaml" target="_blank" rel="noopener noreferrer">default values<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>.</p> <div class="language-bash extra-class"><pre class="language-bash"><code>helm repo <span class="token function">add</span> --force-update oauth2-proxy https://oauth2-proxy.github.io/manifests
+helm upgrade <span class="token parameter variable">--install</span> <span class="token parameter variable">--version</span> <span class="token number">4.2</span>.0 <span class="token parameter variable">--namespace</span> oauth2-proxy-keycloak --create-namespace <span class="token parameter variable">--values</span> - oauth2-proxy oauth2-proxy/oauth2-proxy <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+config:
+  clientID: oauth2-proxy-keycloak.<span class="token variable">${CLUSTER_FQDN}</span>
+  clientSecret: &quot;<span class="token variable">${MY_PASSWORD}</span>&quot;
+  cookieSecret: &quot;<span class="token variable"><span class="token variable">$(</span>openssl rand <span class="token parameter variable">-base64</span> <span class="token number">32</span> <span class="token operator">|</span> <span class="token function">head</span> <span class="token parameter variable">-c</span> <span class="token number">32</span> <span class="token operator">|</span> base64<span class="token variable">)</span></span>&quot;
+  configFile: |-
+    email_domains = [ &quot;*&quot; ]
+    upstreams = [ &quot;file:///dev/null&quot; ]
+    whitelist_domains = &quot;.<span class="token variable">${CLUSTER_FQDN}</span>&quot;
+    cookie_domains = &quot;.<span class="token variable">${CLUSTER_FQDN}</span>&quot;
+    provider = &quot;keycloak&quot;
+    login_url = &quot;https://keycloak.<span class="token variable">${CLUSTER_FQDN}</span>/auth/realms/myrealm/protocol/openid-connect/auth&quot;
+    redeem_url = &quot;https://keycloak.<span class="token variable">${CLUSTER_FQDN}</span>/auth/realms/myrealm/protocol/openid-connect/token&quot;
+    profile_url = &quot;https://keycloak.<span class="token variable">${CLUSTER_FQDN}</span>/auth/realms/myrealm/protocol/openid-connect/userinfo&quot;
+    validate_url = &quot;https://keycloak.<span class="token variable">${CLUSTER_FQDN}</span>/auth/realms/myrealm/protocol/openid-connect/userinfo&quot;
+    scope = &quot;openid email profile&quot;
+    ssl_insecure_skip_verify = &quot;true&quot;
+    insecure_oidc_skip_issuer_verification = &quot;true&quot;
+ingress:
+  enabled: true
+  hosts:
+    - oauth2-proxy-keycloak.<span class="token variable">${CLUSTER_FQDN}</span>
+  tls:
+    - secretName: ingress-cert-<span class="token variable">${LETSENCRYPT_ENVIRONMENT}</span>
+      hosts:
+        - oauth2-proxy-keycloak.<span class="token variable">${CLUSTER_FQDN}</span>
+metrics:
+  servicemonitor:
+    enabled: true
+EOF</span>
+</code></pre></div><h2 id="dex"><a href="#dex" class="header-anchor">#</a> Dex</h2> <p>Install <code>dex</code> <a href="https://artifacthub.io/packages/helm/dex/dex" target="_blank" rel="noopener noreferrer">helm chart<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>
+and modify the
+<a href="https://github.com/dexidp/helm-charts/blob/master/charts/dex/values.yaml" target="_blank" rel="noopener noreferrer">default values<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>.</p> <div class="language-bash extra-class"><pre class="language-bash"><code>helm repo <span class="token function">add</span> --force-update dex https://charts.dexidp.io
+helm upgrade <span class="token parameter variable">--install</span> <span class="token parameter variable">--version</span> <span class="token number">0.6</span>.0 <span class="token parameter variable">--namespace</span> dex --create-namespace <span class="token parameter variable">--values</span> - dex dex/dex <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+ingress:
+  enabled: true
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: &quot;false&quot;
+  hosts:
+    - host: dex.<span class="token variable">${CLUSTER_FQDN}</span>
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls:
+    - secretName: ingress-cert-<span class="token variable">${LETSENCRYPT_ENVIRONMENT}</span>
+      hosts:
+        - dex.<span class="token variable">${CLUSTER_FQDN}</span>
+config:
+  issuer: https://dex.<span class="token variable">${CLUSTER_FQDN}</span>
+  storage:
+    type: kubernetes
+    config:
+      inCluster: true
+  oauth2:
+    skipApprovalScreen: true
+  connectors:
+    - type: github
+      id: github
+      name: GitHub
+      config:
+        clientID: <span class="token variable">${MY_GITHUB_ORG_OAUTH_DEX_CLIENT_ID}</span>
+        clientSecret: <span class="token variable">${MY_GITHUB_ORG_OAUTH_DEX_CLIENT_SECRET}</span>
+        redirectURI: https://dex.<span class="token variable">${CLUSTER_FQDN}</span>/callback
+        orgs:
+          - name: <span class="token variable">${MY_GITHUB_ORG_NAME}</span>
+    - type: oidc
+      id: okta
+      name: Okta
+      config:
+        issuer: <span class="token variable">${OKTA_ISSUER}</span>
+        clientID: <span class="token variable">${OKTA_CLIENT_ID}</span>
+        clientSecret: <span class="token variable">${OKTA_CLIENT_SECRET}</span>
+        redirectURI: https://dex.<span class="token variable">${CLUSTER_FQDN}</span>/callback
+        scopes:
+          - openid
+          - profile
+          - email
+        getUserInfo: true
+  staticClients:
+    - id: argocd.<span class="token variable">${CLUSTER_FQDN}</span>
+      redirectURIs:
+        - https://argocd.<span class="token variable">${CLUSTER_FQDN}</span>/auth/callback
+      name: ArgoCD
+      secret: <span class="token variable">${MY_PASSWORD}</span>
+    - id: gangway.<span class="token variable">${CLUSTER_FQDN}</span>
+      redirectURIs:
+        - https://gangway.<span class="token variable">${CLUSTER_FQDN}</span>/callback
+      name: Gangway
+      secret: <span class="token variable">${MY_PASSWORD}</span>
+    - id: harbor.<span class="token variable">${CLUSTER_FQDN}</span>
+      redirectURIs:
+        - https://harbor.<span class="token variable">${CLUSTER_FQDN}</span>/c/oidc/callback
+      name: Harbor
+      secret: <span class="token variable">${MY_PASSWORD}</span>
+    - id: kiali.<span class="token variable">${CLUSTER_FQDN}</span>
+      redirectURIs:
+        - https://kiali.<span class="token variable">${CLUSTER_FQDN}</span>
+      name: Kiali
+      secret: <span class="token variable">${MY_PASSWORD}</span>
+    - id: keycloak.<span class="token variable">${CLUSTER_FQDN}</span>
+      redirectURIs:
+        - https://keycloak.<span class="token variable">${CLUSTER_FQDN}</span>/auth/realms/myrealm/broker/dex/endpoint
+      name: Keycloak
+      secret: <span class="token variable">${MY_PASSWORD}</span>
+    - id: oauth2-proxy.<span class="token variable">${CLUSTER_FQDN}</span>
+      redirectURIs:
+        - https://oauth2-proxy.<span class="token variable">${CLUSTER_FQDN}</span>/oauth2/callback
+      name: OAuth2 Proxy
+      secret: <span class="token variable">${MY_PASSWORD}</span>
+    - id: vault.<span class="token variable">${CLUSTER_FQDN}</span>
+      redirectURIs:
+        - https://vault.<span class="token variable">${CLUSTER_FQDN}</span>/ui/vault/auth/oidc/oidc/callback
+        - http://localhost:8250/oidc/callback
+      name: Vault
+      secret: <span class="token variable">${MY_PASSWORD}</span>
+  enablePasswordDB: false
+EOF</span>
+</code></pre></div><h2 id="oauth2-proxy"><a href="#oauth2-proxy" class="header-anchor">#</a> oauth2-proxy</h2> <p>Install <a href="https://github.com/oauth2-proxy/oauth2-proxy" target="_blank" rel="noopener noreferrer">oauth2-proxy<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a> to secure
+the endpoints like (<code>prometheus.</code>, <code>alertmanager.</code>).</p> <p>Install <code>oauth2-proxy</code> <a href="https://artifacthub.io/packages/helm/oauth2-proxy/oauth2-proxy" target="_blank" rel="noopener noreferrer">helm chart<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>
+and modify the
+<a href="https://github.com/oauth2-proxy/manifests/blob/main/helm/oauth2-proxy/values.yaml" target="_blank" rel="noopener noreferrer">default values<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>.</p> <div class="language-bash extra-class"><pre class="language-bash"><code>helm upgrade <span class="token parameter variable">--install</span> <span class="token parameter variable">--version</span> <span class="token number">4.2</span>.0 <span class="token parameter variable">--namespace</span> oauth2-proxy --create-namespace <span class="token parameter variable">--values</span> - oauth2-proxy oauth2-proxy/oauth2-proxy <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+config:
+  clientID: oauth2-proxy.<span class="token variable">${CLUSTER_FQDN}</span>
+  clientSecret: &quot;<span class="token variable">${MY_PASSWORD}</span>&quot;
+  cookieSecret: &quot;<span class="token variable"><span class="token variable">$(</span>openssl rand <span class="token parameter variable">-base64</span> <span class="token number">32</span> <span class="token operator">|</span> <span class="token function">head</span> <span class="token parameter variable">-c</span> <span class="token number">32</span> <span class="token operator">|</span> base64<span class="token variable">)</span></span>&quot;
+  configFile: |-
+    email_domains = [ &quot;*&quot; ]
+    upstreams = [ &quot;file:///dev/null&quot; ]
+    whitelist_domains = &quot;.<span class="token variable">${CLUSTER_FQDN}</span>&quot;
+    cookie_domains = &quot;.<span class="token variable">${CLUSTER_FQDN}</span>&quot;
+    provider = &quot;oidc&quot;
+    oidc_issuer_url = &quot;https://dex.<span class="token variable">${CLUSTER_FQDN}</span>&quot;
+    ssl_insecure_skip_verify = &quot;true&quot;
+    insecure_oidc_skip_issuer_verification = &quot;true&quot;
+ingress:
+  enabled: true
+  hosts:
+    - oauth2-proxy.<span class="token variable">${CLUSTER_FQDN}</span>
+  tls:
+    - secretName: ingress-cert-<span class="token variable">${LETSENCRYPT_ENVIRONMENT}</span>
+      hosts:
+        - oauth2-proxy.<span class="token variable">${CLUSTER_FQDN}</span>
+metrics:
+  servicemonitor:
+    enabled: true
+EOF</span>
+</code></pre></div><h2 id="gangway"><a href="#gangway" class="header-anchor">#</a> Gangway</h2> <p>Install gangway:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>helm repo <span class="token function">add</span> --force-update stable https://charts.helm.sh/stable
+helm upgrade <span class="token parameter variable">--install</span> <span class="token parameter variable">--version</span> <span class="token number">0.4</span>.5 <span class="token parameter variable">--namespace</span> gangway --create-namespace <span class="token parameter variable">--values</span> - gangway stable/gangway <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+# https://github.com/helm/charts/blob/master/stable/gangway/values.yaml
+trustedCACert: |
+<span class="token variable"><span class="token variable">$(</span><span class="token function">curl</span> <span class="token parameter variable">-s</span> <span class="token string">&quot;<span class="token variable">${LETSENCRYPT_CERTIFICATE}</span>&quot;</span> <span class="token operator">|</span> <span class="token function">sed</span> <span class="token string">&quot;s/^/  /&quot;</span><span class="token variable">)</span></span>
+gangway:
+  clusterName: <span class="token variable">${CLUSTER_FQDN}</span>
+  authorizeURL: https://dex.<span class="token variable">${CLUSTER_FQDN}</span>/auth
+  tokenURL: https://dex.<span class="token variable">${CLUSTER_FQDN}</span>/token
+  audience: https://dex.<span class="token variable">${CLUSTER_FQDN}</span>/userinfo
+  redirectURL: https://gangway.<span class="token variable">${CLUSTER_FQDN}</span>/callback
+  clientID: gangway.<span class="token variable">${CLUSTER_FQDN}</span>
+  clientSecret: <span class="token variable">${MY_PASSWORD}</span>
+  apiServerURL: https://kube-oidc-proxy.<span class="token variable">${CLUSTER_FQDN}</span>
+ingress:
+  enabled: true
+  annotations:
+    nginx.ingress.kubernetes.io/auth-url: https://oauth2-proxy.<span class="token variable">${CLUSTER_FQDN}</span>/oauth2/auth
+    nginx.ingress.kubernetes.io/auth-signin: https://oauth2-proxy.<span class="token variable">${CLUSTER_FQDN}</span>/oauth2/start?rd=\<span class="token variable">$scheme</span>://\<span class="token variable">$host</span>\<span class="token variable">$request_uri</span>
+  hosts:
+    - gangway.<span class="token variable">${CLUSTER_FQDN}</span>
+  tls:
+    - secretName: ingress-cert-<span class="token variable">${LETSENCRYPT_ENVIRONMENT}</span>
+      hosts:
+        - gangway.<span class="token variable">${CLUSTER_FQDN}</span>
+EOF</span>
+</code></pre></div><h2 id="kube-oidc-proxy"><a href="#kube-oidc-proxy" class="header-anchor">#</a> kube-oidc-proxy</h2> <p>The <code>kube-oidc-proxy</code> accepting connections only via HTTPS. It's necessary to
+configure ingress to communicate with the backend over HTTPS.</p> <p>Install kube-oidc-proxy:</p> <div class="language-bash extra-class"><pre class="language-bash"><code><span class="token builtin class-name">test</span> <span class="token parameter variable">-d</span> <span class="token string">&quot;tmp/<span class="token variable">${CLUSTER_FQDN}</span>/kube-oidc-proxy&quot;</span> <span class="token operator">||</span> <span class="token function">git</span> clone <span class="token parameter variable">--quiet</span> https://github.com/jetstack/kube-oidc-proxy.git <span class="token string">&quot;tmp/<span class="token variable">${CLUSTER_FQDN}</span>/kube-oidc-proxy&quot;</span>
+<span class="token function">git</span> <span class="token parameter variable">-C</span> <span class="token string">&quot;tmp/<span class="token variable">${CLUSTER_FQDN}</span>/kube-oidc-proxy&quot;</span> checkout <span class="token parameter variable">--quiet</span> v0.3.0
+
+helm upgrade <span class="token parameter variable">--install</span> <span class="token parameter variable">--namespace</span> kube-oidc-proxy --create-namespace <span class="token parameter variable">--values</span> - kube-oidc-proxy <span class="token string">&quot;tmp/<span class="token variable">${CLUSTER_FQDN}</span>/kube-oidc-proxy/deploy/charts/kube-oidc-proxy&quot;</span> <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+# https://github.com/jetstack/kube-oidc-proxy/blob/master/deploy/charts/kube-oidc-proxy/values.yaml
+oidc:
+  clientId: gangway.<span class="token variable">${CLUSTER_FQDN}</span>
+  issuerUrl: https://dex.<span class="token variable">${CLUSTER_FQDN}</span>
+  usernameClaim: email
+  caPEM: |
+<span class="token variable"><span class="token variable">$(</span><span class="token function">curl</span> <span class="token parameter variable">-s</span> <span class="token string">&quot;<span class="token variable">${LETSENCRYPT_CERTIFICATE}</span>&quot;</span> <span class="token operator">|</span> <span class="token function">sed</span> <span class="token string">&quot;s/^/    /&quot;</span><span class="token variable">)</span></span>
+ingress:
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: HTTPS
+  enabled: true
+  hosts:
+    - host: kube-oidc-proxy.<span class="token variable">${CLUSTER_FQDN}</span>
+      paths:
+        - /
+  tls:
+   - secretName: ingress-cert-<span class="token variable">${LETSENCRYPT_ENVIRONMENT}</span>
+     hosts:
+       - kube-oidc-proxy.<span class="token variable">${CLUSTER_FQDN}</span>
+EOF</span>
+</code></pre></div><p>If you get the credentials form the <a href="https://gangway.kube1.k8s.mylabs.dev" target="_blank" rel="noopener noreferrer">https://gangway.kube1.k8s.mylabs.dev<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>
+you will have the access to the cluster, but no rights there.</p> <p>Add access rights to the user:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>kubectl apply <span class="token parameter variable">-f</span> - <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: kube-prometheus-stack
+  name: secret-reader
+rules:
+- apiGroups: [&quot;&quot;]
+  resources: [&quot;secrets&quot;]
+  verbs: [&quot;get&quot;, &quot;watch&quot;, &quot;list&quot;]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: read-secrets
+  namespace: kube-prometheus-stack
+subjects:
+- kind: User
+  name: <span class="token variable">${MY_EMAIL}</span>
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: secret-reader
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: pods-reader
+rules:
+- apiGroups: [&quot;&quot;]
+  resources: [&quot;pods&quot;]
+  verbs: [&quot;get&quot;, &quot;watch&quot;, &quot;list&quot;]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: read-pods
+subjects:
+- kind: User
+  name: <span class="token variable">${MY_EMAIL}</span>
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: pods-reader
+  apiGroup: rbac.authorization.k8s.io
+EOF</span>
+</code></pre></div><p>The user should be able to read the secrets in <code>kube-prometheus-stack</code>
+namespace:</p> <div class="language-shell extra-class"><pre class="language-shell"><code>kubectl describe secrets --insecure-skip-tls-verify <span class="token parameter variable">-n</span> kube-prometheus-stack <span class="token string">&quot;ingress-cert-<span class="token variable">${LETSENCRYPT_ENVIRONMENT}</span>&quot;</span> <span class="token comment"># DevSkim: ignore DS126188</span>
+</code></pre></div><p>Output:</p> <div class="language-text extra-class"><pre class="language-text"><code>Name:         ingress-cert-staging
+Namespace:    kube-prometheus-stack
+Labels:       kubed.appscode.com/origin.cluster=kube1.k8s.mylabs.dev
+              kubed.appscode.com/origin.name=ingress-cert-staging
+              kubed.appscode.com/origin.namespace=cert-manager
+Annotations:  cert-manager.io/alt-names: *.kube1.k8s.mylabs.dev,kube1.k8s.mylabs.dev
+              cert-manager.io/certificate-name: ingress-cert-staging
+              cert-manager.io/common-name: *.kube1.k8s.mylabs.dev
+              cert-manager.io/ip-sans:
+              cert-manager.io/issuer-group:
+              cert-manager.io/issuer-kind: ClusterIssuer
+              cert-manager.io/issuer-name: letsencrypt-staging-dns
+              cert-manager.io/uri-sans:
+              kubed.appscode.com/origin:
+                {&quot;namespace&quot;:&quot;cert-manager&quot;,&quot;name&quot;:&quot;ingress-cert-staging&quot;,&quot;uid&quot;:&quot;f1ed062c-23d9-4cf7-ad51-cfafd8a3b788&quot;,&quot;resourceVersion&quot;:&quot;5296&quot;}
+
+Type:  kubernetes.io/tls
+
+Data
+====
+tls.crt:  3586 bytes
+tls.key:  1679 bytes
+</code></pre></div><p>But it's not allowed to delete the secrets for the user:</p> <div class="language-shell extra-class"><pre class="language-shell"><code>kubectl delete secrets --insecure-skip-tls-verify <span class="token parameter variable">-n</span> kube-prometheus-stack <span class="token string">&quot;ingress-cert-<span class="token variable">${LETSENCRYPT_ENVIRONMENT}</span>&quot;</span>   <span class="token comment"># DevSkim: ignore DS126188</span>
+</code></pre></div><p>Output:</p> <div class="language-text extra-class"><pre class="language-text"><code>Error from server (Forbidden): secrets &quot;ingress-cert-staging&quot; is forbidden: User &quot;petr.ruzicka@gmail.com&quot; cannot delete resource &quot;secrets&quot; in API group &quot;&quot; in the namespace &quot;kube-prometheus-stack&quot;
+</code></pre></div><p>The user can not read secrets outside the <code>kube-prometheus-stack</code>:</p> <div class="language-shell extra-class"><pre class="language-shell"><code>kubectl get secrets --insecure-skip-tls-verify <span class="token parameter variable">-n</span> kube-system                                                          <span class="token comment"># DevSkim: ignore DS126188</span>
+</code></pre></div><p>Output:</p> <div class="language-text extra-class"><pre class="language-text"><code>Error from server (Forbidden): secrets is forbidden: User &quot;petr.ruzicka@gmail.com&quot; cannot list resource &quot;secrets&quot; in API group &quot;&quot; in the namespace &quot;kube-system&quot;
+</code></pre></div><p>You can see the pods &quot;everywhere&quot;:</p> <div class="language-shell extra-class"><pre class="language-shell"><code>kubectl get pods --insecure-skip-tls-verify <span class="token parameter variable">-n</span> kube-system                                                             <span class="token comment"># DevSkim: ignore DS126188</span>
+</code></pre></div><p>Output:</p> <div class="language-text extra-class"><pre class="language-text"><code>NAME                                                         READY   STATUS    RESTARTS   AGE
+aws-for-fluent-bit-5hxlt                                     1/1     Running   0          32m
+aws-for-fluent-bit-dmvzq                                     1/1     Running   0          32m
+aws-node-ggfft                                               1/1     Running   0          32m
+aws-node-lhlvf                                               1/1     Running   0          32m
+cluster-autoscaler-aws-cluster-autoscaler-7f878bccc8-s279k   1/1     Running   0          25m
+coredns-59b69b4849-6v487                                     1/1     Running   0          46m
+coredns-59b69b4849-tw2dg                                     1/1     Running   0          46m
+ebs-csi-controller-86785d75db-7brbr                          5/5     Running   0          31m
+ebs-csi-controller-86785d75db-gn4ll                          5/5     Running   0          31m
+ebs-csi-node-6h9zv                                           3/3     Running   0          31m
+ebs-csi-node-r5rj7                                           3/3     Running   0          31m
+kube-proxy-m6dm8                                             1/1     Running   0          32m
+kube-proxy-pdmv9                                             1/1     Running   0          32m
+</code></pre></div><p>But you can not delete them:</p> <div class="language-shell extra-class"><pre class="language-shell"><code>kubectl delete pods --insecure-skip-tls-verify <span class="token parameter variable">-n</span> kube-oidc-proxy <span class="token parameter variable">--all</span>                                                <span class="token comment"># DevSkim: ignore DS126188</span>
+</code></pre></div><p>Output:</p> <div class="language-text extra-class"><pre class="language-text"><code>Error from server (Forbidden): pods &quot;kube-oidc-proxy-74bf5679fd-jhdmr&quot; is forbidden: User &quot;petr.ruzicka@gmail.com&quot; cannot delete resource &quot;pods&quot; in API group &quot;&quot; in the namespace &quot;kube-oidc-proxy&quot;
+</code></pre></div></div> <footer class="page-edit"><div class="edit-link"><a href="https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/edit/main/docs/part-05/README.md" target="_blank" rel="noopener noreferrer">Edit this page</a> <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></div> <div class="last-updated"><span class="prefix">Last Updated:</span> <span class="time">6/30/2024, 4:19:34 AM</span></div></footer> <div class="page-nav"><p class="inner"><span class="prev">
+      ←
+      <a href="/k8s-eks-bottlerocket-fargate/part-04/" class="prev">
+        DNS, Ingress, Certificates
+      </a></span> <span class="next"><a href="/k8s-eks-bottlerocket-fargate/part-06/">
+        Others
+      </a>
+      →
+    </span></p></div> </main></div><div class="global-ui"><!----><!----></div></div>
+    <script src="/k8s-eks-bottlerocket-fargate/assets/js/app.cd5c61da.js" defer></script><script src="/k8s-eks-bottlerocket-fargate/assets/js/2.a27de003.js" defer></script><script src="/k8s-eks-bottlerocket-fargate/assets/js/1.30a6593f.js" defer></script><script src="/k8s-eks-bottlerocket-fargate/assets/js/27.050bbf87.js" defer></script>
+  </body>
+</html>

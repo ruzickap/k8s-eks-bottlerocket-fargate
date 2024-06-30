@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Amazon EKS Bottlerocket and Fargate | Amazon EKS Bottlerocket and Fargate</title>
+    <meta name="generator" content="VuePress 1.9.10">
+    <link rel="icon" href="https://raw.githubusercontent.com/kubernetes/kubernetes/d9a58a39b69a0eaec5797e0f7a0f9472b4829ab0/logo/logo.svg">
+    <meta name="description" content="Amazon EKS Bottlerocket and Fargate">
+    
+    <link rel="preload" href="/k8s-eks-bottlerocket-fargate/assets/css/0.styles.61693ea3.css" as="style"><link rel="preload" href="/k8s-eks-bottlerocket-fargate/assets/js/app.cd5c61da.js" as="script"><link rel="preload" href="/k8s-eks-bottlerocket-fargate/assets/js/2.a27de003.js" as="script"><link rel="preload" href="/k8s-eks-bottlerocket-fargate/assets/js/1.30a6593f.js" as="script"><link rel="preload" href="/k8s-eks-bottlerocket-fargate/assets/js/23.a21f8ae6.js" as="script"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/10.340b7a91.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/11.6724c971.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/12.0f6b2c7f.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/13.0f6f4ef5.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/14.28b41666.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/15.d3972987.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/16.4c24402c.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/17.6cd3a12a.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/18.8d7e6487.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/19.78b16bd4.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/20.a3f134b4.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/21.3fb0cd72.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/22.f5ea0076.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/24.c557dbf6.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/25.3d2180e6.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/26.8ac7134b.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/27.050bbf87.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/28.f566dccc.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/29.3e3635d0.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/3.6b4152e0.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/30.7ac4c6d1.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/31.ee8b8daa.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/32.85f54686.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/33.b5ef35a1.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/34.6e2c7bbd.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/35.301a3049.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/4.bea5e217.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/5.ac8fedb2.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/6.76ff54c2.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/7.98538131.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/vendors~docsearch.d098b00c.js">
+    <link rel="stylesheet" href="/k8s-eks-bottlerocket-fargate/assets/css/0.styles.61693ea3.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div class="theme-container"><header class="navbar"><div class="sidebar-button"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" viewBox="0 0 448 512" class="icon"><path fill="currentColor" d="M436 124H12c-6.627 0-12-5.373-12-12V80c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12z"></path></svg></div> <a href="/k8s-eks-bottlerocket-fargate/" class="home-link router-link-active"><img src="https://raw.githubusercontent.com/kubernetes/kubernetes/d9a58a39b69a0eaec5797e0f7a0f9472b4829ab0/logo/logo.svg" alt="Amazon EKS Bottlerocket and Fargate" class="logo"> <span class="site-name can-hide">Amazon EKS Bottlerocket and Fargate</span></a> <div class="links"><div class="search-box"><input aria-label="Search" autocomplete="off" spellcheck="false" value=""> <!----></div> <nav class="nav-links can-hide"><div class="nav-item"><a href="/k8s-eks-bottlerocket-fargate/" class="nav-link">
+  Home
+</a></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="Links" class="dropdown-title"><span class="title">Links</span> <span class="arrow down"></span></button> <button type="button" aria-label="Links" class="mobile-dropdown-title"><span class="title">Links</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="https://aws.amazon.com/eks/" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  Amazon EKS
+  <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></li><li class="dropdown-item"><!----> <a href="https://aws.amazon.com/bottlerocket/" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  Bottlerocket
+  <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></li></ul></div></div> <a href="https://github.com/ruzickap/k8s-eks-bottlerocket-fargate" target="_blank" rel="noopener noreferrer" class="repo-link">
+    GitHub
+    <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></nav></div></header> <div class="sidebar-mask"></div> <aside class="sidebar"><nav class="nav-links"><div class="nav-item"><a href="/k8s-eks-bottlerocket-fargate/" class="nav-link">
+  Home
+</a></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="Links" class="dropdown-title"><span class="title">Links</span> <span class="arrow down"></span></button> <button type="button" aria-label="Links" class="mobile-dropdown-title"><span class="title">Links</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="https://aws.amazon.com/eks/" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  Amazon EKS
+  <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></li><li class="dropdown-item"><!----> <a href="https://aws.amazon.com/bottlerocket/" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  Bottlerocket
+  <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></li></ul></div></div> <a href="https://github.com/ruzickap/k8s-eks-bottlerocket-fargate" target="_blank" rel="noopener noreferrer" class="repo-link">
+    GitHub
+    <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></nav>  <ul class="sidebar-links"><li><a href="/k8s-eks-bottlerocket-fargate/" aria-current="page" class="sidebar-link">Amazon EKS Bottlerocket and Fargate</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/#requirements" class="sidebar-link">Requirements</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/#content" class="sidebar-link">Content</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-01/" aria-current="page" class="active sidebar-link">Amazon EKS Bottlerocket and Fargate</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-01/#requirements" class="sidebar-link">Requirements</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-01/#prepare-the-local-working-environment" class="sidebar-link">Prepare the local working environment</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-01/#configure-aws-route-53-domain-delegation" class="sidebar-link">Configure AWS Route 53 Domain delegation</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-01/#add-new-domain-to-route-53-policies-s3-ebs" class="sidebar-link">Add new domain to Route 53, Policies, S3, EBS</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-01/#create-amazon-eks" class="sidebar-link">Create Amazon EKS</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-02/" class="sidebar-link">AWS</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#fargate" class="sidebar-link">Fargate</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#aws-load-balancer-controller" class="sidebar-link">aws-load-balancer-controller</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#aws-for-fluent-bit" class="sidebar-link">aws-for-fluent-bit</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#aws-cloudwatch-metrics" class="sidebar-link">aws-cloudwatch-metrics</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#aws-efs-csi-driver" class="sidebar-link">aws-efs-csi-driver</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#install-external-snapshotter" class="sidebar-link">Install external-snapshotter</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#aws-ebs-csi-driver" class="sidebar-link">aws-ebs-csi-driver</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#test-amazon-eks-pod-limits" class="sidebar-link">Test Amazon EKS pod limits</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#amazon-managed-prometheus-amazon-managed-grafana" class="sidebar-link">Amazon Managed Prometheus + Amazon Managed Grafana</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#test-eks-access" class="sidebar-link">Test EKS access</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#capsule" class="sidebar-link">Capsule</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-03/" class="sidebar-link">Monitoring and Logging</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#metrics-server" class="sidebar-link">metrics-server</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#prometheus-adapter" class="sidebar-link">prometheus-adapter</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#kube-prometheus-stack" class="sidebar-link">kube-prometheus-stack</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#enable-calico-monitoring" class="sidebar-link">Enable calico monitoring</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#loki" class="sidebar-link">loki</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#aws-node-termination-handler" class="sidebar-link">aws-node-termination-handler</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#kyverno" class="sidebar-link">kyverno</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#nri-bundle" class="sidebar-link">nri-bundle</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#splunk-connect" class="sidebar-link">splunk-connect</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#aqua-security-enforcer" class="sidebar-link">Aqua Security Enforcer</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#sysdig-agent" class="sidebar-link">sysdig-agent</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-04/" class="sidebar-link">DNS, Ingress, Certificates</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#cert-manager" class="sidebar-link">cert-manager</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#kubed" class="sidebar-link">kubed</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#ingress-nginx" class="sidebar-link">ingress-nginx</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#istio-and-related-tools" class="sidebar-link">Istio and related tools</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#external-dns" class="sidebar-link">external-dns</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#mailhog" class="sidebar-link">mailhog</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#kubewatch-obsolete" class="sidebar-link">kubewatch - obsolete</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#calico-commands" class="sidebar-link">Calico commands</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-05/" class="sidebar-link">Authentication</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-05/#keycloak" class="sidebar-link">Keycloak</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-05/#oauth2-proxy-keycloak" class="sidebar-link">oauth2-proxy - Keycloak</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-05/#dex" class="sidebar-link">Dex</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-05/#oauth2-proxy" class="sidebar-link">oauth2-proxy</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-05/#gangway" class="sidebar-link">Gangway</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-05/#kube-oidc-proxy" class="sidebar-link">kube-oidc-proxy</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-06/" class="sidebar-link">Others</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-06/#cluster-autoscaler" class="sidebar-link">cluster-autoscaler</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-06/#descheduler" class="sidebar-link">Descheduler</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-06/#rancher" class="sidebar-link">Rancher</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-07/" class="sidebar-link">Workloads</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#podinfo" class="sidebar-link">podinfo</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#polaris" class="sidebar-link">Polaris</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#kubei" class="sidebar-link">kubei</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#kube-bench" class="sidebar-link">kube-bench</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#kubernetes-dashboard" class="sidebar-link">kubernetes-dashboard</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#kubeview" class="sidebar-link">kubeview</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#kube-ops-view" class="sidebar-link">kube-ops-view</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#s3-upload-test" class="sidebar-link">S3 upload test</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-08/" class="sidebar-link">Other workloads</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-08/#cluster-api" class="sidebar-link">Cluster API</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-08/#hashicorp-vault" class="sidebar-link">HashiCorp Vault</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-08/#podinfo-with-vault-certificate" class="sidebar-link">podinfo with vault certificate</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-08/#secrets-store-csi-driver" class="sidebar-link">secrets-store-csi-driver</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-08/#kuard" class="sidebar-link">kuard</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-09/" class="sidebar-link">Drupal</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-09/#drupal-installation" class="sidebar-link">Drupal installation</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-10/" class="sidebar-link">Harbor</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-10/#cloudwatch-retention" class="sidebar-link">CloudWatch retention</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-11/" class="sidebar-link">Velero</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-11/#backup-vault-using-csi-volume-snapshotting" class="sidebar-link">Backup Vault using CSI Volume Snapshotting</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-11/#delete-restore-vault-using-csi-volume-snapshotting" class="sidebar-link">Delete + Restore Vault using CSI Volume Snapshotting</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-11/#backup-delete-restore-app-with-efs-storage-using-restic" class="sidebar-link">Backup + Delete + Restore app with EFS storage using restic</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-12/" class="sidebar-link">GitOps tools</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-12/#argocd" class="sidebar-link">ArgoCD</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-12/#flux" class="sidebar-link">Flux</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-13/" class="sidebar-link">Clean-up</a></li></ul> </aside> <main class="page"> <div class="theme-default-content content__default"><h1 id="amazon-eks-bottlerocket-and-fargate"><a href="#amazon-eks-bottlerocket-and-fargate" class="header-anchor">#</a> Amazon EKS Bottlerocket and Fargate</h1> <p><img src="https://raw.githubusercontent.com/cncf/landscape/7f5b02ecba914a32912e77fc78e1c54d1c2f98ec/hosted_logos/amazon-eks.svg?sanitize=true" alt="Amazon EKS" title="Amazon EKS"></p> <p>Before starting with the main content, it's necessary to provision
+the <a href="https://aws.amazon.com/eks/" target="_blank" rel="noopener noreferrer">Amazon EKS<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a> in AWS.</p> <h2 id="requirements"><a href="#requirements" class="header-anchor">#</a> Requirements</h2> <p>If you would like to follow this documents and it's task you will need to set up
+few environment variables.</p> <p>The <code>LETSENCRYPT_ENVIRONMENT</code> variable should be one of:</p> <ul><li><code>staging</code> - Let’s Encrypt will create testing certificate (not valid)</li> <li><code>production</code> - Let’s Encrypt will create valid certificate (use with care)</li></ul> <p><code>BASE_DOMAIN</code> contains DNS records for all your Kubernetes clusters. The cluster
+names will look like <code>CLUSTER_NAME</code>.<code>BASE_DOMAIN</code> (<code>kube1.k8s.mylabs.dev</code>).</p> <div class="language-bash extra-class"><pre class="language-bash"><code><span class="token comment"># Hostname / FQDN definitions</span>
+<span class="token builtin class-name">export</span> <span class="token assign-left variable">BASE_DOMAIN</span><span class="token operator">=</span><span class="token variable">${BASE_DOMAIN<span class="token operator">:-</span>k8s.mylabs.dev}</span>
+<span class="token builtin class-name">export</span> <span class="token assign-left variable">CLUSTER_NAME</span><span class="token operator">=</span><span class="token variable">${CLUSTER_NAME<span class="token operator">:-</span>kube1}</span>
+<span class="token builtin class-name">export</span> <span class="token assign-left variable">CLUSTER_FQDN</span><span class="token operator">=</span><span class="token string">&quot;<span class="token variable">${CLUSTER_NAME}</span>.<span class="token variable">${BASE_DOMAIN}</span>&quot;</span>
+<span class="token builtin class-name">export</span> <span class="token assign-left variable">KUBECONFIG</span><span class="token operator">=</span><span class="token variable">${<span class="token environment constant">PWD</span>}</span>/kubeconfig-<span class="token variable">${CLUSTER_NAME}</span>.conf
+<span class="token comment"># * &quot;production&quot; - valid certificates signed by Lets Encrypt &quot;&quot;</span>
+<span class="token comment"># * &quot;staging&quot; - not trusted certs signed by Lets Encrypt &quot;Fake LE Intermediate X1&quot;</span>
+<span class="token builtin class-name">export</span> <span class="token assign-left variable">LETSENCRYPT_ENVIRONMENT</span><span class="token operator">=</span><span class="token string">&quot;staging&quot;</span>
+<span class="token builtin class-name">export</span> <span class="token assign-left variable">LETSENCRYPT_CERTIFICATE</span><span class="token operator">=</span><span class="token string">&quot;https://letsencrypt.org/certs/staging/letsencrypt-stg-root-x1.pem&quot;</span>
+<span class="token comment"># export LETSENCRYPT_ENVIRONMENT=&quot;production&quot;</span>
+<span class="token comment"># export LETSENCRYPT_CERTIFICATE=&quot;https://letsencrypt.org/certs/lets-encrypt-r3.pem&quot;</span>
+<span class="token builtin class-name">export</span> <span class="token assign-left variable">MY_EMAIL</span><span class="token operator">=</span><span class="token string">&quot;petr.ruzicka@gmail.com&quot;</span>
+<span class="token comment"># GitHub Organization + Team where are the users who will have the admin access</span>
+<span class="token comment"># to K8s resources (Grafana). Only users in GitHub organization</span>
+<span class="token comment"># (MY_GITHUB_ORG_NAME) will be able to access the apps via ingress.</span>
+<span class="token builtin class-name">export</span> <span class="token assign-left variable">MY_GITHUB_ORG_NAME</span><span class="token operator">=</span><span class="token string">&quot;ruzickap-org&quot;</span>
+<span class="token builtin class-name">export</span> <span class="token assign-left variable">MY_GITHUB_USERNAME</span><span class="token operator">=</span><span class="token string">&quot;ruzickap&quot;</span>
+<span class="token comment"># AWS Region</span>
+<span class="token builtin class-name">export</span> <span class="token assign-left variable">AWS_DEFAULT_REGION</span><span class="token operator">=</span><span class="token string">&quot;eu-west-1&quot;</span>
+<span class="token builtin class-name">export</span> <span class="token assign-left variable">SLACK_CHANNEL</span><span class="token operator">=</span><span class="token string">&quot;mylabs&quot;</span>
+<span class="token comment"># Tags used to tag the AWS resources</span>
+<span class="token builtin class-name">export</span> <span class="token assign-left variable">TAGS</span><span class="token operator">=</span><span class="token string">&quot;Owner=<span class="token variable">${MY_EMAIL}</span> Environment=Dev Group=Cloud_Native Squad=Cloud_Container_Platform compliance:na:defender=bottlerocket&quot;</span>
+<span class="token builtin class-name">echo</span> <span class="token parameter variable">-e</span> <span class="token string">&quot;<span class="token variable">${MY_EMAIL}</span> | <span class="token variable">${LETSENCRYPT_ENVIRONMENT}</span> | <span class="token variable">${CLUSTER_NAME}</span> | <span class="token variable">${BASE_DOMAIN}</span> | <span class="token variable">${CLUSTER_FQDN}</span><span class="token entity" title="\n">\n</span><span class="token variable">${TAGS}</span>&quot;</span>
+</code></pre></div><p>Prepare GitHub OAuth &quot;access&quot; credentials ans AWS &quot;access&quot; variables.</p> <p>You will need to configure AWS CLI: <a href="https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html" target="_blank" rel="noopener noreferrer">Configuring the AWS CLI<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></p> <div class="language-shell extra-class"><pre class="language-shell"><code><span class="token comment"># Common password</span>
+<span class="token builtin class-name">export</span> <span class="token assign-left variable">MY_PASSWORD</span><span class="token operator">=</span><span class="token string">&quot;xxxx&quot;</span>
+<span class="token comment"># AWS Credentials</span>
+<span class="token builtin class-name">export</span> <span class="token assign-left variable">AWS_ACCESS_KEY_ID</span><span class="token operator">=</span><span class="token string">&quot;&quot;</span>
+<span class="token builtin class-name">export</span> <span class="token assign-left variable">AWS_SECRET_ACCESS_KEY</span><span class="token operator">=</span><span class="token string">&quot;&quot;</span>
+<span class="token builtin class-name">export</span> <span class="token assign-left variable">AWS_CONSOLE_ADMIN_ROLE_ARN</span><span class="token operator">=</span><span class="token string">&quot;arn:aws:iam::7xxxxxxxxxx7:role/xxxxxxxxxxxxxN&quot;</span>
+<span class="token comment"># GitHub Organization OAuth Apps credentials</span>
+<span class="token builtin class-name">export</span> <span class="token assign-left variable">MY_GITHUB_ORG_OAUTH_DEX_CLIENT_ID</span><span class="token operator">=</span><span class="token string">&quot;3xxxxxxxxxxxxxxxxxx3&quot;</span>
+<span class="token builtin class-name">export</span> <span class="token assign-left variable">MY_GITHUB_ORG_OAUTH_DEX_CLIENT_SECRET</span><span class="token operator">=</span><span class="token string">&quot;7xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx8&quot;</span>
+<span class="token builtin class-name">export</span> <span class="token assign-left variable">MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_ID</span><span class="token operator">=</span><span class="token string">&quot;4xxxxxxxxxxxxxxxxxx4&quot;</span>
+<span class="token builtin class-name">export</span> <span class="token assign-left variable">MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_SECRET</span><span class="token operator">=</span><span class="token string">&quot;7xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxa&quot;</span>
+<span class="token comment"># Sysdig credentials</span>
+<span class="token builtin class-name">export</span> <span class="token assign-left variable">SYSDIG_AGENT_ACCESSKEY</span><span class="token operator">=</span><span class="token string">&quot;xxx&quot;</span>
+<span class="token comment"># Aqua credentials</span>
+<span class="token builtin class-name">export</span> <span class="token assign-left variable">AQUA_REGISTRY_USERNAME</span><span class="token operator">=</span><span class="token string">&quot;xxx&quot;</span>
+<span class="token builtin class-name">export</span> <span class="token assign-left variable">AQUA_REGISTRY_PASSWORD</span><span class="token operator">=</span><span class="token string">&quot;xxx&quot;</span>
+<span class="token builtin class-name">export</span> <span class="token assign-left variable">AQUA_ENFORCER_TOKEN</span><span class="token operator">=</span><span class="token string">&quot;xxx&quot;</span>
+<span class="token comment"># Splunk credentials</span>
+<span class="token builtin class-name">export</span> <span class="token assign-left variable">SPLUNK_HOST</span><span class="token operator">=</span><span class="token string">&quot;xxx&quot;</span>
+<span class="token builtin class-name">export</span> <span class="token assign-left variable">SPLUNK_TOKEN</span><span class="token operator">=</span><span class="token string">&quot;xxx&quot;</span>
+<span class="token builtin class-name">export</span> <span class="token assign-left variable">SPLUNK_INDEX_NAME</span><span class="token operator">=</span><span class="token string">&quot;xxx&quot;</span>
+<span class="token comment"># Slack incoming webhook</span>
+<span class="token builtin class-name">export</span> <span class="token assign-left variable">SLACK_INCOMING_WEBHOOK_URL</span><span class="token operator">=</span><span class="token string">&quot;https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK&quot;</span>
+<span class="token builtin class-name">export</span> <span class="token assign-left variable">SLACK_BOT_API_TOKEN</span><span class="token operator">=</span><span class="token string">&quot;xxxx-xxxxxxxxxxxxx-xxxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxP&quot;</span>
+<span class="token comment"># Okta configuration</span>
+<span class="token builtin class-name">export</span> <span class="token assign-left variable">OKTA_ISSUER</span><span class="token operator">=</span><span class="token string">&quot;https://exxxxxxx-xxxxx-xx.okta.com&quot;</span>
+<span class="token builtin class-name">export</span> <span class="token assign-left variable">OKTA_CLIENT_ID</span><span class="token operator">=</span><span class="token string">&quot;0xxxxxxxxxxxxxxxxxx7&quot;</span>
+<span class="token builtin class-name">export</span> <span class="token assign-left variable">OKTA_CLIENT_SECRET</span><span class="token operator">=</span><span class="token string">&quot;1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxH&quot;</span>
+</code></pre></div><p>Verify if all the necessary variables were set:</p> <div class="language-bash extra-class"><pre class="language-bash"><code><span class="token keyword">case</span> <span class="token string">&quot;<span class="token variable">${CLUSTER_NAME}</span>&quot;</span> <span class="token keyword">in</span>
+kube1<span class="token punctuation">)</span>
+  <span class="token assign-left variable">MY_GITHUB_ORG_OAUTH_DEX_CLIENT_ID</span><span class="token operator">=</span><span class="token variable">${MY_GITHUB_ORG_OAUTH_DEX_CLIENT_ID<span class="token operator">:-</span>${MY_GITHUB_ORG_OAUTH_DEX_CLIENT_ID_KUBE1}</span><span class="token punctuation">}</span>
+  <span class="token assign-left variable">MY_GITHUB_ORG_OAUTH_DEX_CLIENT_SECRET</span><span class="token operator">=</span><span class="token variable">${MY_GITHUB_ORG_OAUTH_DEX_CLIENT_SECRET<span class="token operator">:-</span>${MY_GITHUB_ORG_OAUTH_DEX_CLIENT_SECRET_KUBE1}</span><span class="token punctuation">}</span>
+  <span class="token assign-left variable">MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_ID</span><span class="token operator">=</span><span class="token variable">${MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_ID<span class="token operator">:-</span>${MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_ID_KUBE1}</span><span class="token punctuation">}</span>
+  <span class="token assign-left variable">MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_SECRET</span><span class="token operator">=</span><span class="token variable">${MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_SECRET<span class="token operator">:-</span>${MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_SECRET_KUBE1}</span><span class="token punctuation">}</span>
+  <span class="token punctuation">;</span><span class="token punctuation">;</span>
+kube2<span class="token punctuation">)</span>
+  <span class="token assign-left variable">MY_GITHUB_ORG_OAUTH_DEX_CLIENT_ID</span><span class="token operator">=</span><span class="token variable">${MY_GITHUB_ORG_OAUTH_DEX_CLIENT_ID<span class="token operator">:-</span>${MY_GITHUB_ORG_OAUTH_DEX_CLIENT_ID_KUBE2}</span><span class="token punctuation">}</span>
+  <span class="token assign-left variable">MY_GITHUB_ORG_OAUTH_DEX_CLIENT_SECRET</span><span class="token operator">=</span><span class="token variable">${MY_GITHUB_ORG_OAUTH_DEX_CLIENT_SECRET<span class="token operator">:-</span>${MY_GITHUB_ORG_OAUTH_DEX_CLIENT_SECRET_KUBE2}</span><span class="token punctuation">}</span>
+  <span class="token assign-left variable">MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_ID</span><span class="token operator">=</span><span class="token variable">${MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_ID<span class="token operator">:-</span>${MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_ID_KUBE2}</span><span class="token punctuation">}</span>
+  <span class="token assign-left variable">MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_SECRET</span><span class="token operator">=</span><span class="token variable">${MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_SECRET<span class="token operator">:-</span>${MY_GITHUB_ORG_OAUTH_KEYCLOAK_CLIENT_SECRET_KUBE2}</span><span class="token punctuation">}</span>
+  <span class="token punctuation">;</span><span class="token punctuation">;</span>
+*<span class="token punctuation">)</span>
+  <span class="token builtin class-name">echo</span> <span class="token string">&quot;Unsupported cluster name: <span class="token variable">${CLUSTER_NAME}</span> !&quot;</span>
+  <span class="token builtin class-name">exit</span> <span class="token number">1</span>
+  <span class="token punctuation">;</span><span class="token punctuation">;</span>
+<span class="token keyword">esac</span>
+
+<span class="token builtin class-name">:</span> <span class="token string">&quot;<span class="token variable">${AWS_ACCESS_KEY_ID?}</span>&quot;</span>
+<span class="token builtin class-name">:</span> <span class="token string">&quot;<span class="token variable">${AWS_SECRET_ACCESS_KEY?}</span>&quot;</span>
+<span class="token builtin class-name">:</span> <span class="token string">&quot;<span class="token variable">${AWS_CONSOLE_ADMIN_ROLE_ARN?}</span>&quot;</span>
+<span class="token builtin class-name">:</span> <span class="token string">&quot;<span class="token variable">${GITHUB_TOKEN?}</span>&quot;</span>
+<span class="token builtin class-name">:</span> <span class="token string">&quot;<span class="token variable">${SLACK_INCOMING_WEBHOOK_URL?}</span>&quot;</span>
+<span class="token builtin class-name">:</span> <span class="token string">&quot;<span class="token variable">${SLACK_BOT_API_TOKEN?}</span>&quot;</span>
+<span class="token builtin class-name">:</span> <span class="token string">&quot;<span class="token variable">${MY_PASSWORD?}</span>&quot;</span>
+<span class="token builtin class-name">:</span> <span class="token string">&quot;<span class="token variable">${OKTA_ISSUER?}</span>&quot;</span>
+<span class="token builtin class-name">:</span> <span class="token string">&quot;<span class="token variable">${OKTA_CLIENT_ID?}</span>&quot;</span>
+<span class="token builtin class-name">:</span> <span class="token string">&quot;<span class="token variable">${OKTA_CLIENT_SECRET?}</span>&quot;</span>
+</code></pre></div><h2 id="prepare-the-local-working-environment"><a href="#prepare-the-local-working-environment" class="header-anchor">#</a> Prepare the local working environment</h2> <div class="custom-block tip"><p class="custom-block-title">TIP</p> <p>You can skip these steps if you have all the required software already
+installed.</p></div> <p>Install necessary software:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>
+<span class="token keyword">if</span> <span class="token builtin class-name">command</span> <span class="token parameter variable">-v</span> <span class="token function">apt-get</span> <span class="token operator">&amp;&gt;</span> /dev/null<span class="token punctuation">;</span> <span class="token keyword">then</span>
+  <span class="token function">apt</span> update <span class="token parameter variable">-qq</span>
+  <span class="token assign-left variable">DEBIAN_FRONTEND</span><span class="token operator">=</span>noninteractive <span class="token function">apt-get</span> <span class="token function">install</span> <span class="token parameter variable">-y</span> <span class="token parameter variable">-qq</span> apache2-utils ansible dnsutils <span class="token function">git</span> gnupg2 jq <span class="token function">sudo</span> <span class="token function">unzip</span> <span class="token operator">&gt;</span> /dev/null
+<span class="token keyword">fi</span>
+</code></pre></div><p>Install <a href="https://aws.amazon.com/cli/" target="_blank" rel="noopener noreferrer">AWS CLI<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>  binary:</p> <div class="language-bash extra-class"><pre class="language-bash"><code><span class="token keyword">if</span> <span class="token operator">!</span> <span class="token builtin class-name">command</span> <span class="token parameter variable">-v</span> aws <span class="token operator">&amp;&gt;</span> /dev/null<span class="token punctuation">;</span> <span class="token keyword">then</span>
+  <span class="token function">curl</span> <span class="token parameter variable">-sL</span> <span class="token string">&quot;https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip&quot;</span> <span class="token parameter variable">-o</span> <span class="token string">&quot;/tmp/awscliv2.zip&quot;</span>
+  <span class="token function">unzip</span> <span class="token parameter variable">-q</span> <span class="token parameter variable">-o</span> /tmp/awscliv2.zip <span class="token parameter variable">-d</span> /tmp/
+  <span class="token function">sudo</span> /tmp/aws/install
+<span class="token keyword">fi</span>
+</code></pre></div><p>Install <a href="https://github.com/kubernetes/kubectl" target="_blank" rel="noopener noreferrer">kubectl<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a> binary:</p> <div class="language-bash extra-class"><pre class="language-bash"><code><span class="token keyword">if</span> <span class="token operator">!</span> <span class="token builtin class-name">command</span> <span class="token parameter variable">-v</span> kubectl <span class="token operator">&amp;&gt;</span> /dev/null<span class="token punctuation">;</span> <span class="token keyword">then</span>
+  <span class="token comment"># https://github.com/kubernetes/kubectl/releases</span>
+  <span class="token function">sudo</span> <span class="token function">curl</span> <span class="token parameter variable">-s</span> <span class="token parameter variable">-Lo</span> /usr/local/bin/kubectl <span class="token string">&quot;https://storage.googleapis.com/kubernetes-release/release/v1.21.1/bin/<span class="token variable"><span class="token variable">$(</span><span class="token function">uname</span> <span class="token operator">|</span> <span class="token function">sed</span> <span class="token string">&quot;s/./\L&amp;/g&quot;</span><span class="token variable">)</span></span>/amd64/kubectl&quot;</span>
+  <span class="token function">sudo</span> <span class="token function">chmod</span> a+x /usr/local/bin/kubectl
+<span class="token keyword">fi</span>
+</code></pre></div><p>Install <a href="https://helm.sh/" target="_blank" rel="noopener noreferrer">Helm<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>:</p> <div class="language-bash extra-class"><pre class="language-bash"><code><span class="token keyword">if</span> <span class="token operator">!</span> <span class="token builtin class-name">command</span> <span class="token parameter variable">-v</span> helm <span class="token operator">&amp;&gt;</span> /dev/null<span class="token punctuation">;</span> <span class="token keyword">then</span>
+  <span class="token comment"># https://github.com/helm/helm/releases</span>
+  <span class="token function">curl</span> <span class="token parameter variable">-s</span> https://raw.githubusercontent.com/helm/helm/master/scripts/get <span class="token operator">|</span> <span class="token function">bash</span> <span class="token parameter variable">-s</span> -- <span class="token parameter variable">--version</span> v3.6.0
+<span class="token keyword">fi</span>
+</code></pre></div><p>Install <a href="https://eksctl.io/" target="_blank" rel="noopener noreferrer">eksctl<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>:</p> <div class="language-bash extra-class"><pre class="language-bash"><code><span class="token keyword">if</span> <span class="token operator">!</span> <span class="token builtin class-name">command</span> <span class="token parameter variable">-v</span> eksctl <span class="token operator">&amp;&gt;</span> /dev/null<span class="token punctuation">;</span> <span class="token keyword">then</span>
+  <span class="token comment"># https://github.com/weaveworks/eksctl/releases</span>
+  <span class="token function">curl</span> <span class="token parameter variable">-s</span> <span class="token parameter variable">-L</span> <span class="token string">&quot;https://github.com/weaveworks/eksctl/releases/download/0.60.0/eksctl_<span class="token variable"><span class="token variable">$(</span><span class="token function">uname</span><span class="token variable">)</span></span>_amd64.tar.gz&quot;</span> <span class="token operator">|</span> <span class="token function">sudo</span> <span class="token function">tar</span> xz <span class="token parameter variable">-C</span> /usr/local/bin/
+<span class="token keyword">fi</span>
+</code></pre></div><p>Install <a href="https://github.com/kubernetes-sigs/aws-iam-authenticator" target="_blank" rel="noopener noreferrer">AWS IAM Authenticator for Kubernetes<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>:</p> <div class="language-bash extra-class"><pre class="language-bash"><code><span class="token keyword">if</span> <span class="token operator">!</span> <span class="token builtin class-name">command</span> <span class="token parameter variable">-v</span> aws-iam-authenticator <span class="token operator">&amp;&gt;</span> /dev/null<span class="token punctuation">;</span> <span class="token keyword">then</span>
+  <span class="token comment"># https://docs.aws.amazon.com/eks/latest/userguide/install-aws-iam-authenticator.html</span>
+  <span class="token function">sudo</span> <span class="token function">curl</span> <span class="token parameter variable">-s</span> <span class="token parameter variable">-Lo</span> /usr/local/bin/aws-iam-authenticator <span class="token string">&quot;https://amazon-eks.s3.us-west-2.amazonaws.com/1.19.6/2021-01-05/bin/<span class="token variable"><span class="token variable">$(</span><span class="token function">uname</span> <span class="token operator">|</span> <span class="token function">sed</span> <span class="token string">&quot;s/./\L&amp;/g&quot;</span><span class="token variable">)</span></span>/amd64/aws-iam-authenticator&quot;</span>
+  <span class="token function">sudo</span> <span class="token function">chmod</span> a+x /usr/local/bin/aws-iam-authenticator
+<span class="token keyword">fi</span>
+</code></pre></div><p>Install <a href="https://www.vaultproject.io/downloads" target="_blank" rel="noopener noreferrer">vault<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>:</p> <div class="language-bash extra-class"><pre class="language-bash"><code><span class="token keyword">if</span> <span class="token operator">!</span> <span class="token builtin class-name">command</span> <span class="token parameter variable">-v</span> vault <span class="token operator">&amp;&gt;</span> /dev/null<span class="token punctuation">;</span> <span class="token keyword">then</span>
+  <span class="token function">curl</span> <span class="token parameter variable">-s</span> <span class="token parameter variable">-L</span> <span class="token string">&quot;https://releases.hashicorp.com/vault/1.7.2/vault_1.7.2_<span class="token variable"><span class="token variable">$(</span><span class="token function">uname</span> <span class="token operator">|</span> <span class="token function">sed</span> <span class="token string">&quot;s/./\L&amp;/g&quot;</span><span class="token variable">)</span></span>_amd64.zip&quot;</span> <span class="token parameter variable">-o</span> /tmp/vault.zip
+  <span class="token function">sudo</span> <span class="token function">unzip</span> <span class="token parameter variable">-q</span> /tmp/vault.zip <span class="token parameter variable">-d</span> /usr/local/bin/
+  <span class="token function">rm</span> /tmp/vault.zip
+<span class="token keyword">fi</span>
+</code></pre></div><p>Install <a href="https://github.com/vmware-tanzu/velero/releases" target="_blank" rel="noopener noreferrer">velero<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>:</p> <div class="language-bash extra-class"><pre class="language-bash"><code><span class="token keyword">if</span> <span class="token operator">!</span> <span class="token builtin class-name">command</span> <span class="token parameter variable">-v</span> velero <span class="token operator">&amp;&gt;</span> /dev/null<span class="token punctuation">;</span> <span class="token keyword">then</span>
+  <span class="token function">curl</span> <span class="token parameter variable">-s</span> <span class="token parameter variable">-L</span> <span class="token string">&quot;https://github.com/vmware-tanzu/velero/releases/download/v1.6.0/velero-v1.6.0-<span class="token variable"><span class="token variable">$(</span><span class="token function">uname</span> <span class="token operator">|</span> <span class="token function">sed</span> <span class="token string">&quot;s/./\L&amp;/g&quot;</span><span class="token variable">)</span></span>-amd64.tar.gz&quot;</span> <span class="token parameter variable">-o</span> /tmp/velero.tar.gz
+  <span class="token function">sudo</span> <span class="token function">tar</span> xzf /tmp/velero.tar.gz <span class="token parameter variable">-C</span> /usr/local/bin/ --strip-components <span class="token number">1</span> <span class="token string">&quot;velero-v1.6.0-<span class="token variable"><span class="token variable">$(</span><span class="token function">uname</span> <span class="token operator">|</span> <span class="token function">sed</span> <span class="token string">&quot;s/./\L&amp;/g&quot;</span><span class="token variable">)</span></span>-amd64/velero&quot;</span>
+<span class="token keyword">fi</span>
+</code></pre></div><p>Install <a href="https://toolkit.fluxcd.io/" target="_blank" rel="noopener noreferrer">flux<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>:</p> <div class="language-bash extra-class"><pre class="language-bash"><code><span class="token keyword">if</span> <span class="token operator">!</span> <span class="token builtin class-name">command</span> <span class="token parameter variable">-v</span> flux <span class="token operator">&amp;&gt;</span> /dev/null<span class="token punctuation">;</span> <span class="token keyword">then</span>
+  <span class="token function">curl</span> <span class="token parameter variable">-s</span> https://fluxcd.io/install.sh <span class="token operator">|</span> <span class="token function">sudo</span> <span class="token function">bash</span>
+<span class="token keyword">fi</span>
+</code></pre></div><p>Install <code>calicoctl</code>:</p> <div class="language-bash extra-class"><pre class="language-bash"><code><span class="token keyword">if</span> <span class="token operator">!</span> <span class="token builtin class-name">command</span> <span class="token parameter variable">-v</span> calicoctl <span class="token operator">&amp;&gt;</span> /dev/null<span class="token punctuation">;</span> <span class="token keyword">then</span>
+  <span class="token function">sudo</span> <span class="token function">curl</span> <span class="token parameter variable">-s</span> <span class="token parameter variable">-Lo</span> /usr/local/bin/calicoctl https://github.com/projectcalico/calicoctl/releases/download/v3.20.0/calicoctl
+  <span class="token function">sudo</span> <span class="token function">chmod</span> a+x /usr/local/bin/calicoctl
+<span class="token keyword">fi</span>
+</code></pre></div><p>Install <a href="https://github.com/mozilla/sops" target="_blank" rel="noopener noreferrer">SOPS: Secrets OPerationS<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>:</p> <div class="language-bash extra-class"><pre class="language-bash"><code><span class="token keyword">if</span> <span class="token operator">!</span> <span class="token builtin class-name">command</span> <span class="token parameter variable">-v</span> sops <span class="token operator">&amp;&gt;</span> /dev/null<span class="token punctuation">;</span> <span class="token keyword">then</span>
+  <span class="token function">sudo</span> <span class="token function">curl</span> <span class="token parameter variable">-s</span> <span class="token parameter variable">-Lo</span> /usr/local/bin/sops <span class="token string">&quot;https://github.com/mozilla/sops/releases/download/v3.7.1/sops-v3.7.1.<span class="token variable"><span class="token variable">$(</span><span class="token function">uname</span> <span class="token operator">|</span> <span class="token function">sed</span> <span class="token string">&quot;s/./\L&amp;/g&quot;</span><span class="token variable">)</span></span>&quot;</span>
+  <span class="token function">sudo</span> <span class="token function">chmod</span> a+x /usr/local/bin/sops
+<span class="token keyword">fi</span>
+</code></pre></div><p>Install <a href="https://kustomize.io/" target="_blank" rel="noopener noreferrer">kustomize<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>:</p> <div class="language-bash extra-class"><pre class="language-bash"><code><span class="token keyword">if</span> <span class="token operator">!</span> <span class="token builtin class-name">command</span> <span class="token parameter variable">-v</span> kustomize <span class="token operator">&amp;&gt;</span> /dev/null<span class="token punctuation">;</span> <span class="token keyword">then</span>
+  <span class="token function">curl</span> <span class="token parameter variable">-s</span> <span class="token string">&quot;https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh&quot;</span> <span class="token operator">|</span> <span class="token function">sudo</span> <span class="token function">bash</span> <span class="token parameter variable">-s</span> <span class="token number">4.1</span>.2 /usr/local/bin/
+<span class="token keyword">fi</span>
+</code></pre></div><p>Install <a href="https://github.com/rakyll/hey" target="_blank" rel="noopener noreferrer">hey<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>:</p> <div class="language-bash extra-class"><pre class="language-bash"><code><span class="token keyword">if</span> <span class="token operator">!</span> <span class="token builtin class-name">command</span> <span class="token parameter variable">-v</span> hey <span class="token operator">&amp;&gt;</span> /dev/null<span class="token punctuation">;</span> <span class="token keyword">then</span>
+  <span class="token function">sudo</span> <span class="token function">curl</span> <span class="token parameter variable">-s</span> <span class="token parameter variable">-Lo</span> /usr/local/bin/hey <span class="token string">&quot;https://hey-release.s3.us-east-2.amazonaws.com/hey_<span class="token variable"><span class="token variable">$(</span><span class="token function">uname</span> <span class="token operator">|</span> <span class="token function">sed</span> <span class="token string">&quot;s/./\L&amp;/g&quot;</span><span class="token variable">)</span></span>_amd64&quot;</span>
+  <span class="token function">sudo</span> <span class="token function">chmod</span> a+x /usr/local/bin/hey
+<span class="token keyword">fi</span>
+</code></pre></div><h2 id="configure-aws-route-53-domain-delegation"><a href="#configure-aws-route-53-domain-delegation" class="header-anchor">#</a> Configure AWS Route 53 Domain delegation</h2> <p>Create DNS zone (<code>BASE_DOMAIN</code>):</p> <div class="language-shell extra-class"><pre class="language-shell"><code>aws route53 create-hosted-zone <span class="token parameter variable">--output</span> json <span class="token punctuation">\</span>
+  <span class="token parameter variable">--name</span> <span class="token string">&quot;<span class="token variable">${BASE_DOMAIN}</span>&quot;</span> <span class="token punctuation">\</span>
+  --caller-reference <span class="token string">&quot;<span class="token variable"><span class="token variable">$(</span><span class="token function">date</span><span class="token variable">)</span></span>&quot;</span> <span class="token punctuation">\</span>
+  --hosted-zone-config<span class="token operator">=</span><span class="token string">&quot;{<span class="token entity" title="\&quot;">\&quot;</span>Comment<span class="token entity" title="\&quot;">\&quot;</span>: <span class="token entity" title="\&quot;">\&quot;</span>Created by <span class="token variable">${MY_EMAIL}</span><span class="token entity" title="\&quot;">\&quot;</span>, <span class="token entity" title="\&quot;">\&quot;</span>PrivateZone<span class="token entity" title="\&quot;">\&quot;</span>: false}&quot;</span> <span class="token operator">|</span> jq
+</code></pre></div><p>Use your domain registrar to change the nameservers for your zone (for example
+&quot;mylabs.dev&quot;) to use the Amazon Route 53 nameservers. Here is the way how you
+can find out the the Route 53 nameservers:</p> <div class="language-shell extra-class"><pre class="language-shell"><code><span class="token assign-left variable">NEW_ZONE_ID</span><span class="token operator">=</span><span class="token variable"><span class="token variable">$(</span>aws route53 list-hosted-zones <span class="token parameter variable">--query</span> <span class="token string">&quot;HostedZones[?Name==\<span class="token variable"><span class="token variable">`</span>$<span class="token punctuation">{</span>BASE_DOMAIN<span class="token punctuation">}</span>.<span class="token punctuation">\</span><span class="token variable">`</span></span>].Id&quot;</span> <span class="token parameter variable">--output</span> text<span class="token variable">)</span></span>
+<span class="token assign-left variable">NEW_ZONE_NS</span><span class="token operator">=</span><span class="token variable"><span class="token variable">$(</span>aws route53 get-hosted-zone <span class="token parameter variable">--output</span> json <span class="token parameter variable">--id</span> <span class="token string">&quot;<span class="token variable">${NEW_ZONE_ID}</span>&quot;</span> <span class="token parameter variable">--query</span> <span class="token string">&quot;DelegationSet.NameServers&quot;</span><span class="token variable">)</span></span>
+<span class="token assign-left variable">NEW_ZONE_NS1</span><span class="token operator">=</span><span class="token variable"><span class="token variable">$(</span><span class="token builtin class-name">echo</span> <span class="token string">&quot;<span class="token variable">${NEW_ZONE_NS}</span>&quot;</span> <span class="token operator">|</span> jq <span class="token parameter variable">-r</span> <span class="token string">&quot;.[0]&quot;</span><span class="token variable">)</span></span>
+<span class="token assign-left variable">NEW_ZONE_NS2</span><span class="token operator">=</span><span class="token variable"><span class="token variable">$(</span><span class="token builtin class-name">echo</span> <span class="token string">&quot;<span class="token variable">${NEW_ZONE_NS}</span>&quot;</span> <span class="token operator">|</span> jq <span class="token parameter variable">-r</span> <span class="token string">&quot;.[1]&quot;</span><span class="token variable">)</span></span>
+</code></pre></div><p>Create the NS record in <code>k8s.mylabs.dev</code> (<code>BASE_DOMAIN</code>) for proper zone
+delegation. This step depends on your domain registrar - I'm using CloudFlare
+and using Ansible to automate it:</p> <div class="language-shell extra-class"><pre class="language-shell"><code>ansible <span class="token parameter variable">-m</span> cloudflare_dns <span class="token parameter variable">-c</span> <span class="token builtin class-name">local</span> <span class="token parameter variable">-i</span> <span class="token string">&quot;localhost,&quot;</span> localhost <span class="token parameter variable">-a</span> <span class="token string">&quot;zone=mylabs.dev record=<span class="token variable">${BASE_DOMAIN}</span> type=NS value=<span class="token variable">${NEW_ZONE_NS1}</span> solo=true proxied=no account_email=<span class="token variable">${CLOUDFLARE_EMAIL}</span> account_api_token=<span class="token variable">${CLOUDFLARE_API_KEY}</span>&quot;</span>
+ansible <span class="token parameter variable">-m</span> cloudflare_dns <span class="token parameter variable">-c</span> <span class="token builtin class-name">local</span> <span class="token parameter variable">-i</span> <span class="token string">&quot;localhost,&quot;</span> localhost <span class="token parameter variable">-a</span> <span class="token string">&quot;zone=mylabs.dev record=<span class="token variable">${BASE_DOMAIN}</span> type=NS value=<span class="token variable">${NEW_ZONE_NS2}</span> solo=false proxied=no account_email=<span class="token variable">${CLOUDFLARE_EMAIL}</span> account_api_token=<span class="token variable">${CLOUDFLARE_API_KEY}</span>&quot;</span>
+</code></pre></div><p>Output:</p> <div class="language-text extra-class"><pre class="language-text"><code>localhost | CHANGED =&gt; {
+    &quot;ansible_facts&quot;: {
+        &quot;discovered_interpreter_python&quot;: &quot;/usr/bin/python&quot;
+    },
+    &quot;changed&quot;: true,
+    &quot;result&quot;: {
+        &quot;record&quot;: {
+            &quot;content&quot;: &quot;ns-885.awsdns-46.net&quot;,
+            &quot;created_on&quot;: &quot;2020-11-13T06:25:32.18642Z&quot;,
+            &quot;id&quot;: &quot;dxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxb&quot;,
+            &quot;locked&quot;: false,
+            &quot;meta&quot;: {
+                &quot;auto_added&quot;: false,
+                &quot;managed_by_apps&quot;: false,
+                &quot;managed_by_argo_tunnel&quot;: false,
+                &quot;source&quot;: &quot;primary&quot;
+            },
+            &quot;modified_on&quot;: &quot;2020-11-13T06:25:32.18642Z&quot;,
+            &quot;name&quot;: &quot;k8s.mylabs.dev&quot;,
+            &quot;proxiable&quot;: false,
+            &quot;proxied&quot;: false,
+            &quot;ttl&quot;: 1,
+            &quot;type&quot;: &quot;NS&quot;,
+            &quot;zone_id&quot;: &quot;2xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxe&quot;,
+            &quot;zone_name&quot;: &quot;mylabs.dev&quot;
+        }
+    }
+}
+localhost | CHANGED =&gt; {
+    &quot;ansible_facts&quot;: {
+        &quot;discovered_interpreter_python&quot;: &quot;/usr/bin/python&quot;
+    },
+    &quot;changed&quot;: true,
+    &quot;result&quot;: {
+        &quot;record&quot;: {
+            &quot;content&quot;: &quot;ns-1692.awsdns-19.co.uk&quot;,
+            &quot;created_on&quot;: &quot;2020-11-13T06:25:37.605605Z&quot;,
+            &quot;id&quot;: &quot;9xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxb&quot;,
+            &quot;locked&quot;: false,
+            &quot;meta&quot;: {
+                &quot;auto_added&quot;: false,
+                &quot;managed_by_apps&quot;: false,
+                &quot;managed_by_argo_tunnel&quot;: false,
+                &quot;source&quot;: &quot;primary&quot;
+            },
+            &quot;modified_on&quot;: &quot;2020-11-13T06:25:37.605605Z&quot;,
+            &quot;name&quot;: &quot;k8s.mylabs.dev&quot;,
+            &quot;proxiable&quot;: false,
+            &quot;proxied&quot;: false,
+            &quot;ttl&quot;: 1,
+            &quot;type&quot;: &quot;NS&quot;,
+            &quot;zone_id&quot;: &quot;2xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxe&quot;,
+            &quot;zone_name&quot;: &quot;mylabs.dev&quot;
+        }
+    }
+}
+</code></pre></div><h2 id="add-new-domain-to-route-53-policies-s3-ebs"><a href="#add-new-domain-to-route-53-policies-s3-ebs" class="header-anchor">#</a> Add new domain to Route 53, Policies, S3, EBS</h2> <p>Details with examples are described on these links:</p> <ul><li><a href="https://aws.amazon.com/blogs/opensource/introducing-fine-grained-iam-roles-service-accounts/" target="_blank" rel="noopener noreferrer">https://aws.amazon.com/blogs/opensource/introducing-fine-grained-iam-roles-service-accounts/<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></li> <li><a href="https://cert-manager.io/docs/configuration/acme/dns01/route53/" target="_blank" rel="noopener noreferrer">https://cert-manager.io/docs/configuration/acme/dns01/route53/<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></li> <li><a href="https://github.com/kubernetes-sigs/external-dns/blob/master/docs/tutorials/aws.md" target="_blank" rel="noopener noreferrer">https://github.com/kubernetes-sigs/external-dns/blob/master/docs/tutorials/aws.md<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></li></ul> <p>Create CloudFormation template containing policies for Route53, S3 access
+(Harbor, Velero) and Domain. Put new domain <code>CLUSTER_FQDN</code> to the Route 53 and
+configure the DNS delegation from the <code>BASE_DOMAIN</code>.</p> <div class="language-bash extra-class"><pre class="language-bash"><code><span class="token function">mkdir</span> <span class="token parameter variable">-vp</span> <span class="token string">&quot;tmp/<span class="token variable">${CLUSTER_FQDN}</span>&quot;</span>
+
+<span class="token function">cat</span> <span class="token operator">&gt;</span> <span class="token string">&quot;tmp/<span class="token variable">${CLUSTER_FQDN}</span>/aws-route53-iam-s3-kms-asm.yml&quot;</span> <span class="token operator">&lt;&lt;</span> <span class="token punctuation">\</span>EOF
+Description: <span class="token string">&quot;Template to generate the necessary IAM Policies for access to Route53 and S3&quot;</span>
+Parameters:
+  ClusterFQDN:
+    Description: <span class="token string">&quot;Cluster domain where all necessary app subdomains will live (subdomain of BaseDomain). Ex: kube1.k8s.mylabs.dev&quot;</span>
+    Type: String
+  ClusterName:
+    Description: <span class="token string">&quot;Cluster Name Ex: kube1&quot;</span>
+    Type: String
+  BaseDomain:
+    Description: <span class="token string">&quot;Base domain where cluster domains + their subdomains will live. Ex: k8s.mylabs.dev&quot;</span>
+    Type: String
+Resources:
+  <span class="token comment"># This AWS control checks whether the status of the AWS Systems Manager association compliance is COMPLIANT or NON_COMPLIANT after the association is executed on an instance.</span>
+  ConfigRule:
+    Type: <span class="token string">&quot;AWS::Config::ConfigRule&quot;</span>
+    Properties:
+      ConfigRuleName: <span class="token operator">!</span>Sub <span class="token string">&quot;<span class="token variable">${ClusterName}</span>-ec2-managedinstance-association-compliance-status-check&quot;</span>
+      Scope:
+        ComplianceResourceTypes:
+          - <span class="token string">&quot;AWS::SSM::AssociationCompliance&quot;</span>
+      Description: <span class="token string">&quot;A Config rule that checks whether the compliance status of the Amazon EC2 Systems Manager association compliance is COMPLIANT or NON_COMPLIANT after the association execution on the instance. The rule is compliant if the field status is COMPLIANT.&quot;</span>
+      Source:
+        Owner: <span class="token string">&quot;AWS&quot;</span>
+        SourceIdentifier: <span class="token string">&quot;EC2_MANAGEDINSTANCE_ASSOCIATION_COMPLIANCE_STATUS_CHECK&quot;</span>
+  CloudWatchPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: <span class="token operator">!</span>Sub <span class="token string">&quot;<span class="token variable">${ClusterFQDN}</span>-CloudWatch&quot;</span>
+      Description: <span class="token operator">!</span>Sub <span class="token string">&quot;Policy required by Fargate to log to CloudWatch for <span class="token variable">${ClusterFQDN}</span>&quot;</span>
+      PolicyDocument:
+        Version: <span class="token string">&quot;2012-10-17&quot;</span>
+        Statement:
+        - Effect: Allow
+          Action:
+          - logs:CreateLogStream
+          - logs:CreateLogGroup
+          - logs:DescribeLogStreams
+          - logs:PutLogEvents
+          Resource: <span class="token string">&quot;*&quot;</span>
+  HostedZone:
+    Type: AWS::Route53::HostedZone
+    Properties:
+      Name: <span class="token operator">!</span>Ref ClusterFQDN
+  KMSAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: <span class="token operator">!</span>Sub <span class="token string">&quot;alias/eks-<span class="token variable">${ClusterName}</span>&quot;</span>
+      TargetKeyId: <span class="token operator">!</span>Ref KMSKey
+  KMSKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: <span class="token operator">!</span>Sub <span class="token string">&quot;KMS key for secrets related to <span class="token variable">${ClusterFQDN}</span>&quot;</span>
+      EnableKeyRotation: <span class="token boolean">true</span>
+      PendingWindowInDays: <span class="token number">7</span>
+      KeyPolicy:
+        Version: <span class="token string">&quot;2012-10-17&quot;</span>
+        Id: <span class="token operator">!</span>Sub <span class="token string">&quot;eks-key-policy-<span class="token variable">${ClusterName}</span>&quot;</span>
+        Statement:
+        - Sid: Enable IAM User Permissions
+          Effect: Allow
+          Principal:
+            AWS: <span class="token operator">!</span>Sub <span class="token string">&quot;arn:aws:iam::<span class="token variable">${AWS<span class="token operator">:</span><span class="token operator">:</span>AccountId}</span>:root&quot;</span>
+          Action: kms:*
+          Resource: <span class="token string">&quot;*&quot;</span>
+        - Sid: Allow use of the key
+          Effect: Allow
+          Principal:
+            AWS: <span class="token operator">!</span>Sub <span class="token string">&quot;arn:aws:iam::<span class="token variable">${AWS<span class="token operator">:</span><span class="token operator">:</span>AccountId}</span>:role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling&quot;</span>
+          Action:
+          - kms:Encrypt
+          - kms:Decrypt
+          - kms:ReEncrypt*
+          - kms:GenerateDataKey*
+          - kms:DescribeKey
+          Resource: <span class="token string">&quot;*&quot;</span>
+        - Sid: Allow attachment of persistent resources
+          Effect: Allow
+          Principal:
+            AWS: <span class="token operator">!</span>Sub <span class="token string">&quot;arn:aws:iam::<span class="token variable">${AWS<span class="token operator">:</span><span class="token operator">:</span>AccountId}</span>:role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling&quot;</span>
+          Action:
+          - kms:CreateGrant
+          Resource: <span class="token string">&quot;*&quot;</span>
+          Condition:
+            Bool:
+              kms:GrantIsForAWSResource: <span class="token boolean">true</span>
+  EKSViewNodesAndWorkloadsPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: <span class="token operator">!</span>Sub <span class="token string">&quot;<span class="token variable">${ClusterFQDN}</span>-EKSViewNodesAndWorkloads&quot;</span>
+      Description: <span class="token operator">!</span>Sub <span class="token string">&quot;Policy used to view workloads running in an EKS cluster created using CAPA&quot;</span>
+      PolicyDocument:
+        Version: <span class="token string">&quot;2012-10-17&quot;</span>
+        Statement:
+        - Effect: Allow
+          Action:
+          - eks:DescribeNodegroup
+          - eks:ListNodegroups
+          - eks:DescribeCluster
+          - eks:ListClusters
+          - eks:AccessKubernetesApi
+          - ssm:GetParameter
+          - eks:ListUpdates
+          - eks:ListFargateProfiles
+          Resource: <span class="token string">&quot;*&quot;</span>
+  RecordSet:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: <span class="token operator">!</span>Sub <span class="token string">&quot;<span class="token variable">${BaseDomain}</span>.&quot;</span>
+      Name: <span class="token operator">!</span>Ref ClusterFQDN
+      Type: NS
+      TTL: <span class="token number">60</span>
+      ResourceRecords: <span class="token operator">!</span>GetAtt HostedZone.NameServers
+  S3Policy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: <span class="token operator">!</span>Sub <span class="token string">&quot;<span class="token variable">${ClusterFQDN}</span>-AmazonS3&quot;</span>
+      Description: <span class="token operator">!</span>Sub <span class="token string">&quot;Policy required by Harbor and Velero to write to S3 bucket <span class="token variable">${ClusterFQDN}</span>&quot;</span>
+      PolicyDocument:
+        Version: <span class="token string">&quot;2012-10-17&quot;</span>
+        Statement:
+        - Effect: Allow
+          Action:
+          - s3:ListBucket
+          - s3:GetBucketLocation
+          - s3:ListBucketMultipartUploads
+          Resource: <span class="token operator">!</span>GetAtt S3Bucket.Arn
+        - Effect: Allow
+          Action:
+          - s3:PutObject
+          - s3:GetObject
+          - s3:DeleteObject
+          - s3:ListMultipartUploadParts
+          - s3:AbortMultipartUpload
+          Resource: <span class="token operator">!</span>Sub <span class="token string">&quot;arn:aws:s3:::<span class="token variable">${ClusterFQDN}</span>/*&quot;</span>
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: Private
+      BucketName: <span class="token operator">!</span>Sub <span class="token string">&quot;<span class="token variable">${ClusterFQDN}</span>&quot;</span>
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+  SecretsManagerMySecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: <span class="token operator">!</span>Sub <span class="token string">&quot;<span class="token variable">${ClusterFQDN}</span>-MySecret&quot;</span>
+      Description: My Secret
+      GenerateSecretString:
+        SecretStringTemplate: <span class="token string">&quot;{<span class="token entity" title="\&quot;">\&quot;</span>username<span class="token entity" title="\&quot;">\&quot;</span>: <span class="token entity" title="\&quot;">\&quot;</span>Administrator<span class="token entity" title="\&quot;">\&quot;</span>}&quot;</span>
+        GenerateStringKey: password
+        PasswordLength: <span class="token number">32</span>
+      KmsKeyId: <span class="token operator">!</span>Ref KMSKey
+  SecretsManagerMySecret2:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: <span class="token operator">!</span>Sub <span class="token string">&quot;<span class="token variable">${ClusterFQDN}</span>-MySecret2&quot;</span>
+      Description: My Secret2
+      GenerateSecretString:
+        SecretStringTemplate: <span class="token string">&quot;{<span class="token entity" title="\&quot;">\&quot;</span>username<span class="token entity" title="\&quot;">\&quot;</span>: <span class="token entity" title="\&quot;">\&quot;</span>Administrator2<span class="token entity" title="\&quot;">\&quot;</span>}&quot;</span>
+        GenerateStringKey: password
+        PasswordLength: <span class="token number">32</span>
+      KmsKeyId: <span class="token operator">!</span>Ref KMSKey
+  UserMyUser1:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: <span class="token operator">!</span>Sub <span class="token string">&quot;myuser1-<span class="token variable">${ClusterName}</span>&quot;</span>
+      Policies:
+      - PolicyName: <span class="token operator">!</span>Sub <span class="token string">&quot;myuser1-<span class="token variable">${ClusterName}</span>-policy&quot;</span>
+        PolicyDocument:
+          Version: <span class="token string">&quot;2012-10-17&quot;</span>
+          Statement:
+          - Sid: AllowAssumeOrganizationAccountRole
+            Effect: Allow
+            Action: sts:AssumeRole
+            Resource: <span class="token operator">!</span>GetAtt RoleMyUser1.Arn
+  AccessKeyMyUser1:
+    Type: AWS::IAM::AccessKey
+    Properties:
+      UserName: <span class="token operator">!</span>Ref UserMyUser1
+  RoleMyUser1:
+    Type: AWS::IAM::Role
+    Properties:
+      Description: <span class="token operator">!</span>Sub <span class="token string">&quot;IAM role for the myuser1-<span class="token variable">${ClusterName}</span> user&quot;</span>
+      RoleName: <span class="token operator">!</span>Sub <span class="token string">&quot;myuser1-<span class="token variable">${ClusterName}</span>&quot;</span>
+      AssumeRolePolicyDocument:
+        Version: <span class="token number">2012</span>-10-17
+        Statement:
+        - Effect: Allow
+          Principal:
+            AWS: <span class="token operator">!</span>Sub <span class="token string">&quot;arn:aws:iam::<span class="token variable">${AWS<span class="token operator">:</span><span class="token operator">:</span>AccountId}</span>:root&quot;</span>
+          Action: sts:AssumeRole
+  UserMyUser2:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: <span class="token operator">!</span>Sub <span class="token string">&quot;myuser2-<span class="token variable">${ClusterName}</span>&quot;</span>
+      Policies:
+      - PolicyName: <span class="token operator">!</span>Sub <span class="token string">&quot;myuser2-<span class="token variable">${ClusterName}</span>-policy&quot;</span>
+        PolicyDocument:
+          Version: <span class="token string">&quot;2012-10-17&quot;</span>
+          Statement:
+          - Sid: AllowAssumeOrganizationAccountRole
+            Effect: Allow
+            Action: sts:AssumeRole
+            Resource: <span class="token operator">!</span>GetAtt RoleMyUser2.Arn
+  AccessKeyMyUser2:
+    Type: AWS::IAM::AccessKey
+    Properties:
+      UserName: <span class="token operator">!</span>Ref UserMyUser2
+  RoleMyUser2:
+    Type: AWS::IAM::Role
+    Properties:
+      Description: <span class="token operator">!</span>Sub <span class="token string">&quot;IAM role for the myuser2-<span class="token variable">${ClusterName}</span> user&quot;</span>
+      RoleName: <span class="token operator">!</span>Sub <span class="token string">&quot;myuser2-<span class="token variable">${ClusterName}</span>&quot;</span>
+      AssumeRolePolicyDocument:
+        Version: <span class="token number">2012</span>-10-17
+        Statement:
+        - Effect: Allow
+          Principal:
+            AWS: <span class="token operator">!</span>Sub <span class="token string">&quot;arn:aws:iam::<span class="token variable">${AWS<span class="token operator">:</span><span class="token operator">:</span>AccountId}</span>:root&quot;</span>
+          Action: sts:AssumeRole
+Outputs:
+  CloudWatchPolicyArn:
+    Description: The ARN of the created CloudWatchPolicy
+    Value: <span class="token operator">!</span>Ref CloudWatchPolicy
+    Export:
+      Name:
+        Fn::Sub: <span class="token string">&quot;<span class="token variable">${AWS<span class="token operator">:</span><span class="token operator">:</span>StackName}</span>-CloudWatchPolicyArn&quot;</span>
+  KMSKeyArn:
+    Description: The ARN of the created KMS Key to encrypt EKS related services
+    Value: <span class="token operator">!</span>GetAtt KMSKey.Arn
+    Export:
+      Name:
+        Fn::Sub: <span class="token string">&quot;<span class="token variable">${AWS<span class="token operator">:</span><span class="token operator">:</span>StackName}</span>-KMSKeyArn&quot;</span>
+  KMSKeyId:
+    Description: The ID of the created KMS Key to encrypt EKS related services
+    Value: <span class="token operator">!</span>Ref KMSKey
+    Export:
+      Name:
+        Fn::Sub: <span class="token string">&quot;<span class="token variable">${AWS<span class="token operator">:</span><span class="token operator">:</span>StackName}</span>-KMSKeyId&quot;</span>
+  HostedZoneArn:
+    Description: The ARN of the created Route53 Zone <span class="token keyword">for</span> K8s cluster
+    Value: <span class="token operator">!</span>Ref HostedZone
+    Export:
+      Name:
+        Fn::Sub: <span class="token string">&quot;<span class="token variable">${AWS<span class="token operator">:</span><span class="token operator">:</span>StackName}</span>-HostedZoneArn&quot;</span>
+  S3PolicyArn:
+    Description: The ARN of the created AmazonS3 policy
+    Value: <span class="token operator">!</span>Ref S3Policy
+    Export:
+      Name:
+        Fn::Sub: <span class="token string">&quot;<span class="token variable">${AWS<span class="token operator">:</span><span class="token operator">:</span>StackName}</span>-S3PolicyArn&quot;</span>
+  RoleMyUser1Arn:
+    Description: The ARN of the MyUser1 IAM Role
+    Value: <span class="token operator">!</span>GetAtt RoleMyUser1.Arn
+    Export:
+      Name:
+        Fn::Sub: <span class="token string">&quot;<span class="token variable">${AWS<span class="token operator">:</span><span class="token operator">:</span>StackName}</span>-RoleMyUser1Arn&quot;</span>
+  AccessKeyMyUser1:
+    Description: The AccessKey <span class="token keyword">for</span> MyUser1 user
+    Value: <span class="token operator">!</span>Ref AccessKeyMyUser1
+    Export:
+      Name:
+        Fn::Sub: <span class="token string">&quot;<span class="token variable">${AWS<span class="token operator">:</span><span class="token operator">:</span>StackName}</span>-AccessKeyMyUser1&quot;</span>
+  SecretAccessKeyMyUser1:
+    Description: The SecretAccessKey <span class="token keyword">for</span> MyUser1 user
+    Value: <span class="token operator">!</span>GetAtt AccessKeyMyUser1.SecretAccessKey
+    Export:
+      Name:
+        Fn::Sub: <span class="token string">&quot;<span class="token variable">${AWS<span class="token operator">:</span><span class="token operator">:</span>StackName}</span>-SecretAccessKeyMyUser1&quot;</span>
+  RoleMyUser2Arn:
+    Description: The ARN of the MyUser2 IAM Role
+    Value: <span class="token operator">!</span>GetAtt RoleMyUser2.Arn
+    Export:
+      Name:
+        Fn::Sub: <span class="token string">&quot;<span class="token variable">${AWS<span class="token operator">:</span><span class="token operator">:</span>StackName}</span>-RoleMyUser2Arn&quot;</span>
+  AccessKeyMyUser2:
+    Description: The AccessKey <span class="token keyword">for</span> MyUser2 user
+    Value: <span class="token operator">!</span>Ref AccessKeyMyUser2
+    Export:
+      Name:
+        Fn::Sub: <span class="token string">&quot;<span class="token variable">${AWS<span class="token operator">:</span><span class="token operator">:</span>StackName}</span>-AccessKeyMyUser2&quot;</span>
+  SecretAccessKeyMyUser2:
+    Description: The SecretAccessKey <span class="token keyword">for</span> MyUser2 user
+    Value: <span class="token operator">!</span>GetAtt AccessKeyMyUser2.SecretAccessKey
+    Export:
+      Name:
+        Fn::Sub: <span class="token string">&quot;<span class="token variable">${AWS<span class="token operator">:</span><span class="token operator">:</span>StackName}</span>-SecretAccessKeyMyUser2&quot;</span>
+EOF
+
+<span class="token builtin class-name">eval</span> aws cloudformation deploy <span class="token parameter variable">--capabilities</span> CAPABILITY_NAMED_IAM <span class="token punctuation">\</span>
+  --parameter-overrides <span class="token string">&quot;ClusterFQDN=<span class="token variable">${CLUSTER_FQDN}</span> ClusterName=<span class="token variable">${CLUSTER_NAME}</span> BaseDomain=<span class="token variable">${BASE_DOMAIN}</span>&quot;</span> <span class="token punctuation">\</span>
+  --stack-name <span class="token string">&quot;<span class="token variable">${CLUSTER_NAME}</span>-route53-iam-s3-kms-asm&quot;</span> --template-file <span class="token string">&quot;tmp/<span class="token variable">${CLUSTER_FQDN}</span>/aws-route53-iam-s3-kms-asm.yml&quot;</span> <span class="token parameter variable">--tags</span> <span class="token string">&quot;<span class="token variable">${TAGS}</span>&quot;</span>
+
+<span class="token assign-left variable">AWS_CLOUDFORMATION_DETAILS</span><span class="token operator">=</span><span class="token variable"><span class="token variable">$(</span>aws cloudformation describe-stacks --stack-name <span class="token string">&quot;<span class="token variable">${CLUSTER_NAME}</span>-route53-iam-s3-kms-asm&quot;</span><span class="token variable">)</span></span>
+<span class="token assign-left variable">CLOUDWATCH_POLICY_ARN</span><span class="token operator">=</span><span class="token variable"><span class="token variable">$(</span><span class="token builtin class-name">echo</span> <span class="token string">&quot;<span class="token variable">${AWS_CLOUDFORMATION_DETAILS}</span>&quot;</span> <span class="token operator">|</span> jq <span class="token parameter variable">-r</span> <span class="token string">&quot;.Stacks[0].Outputs[] | select(.OutputKey==<span class="token entity" title="\&quot;">\&quot;</span>CloudWatchPolicyArn<span class="token entity" title="\&quot;">\&quot;</span>) .OutputValue&quot;</span><span class="token variable">)</span></span>
+<span class="token assign-left variable">KMS_KEY_ARN</span><span class="token operator">=</span><span class="token variable"><span class="token variable">$(</span><span class="token builtin class-name">echo</span> <span class="token string">&quot;<span class="token variable">${AWS_CLOUDFORMATION_DETAILS}</span>&quot;</span> <span class="token operator">|</span> jq <span class="token parameter variable">-r</span> <span class="token string">&quot;.Stacks[0].Outputs[] | select(.OutputKey==<span class="token entity" title="\&quot;">\&quot;</span>KMSKeyArn<span class="token entity" title="\&quot;">\&quot;</span>) .OutputValue&quot;</span><span class="token variable">)</span></span>
+<span class="token assign-left variable">KMS_KEY_ID</span><span class="token operator">=</span><span class="token variable"><span class="token variable">$(</span><span class="token builtin class-name">echo</span> <span class="token string">&quot;<span class="token variable">${AWS_CLOUDFORMATION_DETAILS}</span>&quot;</span> <span class="token operator">|</span> jq <span class="token parameter variable">-r</span> <span class="token string">&quot;.Stacks[0].Outputs[] | select(.OutputKey==<span class="token entity" title="\&quot;">\&quot;</span>KMSKeyId<span class="token entity" title="\&quot;">\&quot;</span>) .OutputValue&quot;</span><span class="token variable">)</span></span>
+<span class="token assign-left variable">S3_POLICY_ARN</span><span class="token operator">=</span><span class="token variable"><span class="token variable">$(</span><span class="token builtin class-name">echo</span> <span class="token string">&quot;<span class="token variable">${AWS_CLOUDFORMATION_DETAILS}</span>&quot;</span> <span class="token operator">|</span> jq <span class="token parameter variable">-r</span> <span class="token string">&quot;.Stacks[0].Outputs[] | select(.OutputKey==<span class="token entity" title="\&quot;">\&quot;</span>S3PolicyArn<span class="token entity" title="\&quot;">\&quot;</span>) .OutputValue&quot;</span><span class="token variable">)</span></span>
+<span class="token assign-left variable">MYUSER1_ROLE_ARN</span><span class="token operator">=</span><span class="token variable"><span class="token variable">$(</span><span class="token builtin class-name">echo</span> <span class="token string">&quot;<span class="token variable">${AWS_CLOUDFORMATION_DETAILS}</span>&quot;</span> <span class="token operator">|</span> jq <span class="token parameter variable">-r</span> <span class="token string">&quot;.Stacks[0].Outputs[] | select(.OutputKey==<span class="token entity" title="\&quot;">\&quot;</span>RoleMyUser1Arn<span class="token entity" title="\&quot;">\&quot;</span>) .OutputValue&quot;</span><span class="token variable">)</span></span>
+<span class="token assign-left variable">MYUSER1_USER_ACCESSKEYMYUSER</span><span class="token operator">=</span><span class="token variable"><span class="token variable">$(</span><span class="token builtin class-name">echo</span> <span class="token string">&quot;<span class="token variable">${AWS_CLOUDFORMATION_DETAILS}</span>&quot;</span> <span class="token operator">|</span> jq <span class="token parameter variable">-r</span> <span class="token string">&quot;.Stacks[0].Outputs[] | select(.OutputKey==<span class="token entity" title="\&quot;">\&quot;</span>AccessKeyMyUser1<span class="token entity" title="\&quot;">\&quot;</span>) .OutputValue&quot;</span><span class="token variable">)</span></span>
+<span class="token assign-left variable">MYUSER1_USER_SECRETACCESSKEY</span><span class="token operator">=</span><span class="token variable"><span class="token variable">$(</span><span class="token builtin class-name">echo</span> <span class="token string">&quot;<span class="token variable">${AWS_CLOUDFORMATION_DETAILS}</span>&quot;</span> <span class="token operator">|</span> jq <span class="token parameter variable">-r</span> <span class="token string">&quot;.Stacks[0].Outputs[] | select(.OutputKey==<span class="token entity" title="\&quot;">\&quot;</span>SecretAccessKeyMyUser1<span class="token entity" title="\&quot;">\&quot;</span>) .OutputValue&quot;</span><span class="token variable">)</span></span>
+<span class="token assign-left variable">MYUSER2_ROLE_ARN</span><span class="token operator">=</span><span class="token variable"><span class="token variable">$(</span><span class="token builtin class-name">echo</span> <span class="token string">&quot;<span class="token variable">${AWS_CLOUDFORMATION_DETAILS}</span>&quot;</span> <span class="token operator">|</span> jq <span class="token parameter variable">-r</span> <span class="token string">&quot;.Stacks[0].Outputs[] | select(.OutputKey==<span class="token entity" title="\&quot;">\&quot;</span>RoleMyUser2Arn<span class="token entity" title="\&quot;">\&quot;</span>) .OutputValue&quot;</span><span class="token variable">)</span></span>
+<span class="token assign-left variable">MYUSER2_USER_ACCESSKEYMYUSER</span><span class="token operator">=</span><span class="token variable"><span class="token variable">$(</span><span class="token builtin class-name">echo</span> <span class="token string">&quot;<span class="token variable">${AWS_CLOUDFORMATION_DETAILS}</span>&quot;</span> <span class="token operator">|</span> jq <span class="token parameter variable">-r</span> <span class="token string">&quot;.Stacks[0].Outputs[] | select(.OutputKey==<span class="token entity" title="\&quot;">\&quot;</span>AccessKeyMyUser2<span class="token entity" title="\&quot;">\&quot;</span>) .OutputValue&quot;</span><span class="token variable">)</span></span>
+<span class="token assign-left variable">MYUSER2_USER_SECRETACCESSKEY</span><span class="token operator">=</span><span class="token variable"><span class="token variable">$(</span><span class="token builtin class-name">echo</span> <span class="token string">&quot;<span class="token variable">${AWS_CLOUDFORMATION_DETAILS}</span>&quot;</span> <span class="token operator">|</span> jq <span class="token parameter variable">-r</span> <span class="token string">&quot;.Stacks[0].Outputs[] | select(.OutputKey==<span class="token entity" title="\&quot;">\&quot;</span>SecretAccessKeyMyUser2<span class="token entity" title="\&quot;">\&quot;</span>) .OutputValue&quot;</span><span class="token variable">)</span></span>
+</code></pre></div><p>Change TTL=60 of SOA + NS records for new domain
+(it can not be done in CloudFormation):</p> <div class="language-bash extra-class"><pre class="language-bash"><code><span class="token assign-left variable">HOSTED_ZONE_ID</span><span class="token operator">=</span><span class="token variable"><span class="token variable">$(</span>aws route53 list-hosted-zones <span class="token parameter variable">--query</span> <span class="token string">&quot;HostedZones[?Name==\<span class="token variable"><span class="token variable">`</span>$<span class="token punctuation">{</span>CLUSTER_FQDN<span class="token punctuation">}</span>.<span class="token punctuation">\</span><span class="token variable">`</span></span>].Id&quot;</span> <span class="token parameter variable">--output</span> text<span class="token variable">)</span></span>
+<span class="token assign-left variable">RESOURCE_RECORD_SET_SOA</span><span class="token operator">=</span><span class="token variable"><span class="token variable">$(</span>aws route53 <span class="token parameter variable">--output</span> json list-resource-record-sets --hosted-zone-id <span class="token string">&quot;<span class="token variable">${HOSTED_ZONE_ID}</span>&quot;</span> <span class="token parameter variable">--query</span> <span class="token string">&quot;(ResourceRecordSets[?Type == \<span class="token variable"><span class="token variable">`</span>SOA<span class="token punctuation">\</span><span class="token variable">`</span></span>])[0]&quot;</span> <span class="token operator">|</span> <span class="token function">sed</span> <span class="token string">&quot;s/<span class="token entity" title="\&quot;">\&quot;</span>TTL<span class="token entity" title="\&quot;">\&quot;</span>:.*/<span class="token entity" title="\&quot;">\&quot;</span>TTL<span class="token entity" title="\&quot;">\&quot;</span>: 60,/&quot;</span><span class="token variable">)</span></span>
+<span class="token assign-left variable">RESOURCE_RECORD_SET_NS</span><span class="token operator">=</span><span class="token variable"><span class="token variable">$(</span>aws route53 <span class="token parameter variable">--output</span> json list-resource-record-sets --hosted-zone-id <span class="token string">&quot;<span class="token variable">${HOSTED_ZONE_ID}</span>&quot;</span> <span class="token parameter variable">--query</span> <span class="token string">&quot;(ResourceRecordSets[?Type == \<span class="token variable"><span class="token variable">`</span>NS<span class="token punctuation">\</span><span class="token variable">`</span></span>])[0]&quot;</span> <span class="token operator">|</span> <span class="token function">sed</span> <span class="token string">&quot;s/<span class="token entity" title="\&quot;">\&quot;</span>TTL<span class="token entity" title="\&quot;">\&quot;</span>:.*/<span class="token entity" title="\&quot;">\&quot;</span>TTL<span class="token entity" title="\&quot;">\&quot;</span>: 60,/&quot;</span><span class="token variable">)</span></span>
+<span class="token function">cat</span> <span class="token operator">&lt;&lt;</span> <span class="token string">EOF<span class="token bash punctuation"> <span class="token operator">|</span> aws route53 <span class="token parameter variable">--output</span> json change-resource-record-sets --hosted-zone-id <span class="token string">&quot;<span class="token variable">${HOSTED_ZONE_ID}</span>&quot;</span> --change-batch<span class="token operator">=</span>file:///dev/stdin</span>
+{
+    &quot;Comment&quot;: &quot;Update record to reflect new TTL for SOA and NS records&quot;,
+    &quot;Changes&quot;: [
+        {
+            &quot;Action&quot;: &quot;UPSERT&quot;,
+            &quot;ResourceRecordSet&quot;:
+<span class="token variable">${RESOURCE_RECORD_SET_SOA}</span>
+        },
+        {
+            &quot;Action&quot;: &quot;UPSERT&quot;,
+            &quot;ResourceRecordSet&quot;:
+<span class="token variable">${RESOURCE_RECORD_SET_NS}</span>
+        }
+    ]
+}
+EOF</span>
+</code></pre></div><h2 id="create-amazon-eks"><a href="#create-amazon-eks" class="header-anchor">#</a> Create Amazon EKS</h2> <p><img src="https://raw.githubusercontent.com/aws-samples/eks-workshop/65b766c494a5b4f5420b2912d8373c4957163541/static/images/3-service-animated.gif" alt="EKS" title="EKS"></p> <p>Create <a href="https://aws.amazon.com/eks/" target="_blank" rel="noopener noreferrer">Amazon EKS<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a> in AWS by using <a href="https://eksctl.io/" target="_blank" rel="noopener noreferrer">eksctl<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>.
+It's a tool from Weaveworks based on official
+AWS CloudFormation templates which will be used to launch and configure our
+EKS cluster and nodes.</p> <p><img src="https://raw.githubusercontent.com/weaveworks/eksctl/c365149fc1a0b8d357139cbd6cda5aee8841c16c/logo/eksctl.png" alt="eksctl" title="eksctl"></p> <p>Generate SSH key if not exists:</p> <div class="language-bash extra-class"><pre class="language-bash"><code><span class="token builtin class-name">test</span> <span class="token parameter variable">-f</span> ~/.ssh/id_rsa.pub <span class="token operator">||</span> <span class="token punctuation">(</span>install <span class="token parameter variable">-m</span> 0700 <span class="token parameter variable">-d</span> ~/.ssh <span class="token operator">&amp;&amp;</span> ssh-keygen <span class="token parameter variable">-b</span> <span class="token number">2048</span> <span class="token parameter variable">-t</span> rsa <span class="token parameter variable">-f</span> ~/.ssh/id_rsa <span class="token parameter variable">-q</span> <span class="token parameter variable">-N</span> <span class="token string">&quot;&quot;</span><span class="token punctuation">)</span>
+</code></pre></div><p>Create the Amazon EKS cluster with Calico using <code>eksctl</code>:</p> <div class="language-bash extra-class"><pre class="language-bash"><code><span class="token function">cat</span> <span class="token operator">&gt;</span> <span class="token string">&quot;tmp/<span class="token variable">${CLUSTER_FQDN}</span>/eksctl.yaml&quot;</span> <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: <span class="token variable">${CLUSTER_NAME}</span>
+  region: <span class="token variable">${AWS_DEFAULT_REGION}</span>
+  version: &quot;1.21&quot;
+  tags: &amp;tags
+<span class="token variable"><span class="token variable">$(</span><span class="token builtin class-name">echo</span> <span class="token string">&quot;<span class="token variable">${TAGS}</span>&quot;</span> <span class="token operator">|</span> <span class="token function">sed</span> <span class="token string">&quot;s/ /<span class="token entity" title="\\">\\</span>n    /g; s/^/    /g; s/=/: /g&quot;</span><span class="token variable">)</span></span>
+availabilityZones:
+  - <span class="token variable">${AWS_DEFAULT_REGION}</span>a
+  - <span class="token variable">${AWS_DEFAULT_REGION}</span>b
+iam:
+  withOIDC: true
+  serviceAccounts:
+    - metadata:
+        name: aws-load-balancer-controller
+        namespace: kube-system
+      wellKnownPolicies:
+        awsLoadBalancerController: true
+    - metadata:
+        name: cert-manager
+        namespace: cert-manager
+      wellKnownPolicies:
+        certManager: true
+    - metadata:
+        name: cluster-autoscaler
+        namespace: kube-system
+      wellKnownPolicies:
+        autoScaler: true
+    - metadata:
+        name: external-dns
+        namespace: external-dns
+      wellKnownPolicies:
+        externalDNS: true
+    - metadata:
+        name: ebs-csi-controller-sa
+        namespace: kube-system
+      wellKnownPolicies:
+        ebsCSIController: true
+    - metadata:
+        name: harbor
+        namespace: harbor
+      attachPolicyARNs:
+        - <span class="token variable">${S3_POLICY_ARN}</span>
+    - metadata:
+        name: velero
+        namespace: velero
+      attachPolicyARNs:
+        - <span class="token variable">${S3_POLICY_ARN}</span>
+    - metadata:
+        name: s3-test
+        namespace: s3-test
+      attachPolicyARNs:
+        - <span class="token variable">${S3_POLICY_ARN}</span>
+    - metadata:
+        name: grafana
+        namespace: kube-prometheus-stack
+      attachPolicyARNs:
+        - arn:aws:iam::aws:policy/AmazonPrometheusQueryAccess
+        - arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess
+      attachPolicy:
+        Version: 2012-10-17
+        Statement:
+        - Sid: AllowReadingTagsInstancesRegionsFromEC2
+          Effect: Allow
+          Action:
+          - ec2:DescribeTags
+          - ec2:DescribeInstances
+          - ec2:DescribeRegions
+          Resource: &quot;*&quot;
+        - Sid: AllowReadingResourcesForTags
+          Effect: Allow
+          Action: tag:GetResources
+          Resource: &quot;*&quot;
+    - metadata:
+        name: kube-prometheus-stack-prometheus
+        namespace: kube-prometheus-stack
+      attachPolicyARNs:
+        - arn:aws:iam::aws:policy/AmazonPrometheusQueryAccess
+        - arn:aws:iam::aws:policy/AmazonPrometheusRemoteWriteAccess
+    - metadata:
+        name: efs-csi-controller-sa
+        namespace: kube-system
+      wellKnownPolicies:
+        efsCSIController: true
+    - metadata:
+        name: vault
+        namespace: vault
+      attachPolicy:
+        Version: 2012-10-17
+        Statement:
+        - Sid: VaultKMSUnseal
+          Effect: Allow
+          Action:
+          - kms:Encrypt
+          - kms:Decrypt
+          - kms:DescribeKey
+          Resource:
+          - &quot;<span class="token variable">${KMS_KEY_ARN}</span>&quot;
+    - metadata:
+        name: kuard
+        namespace: kuard
+      attachPolicy:
+        Version: 2012-10-17
+        Statement:
+        - Sid: AllowSecretManagerAccess
+          Effect: Allow
+          Action:
+          - secretsmanager:GetSecretValue
+          - secretsmanager:DescribeSecret
+          Resource:
+          - &quot;arn:aws:secretsmanager:*:*:secret:*&quot;
+        - Sid: AllowKMSAccess
+          Effect: Allow
+          Action:
+          - kms:Decrypt
+          Resource:
+          - &quot;<span class="token variable">${KMS_KEY_ARN}</span>&quot;
+vpc:
+  nat:
+    gateway: Disable
+managedNodeGroups:
+  - name: managed-ng-1
+    amiFamily: Bottlerocket
+    instanceType: t3.xlarge
+    instancePrefix: ruzickap
+    desiredCapacity: 3
+    minSize: 2
+    maxSize: 5
+    volumeSize: 30
+    labels:
+      role: worker
+    tags: *tags
+    iam:
+      withAddonPolicies:
+        autoScaler: true
+        cloudWatch: true
+        ebs: true
+        efs: true
+    maxPodsPerNode: 1000
+    volumeEncrypted: true
+    volumeKmsKeyID: <span class="token variable">${KMS_KEY_ID}</span>
+fargateProfiles:
+  - name: fp-fgtest
+    selectors:
+      - namespace: fgtest
+    tags: *tags
+secretsEncryption:
+  keyARN: <span class="token variable">${KMS_KEY_ARN}</span>
+cloudWatch:
+  clusterLogging:
+    enableTypes:
+      - authenticator
+EOF</span>
+
+<span class="token keyword">if</span> <span class="token operator">!</span> eksctl get clusters <span class="token parameter variable">--name</span><span class="token operator">=</span><span class="token string">&quot;<span class="token variable">${CLUSTER_NAME}</span>&quot;</span> <span class="token operator">&amp;&gt;</span> /dev/null<span class="token punctuation">;</span> <span class="token keyword">then</span>
+  eksctl create cluster --config-file <span class="token string">&quot;tmp/<span class="token variable">${CLUSTER_FQDN}</span>/eksctl.yaml&quot;</span> <span class="token parameter variable">--kubeconfig</span> <span class="token string">&quot;<span class="token variable">${KUBECONFIG}</span>&quot;</span> --without-nodegroup
+  kubectl delete daemonset <span class="token parameter variable">-n</span> kube-system aws-node
+  kubectl apply <span class="token parameter variable">-f</span> https://docs.projectcalico.org/archive/v3.20/manifests/calico-vxlan.yaml
+  eksctl create nodegroup --config-file <span class="token string">&quot;tmp/<span class="token variable">${CLUSTER_FQDN}</span>/eksctl.yaml&quot;</span>
+<span class="token keyword">fi</span>
+</code></pre></div><p>Output:</p> <div class="language-text extra-class"><pre class="language-text"><code>2021-11-29 17:52:50 [ℹ]  eksctl version 0.75.0
+2021-11-29 17:52:50 [ℹ]  using region eu-west-1
+2021-11-29 17:52:50 [ℹ]  subnets for eu-west-1a - public:192.168.0.0/19 private:192.168.64.0/19
+2021-11-29 17:52:50 [ℹ]  subnets for eu-west-1b - public:192.168.32.0/19 private:192.168.96.0/19
+2021-11-29 17:52:50 [ℹ]  using Kubernetes version 1.21
+2021-11-29 17:52:50 [ℹ]  creating EKS cluster &quot;kube1&quot; in &quot;eu-west-1&quot; region with Fargate profile
+2021-11-29 17:52:50 [ℹ]  will create a CloudFormation stack for cluster itself and 0 nodegroup stack(s)
+2021-11-29 17:52:50 [ℹ]  will create a CloudFormation stack for cluster itself and 0 managed nodegroup stack(s)
+2021-11-29 17:52:50 [ℹ]  if you encounter any issues, check CloudFormation console or try 'eksctl utils describe-stacks --region=eu-west-1 --cluster=kube1'
+2021-11-29 17:52:50 [ℹ]  Kubernetes API endpoint access will use default of {publicAccess=true, privateAccess=false} for cluster &quot;kube1&quot; in &quot;eu-west-1&quot;
+2021-11-29 17:52:50 [ℹ]
+2 sequential tasks: { create cluster control plane &quot;kube1&quot;,
+    7 sequential sub-tasks: {
+        wait for control plane to become ready,
+        tag cluster,
+        update CloudWatch logging configuration,
+        create fargate profiles,
+        associate IAM OIDC provider,
+        14 parallel sub-tasks: {
+            2 sequential sub-tasks: {
+                create IAM role for serviceaccount &quot;kube-system/aws-load-balancer-controller&quot;,
+                create serviceaccount &quot;kube-system/aws-load-balancer-controller&quot;,
+            },
+            2 sequential sub-tasks: {
+                create IAM role for serviceaccount &quot;cert-manager/cert-manager&quot;,
+                create serviceaccount &quot;cert-manager/cert-manager&quot;,
+            },
+            2 sequential sub-tasks: {
+                create IAM role for serviceaccount &quot;kube-system/cluster-autoscaler&quot;,
+                create serviceaccount &quot;kube-system/cluster-autoscaler&quot;,
+            },
+            2 sequential sub-tasks: {
+                create IAM role for serviceaccount &quot;external-dns/external-dns&quot;,
+                create serviceaccount &quot;external-dns/external-dns&quot;,
+            },
+            2 sequential sub-tasks: {
+                create IAM role for serviceaccount &quot;kube-system/ebs-csi-controller-sa&quot;,
+                create serviceaccount &quot;kube-system/ebs-csi-controller-sa&quot;,
+            },
+            2 sequential sub-tasks: {
+                create IAM role for serviceaccount &quot;harbor/harbor&quot;,
+                create serviceaccount &quot;harbor/harbor&quot;,
+            },
+            2 sequential sub-tasks: {
+                create IAM role for serviceaccount &quot;velero/velero&quot;,
+                create serviceaccount &quot;velero/velero&quot;,
+            },
+            2 sequential sub-tasks: {
+                create IAM role for serviceaccount &quot;s3-test/s3-test&quot;,
+                create serviceaccount &quot;s3-test/s3-test&quot;,
+            },
+            2 sequential sub-tasks: {
+                create IAM role for serviceaccount &quot;kube-prometheus-stack/grafana&quot;,
+                create serviceaccount &quot;kube-prometheus-stack/grafana&quot;,
+            },
+            2 sequential sub-tasks: {
+                create IAM role for serviceaccount &quot;kube-prometheus-stack/kube-prometheus-stack-prometheus&quot;,
+                create serviceaccount &quot;kube-prometheus-stack/kube-prometheus-stack-prometheus&quot;,
+            },
+            2 sequential sub-tasks: {
+                create IAM role for serviceaccount &quot;kube-system/efs-csi-controller-sa&quot;,
+                create serviceaccount &quot;kube-system/efs-csi-controller-sa&quot;,
+            },
+            2 sequential sub-tasks: {
+                create IAM role for serviceaccount &quot;vault/vault&quot;,
+                create serviceaccount &quot;vault/vault&quot;,
+            },
+            2 sequential sub-tasks: {
+                create IAM role for serviceaccount &quot;kuard/kuard&quot;,
+                create serviceaccount &quot;kuard/kuard&quot;,
+            },
+            2 sequential sub-tasks: {
+                create IAM role for serviceaccount &quot;kube-system/aws-node&quot;,
+                create serviceaccount &quot;kube-system/aws-node&quot;,
+            },
+        },
+        restart daemonset &quot;kube-system/aws-node&quot;,
+    }
+}
+2021-11-29 17:52:50 [ℹ]  building cluster stack &quot;eksctl-kube1-cluster&quot;
+2021-11-29 17:52:50 [ℹ]  deploying stack &quot;eksctl-kube1-cluster&quot;
+2021-11-29 17:53:21 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-cluster&quot;
+...
+2021-11-29 18:05:55 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-cluster&quot;
+2021-11-29 18:07:59 [✔]  tagged EKS cluster (Owner=petr.ruzicka@gmail.com, Squad=Cloud_Container_Platform, compliance:na:defender=bottlerocket, Environment=Dev, Group=Cloud_Native)
+2021-11-29 18:08:00 [ℹ]  waiting for requested &quot;LoggingUpdate&quot; in cluster &quot;kube1&quot; to succeed
+...
+2021-11-29 18:08:53 [ℹ]  waiting for requested &quot;LoggingUpdate&quot; in cluster &quot;kube1&quot; to succeed
+2021-11-29 18:08:54 [✔]  configured CloudWatch logging for cluster &quot;kube1&quot; in &quot;eu-west-1&quot; (enabled types: authenticator &amp;amp; disabled types: api, audit, controllerManager, scheduler)
+2021-11-29 18:08:54 [ℹ]  creating Fargate profile &quot;fp-fgtest&quot; on EKS cluster &quot;kube1&quot;
+2021-11-29 18:13:12 [ℹ]  created Fargate profile &quot;fp-fgtest&quot; on EKS cluster &quot;kube1&quot;
+2021-11-29 18:17:44 [ℹ]  building iamserviceaccount stack &quot;eksctl-kube1-addon-iamserviceaccount-kube-system-aws-load-balancer-controller&quot;
+2021-11-29 18:17:44 [ℹ]  building iamserviceaccount stack &quot;eksctl-kube1-addon-iamserviceaccount-kube-prometheus-stack-grafana&quot;
+2021-11-29 18:17:44 [ℹ]  building iamserviceaccount stack &quot;eksctl-kube1-addon-iamserviceaccount-velero-velero&quot;
+2021-11-29 18:17:44 [ℹ]  building iamserviceaccount stack &quot;eksctl-kube1-addon-iamserviceaccount-kube-system-efs-csi-controller-sa&quot;
+2021-11-29 18:17:44 [ℹ]  building iamserviceaccount stack &quot;eksctl-kube1-addon-iamserviceaccount-kuard-kuard&quot;
+2021-11-29 18:17:44 [ℹ]  building iamserviceaccount stack &quot;eksctl-kube1-addon-iamserviceaccount-cert-manager-cert-manager&quot;
+2021-11-29 18:17:44 [ℹ]  building iamserviceaccount stack &quot;eksctl-kube1-addon-iamserviceaccount-kube-system-aws-node&quot;
+2021-11-29 18:17:44 [ℹ]  building iamserviceaccount stack &quot;eksctl-kube1-addon-iamserviceaccount-kube-system-ebs-csi-controller-sa&quot;
+2021-11-29 18:17:44 [ℹ]  building iamserviceaccount stack &quot;eksctl-kube1-addon-iamserviceaccount-kube-system-cluster-autoscaler&quot;
+2021-11-29 18:17:44 [ℹ]  building iamserviceaccount stack &quot;eksctl-kube1-addon-iamserviceaccount-kube-prometheus-stack-kube-prometheus-stack-prometheus&quot;
+2021-11-29 18:17:44 [ℹ]  building iamserviceaccount stack &quot;eksctl-kube1-addon-iamserviceaccount-external-dns-external-dns&quot;
+2021-11-29 18:17:44 [ℹ]  building iamserviceaccount stack &quot;eksctl-kube1-addon-iamserviceaccount-s3-test-s3-test&quot;
+2021-11-29 18:17:44 [ℹ]  building iamserviceaccount stack &quot;eksctl-kube1-addon-iamserviceaccount-vault-vault&quot;
+2021-11-29 18:17:44 [ℹ]  building iamserviceaccount stack &quot;eksctl-kube1-addon-iamserviceaccount-harbor-harbor&quot;
+2021-11-29 18:17:45 [ℹ]  deploying stack &quot;eksctl-kube1-addon-iamserviceaccount-kube-system-cluster-autoscaler&quot;
+2021-11-29 18:17:45 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-kube-system-cluster-autoscaler&quot;
+2021-11-29 18:17:45 [ℹ]  deploying stack &quot;eksctl-kube1-addon-iamserviceaccount-harbor-harbor&quot;
+2021-11-29 18:17:45 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-harbor-harbor&quot;
+2021-11-29 18:17:45 [ℹ]  deploying stack &quot;eksctl-kube1-addon-iamserviceaccount-kube-prometheus-stack-grafana&quot;
+2021-11-29 18:17:45 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-kube-prometheus-stack-grafana&quot;
+2021-11-29 18:17:45 [ℹ]  deploying stack &quot;eksctl-kube1-addon-iamserviceaccount-s3-test-s3-test&quot;
+2021-11-29 18:17:45 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-s3-test-s3-test&quot;
+2021-11-29 18:17:45 [ℹ]  deploying stack &quot;eksctl-kube1-addon-iamserviceaccount-cert-manager-cert-manager&quot;
+2021-11-29 18:17:45 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-cert-manager-cert-manager&quot;
+2021-11-29 18:17:45 [ℹ]  deploying stack &quot;eksctl-kube1-addon-iamserviceaccount-kube-system-efs-csi-controller-sa&quot;
+2021-11-29 18:17:45 [ℹ]  deploying stack &quot;eksctl-kube1-addon-iamserviceaccount-vault-vault&quot;
+2021-11-29 18:17:45 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-kube-system-efs-csi-controller-sa&quot;
+2021-11-29 18:17:45 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-vault-vault&quot;
+2021-11-29 18:17:45 [ℹ]  deploying stack &quot;eksctl-kube1-addon-iamserviceaccount-velero-velero&quot;
+2021-11-29 18:17:45 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-velero-velero&quot;
+2021-11-29 18:17:45 [ℹ]  deploying stack &quot;eksctl-kube1-addon-iamserviceaccount-kuard-kuard&quot;
+2021-11-29 18:17:45 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-kuard-kuard&quot;
+2021-11-29 18:17:45 [ℹ]  deploying stack &quot;eksctl-kube1-addon-iamserviceaccount-external-dns-external-dns&quot;
+2021-11-29 18:17:45 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-external-dns-external-dns&quot;
+2021-11-29 18:17:45 [ℹ]  deploying stack &quot;eksctl-kube1-addon-iamserviceaccount-kube-prometheus-stack-kube-prometheus-stack-prometheus&quot;
+2021-11-29 18:17:45 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-kube-prometheus-stack-kube-prometheus-stack-prometheus&quot;
+2021-11-29 18:17:45 [ℹ]  deploying stack &quot;eksctl-kube1-addon-iamserviceaccount-kube-system-aws-node&quot;
+2021-11-29 18:17:45 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-kube-system-aws-node&quot;
+2021-11-29 18:17:45 [ℹ]  deploying stack &quot;eksctl-kube1-addon-iamserviceaccount-kube-system-aws-load-balancer-controller&quot;
+2021-11-29 18:17:45 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-kube-system-aws-load-balancer-controller&quot;
+2021-11-29 18:17:45 [ℹ]  deploying stack &quot;eksctl-kube1-addon-iamserviceaccount-kube-system-ebs-csi-controller-sa&quot;
+2021-11-29 18:17:45 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-kube-system-ebs-csi-controller-sa&quot;
+2021-11-29 18:18:00 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-kube-system-cluster-autoscaler&quot;
+2021-11-29 18:18:00 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-kube-prometheus-stack-grafana&quot;
+2021-11-29 18:18:01 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-velero-velero&quot;
+2021-11-29 18:18:02 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-kube-system-aws-load-balancer-controller&quot;
+2021-11-29 18:18:02 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-harbor-harbor&quot;
+2021-11-29 18:18:02 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-s3-test-s3-test&quot;
+2021-11-29 18:18:02 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-kube-system-ebs-csi-controller-sa&quot;
+2021-11-29 18:18:03 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-cert-manager-cert-manager&quot;
+2021-11-29 18:18:03 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-vault-vault&quot;
+2021-11-29 18:18:03 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-kuard-kuard&quot;
+2021-11-29 18:18:04 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-kube-system-efs-csi-controller-sa&quot;
+2021-11-29 18:18:04 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-kube-system-aws-node&quot;
+2021-11-29 18:18:04 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-kube-prometheus-stack-kube-prometheus-stack-prometheus&quot;
+2021-11-29 18:18:05 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-external-dns-external-dns&quot;
+2021-11-29 18:18:17 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-harbor-harbor&quot;
+2021-11-29 18:18:18 [ℹ]  created namespace &quot;harbor&quot;
+2021-11-29 18:18:18 [ℹ]  created serviceaccount &quot;harbor/harbor&quot;
+2021-11-29 18:18:18 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-s3-test-s3-test&quot;
+2021-11-29 18:18:18 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-kube-system-cluster-autoscaler&quot;
+2021-11-29 18:18:18 [ℹ]  created namespace &quot;s3-test&quot;
+2021-11-29 18:18:18 [ℹ]  created serviceaccount &quot;s3-test/s3-test&quot;
+2021-11-29 18:18:19 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-velero-velero&quot;
+2021-11-29 18:18:19 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-cert-manager-cert-manager&quot;
+2021-11-29 18:18:19 [ℹ]  created namespace &quot;velero&quot;
+2021-11-29 18:18:19 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-kube-system-aws-load-balancer-controller&quot;
+2021-11-29 18:18:20 [ℹ]  created serviceaccount &quot;velero/velero&quot;
+2021-11-29 18:18:20 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-vault-vault&quot;
+2021-11-29 18:18:20 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-kube-prometheus-stack-grafana&quot;
+2021-11-29 18:18:21 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-kube-prometheus-stack-kube-prometheus-stack-prometheus&quot;
+2021-11-29 18:18:21 [ℹ]  created namespace &quot;kube-prometheus-stack&quot;
+2021-11-29 18:18:21 [ℹ]  created serviceaccount &quot;kube-prometheus-stack/kube-prometheus-stack-prometheus&quot;
+2021-11-29 18:18:21 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-kube-system-ebs-csi-controller-sa&quot;
+2021-11-29 18:18:21 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-kuard-kuard&quot;
+2021-11-29 18:18:24 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-kube-system-efs-csi-controller-sa&quot;
+2021-11-29 18:18:24 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-external-dns-external-dns&quot;
+2021-11-29 18:18:24 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-kube-system-aws-node&quot;
+2021-11-29 18:18:24 [ℹ]  serviceaccount &quot;kube-system/aws-node&quot; already exists
+2021-11-29 18:18:24 [ℹ]  updated serviceaccount &quot;kube-system/aws-node&quot;
+2021-11-29 18:18:35 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-kube-system-cluster-autoscaler&quot;
+2021-11-29 18:18:36 [ℹ]  created serviceaccount &quot;kube-system/cluster-autoscaler&quot;
+2021-11-29 18:18:37 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-kube-prometheus-stack-grafana&quot;
+2021-11-29 18:18:38 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-kuard-kuard&quot;
+2021-11-29 18:18:38 [ℹ]  created serviceaccount &quot;kube-prometheus-stack/grafana&quot;
+2021-11-29 18:18:38 [ℹ]  created namespace &quot;kuard&quot;
+2021-11-29 18:18:38 [ℹ]  created serviceaccount &quot;kuard/kuard&quot;
+2021-11-29 18:18:38 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-vault-vault&quot;
+2021-11-29 18:18:38 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-cert-manager-cert-manager&quot;
+2021-11-29 18:18:38 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-kube-system-aws-load-balancer-controller&quot;
+2021-11-29 18:18:38 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-kube-system-ebs-csi-controller-sa&quot;
+2021-11-29 18:18:38 [ℹ]  created namespace &quot;vault&quot;
+2021-11-29 18:18:39 [ℹ]  created serviceaccount &quot;vault/vault&quot;
+2021-11-29 18:18:39 [ℹ]  created namespace &quot;cert-manager&quot;
+2021-11-29 18:18:39 [ℹ]  created serviceaccount &quot;cert-manager/cert-manager&quot;
+2021-11-29 18:18:39 [ℹ]  created serviceaccount &quot;kube-system/aws-load-balancer-controller&quot;
+2021-11-29 18:18:39 [ℹ]  created serviceaccount &quot;kube-system/ebs-csi-controller-sa&quot;
+2021-11-29 18:18:41 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-external-dns-external-dns&quot;
+2021-11-29 18:18:42 [ℹ]  created namespace &quot;external-dns&quot;
+2021-11-29 18:18:42 [ℹ]  created serviceaccount &quot;external-dns/external-dns&quot;
+2021-11-29 18:18:42 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-addon-iamserviceaccount-kube-system-efs-csi-controller-sa&quot;
+2021-11-29 18:18:43 [ℹ]  created serviceaccount &quot;kube-system/efs-csi-controller-sa&quot;
+2021-11-29 18:18:43 [ℹ]  daemonset &quot;kube-system/aws-node&quot; restarted
+2021-11-29 18:18:43 [ℹ]  waiting for the control plane availability...
+2021-11-29 18:18:43 [✔]  saved kubeconfig as &quot;/Users/ruzickap/git/k8s-eks-bottlerocket-fargate/kubeconfig-kube1.conf&quot;
+2021-11-29 18:18:43 [ℹ]  no tasks
+2021-11-29 18:18:43 [✔]  all EKS cluster resources for &quot;kube1&quot; have been created
+2021-11-29 18:18:44 [ℹ]  kubectl command should work with &quot;/Users/ruzickap/git/k8s-eks-bottlerocket-fargate/kubeconfig-kube1.conf&quot;, try 'kubectl --kubeconfig=/Users/ruzickap/git/k8s-eks-bottlerocket-fargate/kubeconfig-kube1.conf get nodes'
+2021-11-29 18:18:44 [✔]  EKS cluster &quot;kube1&quot; in &quot;eu-west-1&quot; region is ready
+daemonset.apps &quot;aws-node&quot; deleted
+configmap/calico-config created
+customresourcedefinition.apiextensions.k8s.io/bgpconfigurations.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/bgppeers.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/blockaffinities.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/clusterinformations.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/felixconfigurations.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/globalnetworkpolicies.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/globalnetworksets.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/hostendpoints.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/ipamblocks.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/ipamconfigs.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/ipamhandles.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/ippools.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/kubecontrollersconfigurations.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/networkpolicies.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/networksets.crd.projectcalico.org created
+clusterrole.rbac.authorization.k8s.io/calico-kube-controllers created
+clusterrolebinding.rbac.authorization.k8s.io/calico-kube-controllers created
+clusterrole.rbac.authorization.k8s.io/calico-node created
+clusterrolebinding.rbac.authorization.k8s.io/calico-node created
+daemonset.apps/calico-node created
+serviceaccount/calico-node created
+deployment.apps/calico-kube-controllers created
+serviceaccount/calico-kube-controllers created
+Warning: policy/v1beta1 PodDisruptionBudget is deprecated in v1.21+, unavailable in v1.25+; use policy/v1 PodDisruptionBudget
+poddisruptionbudget.policy/calico-kube-controllers created
+2021-11-29 18:18:59 [ℹ]  eksctl version 0.75.0
+2021-11-29 18:18:59 [ℹ]  using region eu-west-1
+2021-11-29 18:19:15 [ℹ]  nodegroup &quot;managed-ng-1&quot; will use &quot;&quot; [Bottlerocket/1.21]
+2021-11-29 18:19:32 [ℹ]  1 nodegroup (managed-ng-1) was included (based on the include/exclude rules)
+2021-11-29 18:19:32 [ℹ]  will create a CloudFormation stack for each of 1 managed nodegroups in cluster &quot;kube1&quot;
+2021-11-29 18:19:32 [ℹ]
+2 sequential tasks: { fix cluster compatibility, 1 task: { 1 task: { create managed nodegroup &quot;managed-ng-1&quot; } }
+}
+2021-11-29 18:19:32 [ℹ]  checking cluster stack for missing resources
+2021-11-29 18:19:41 [ℹ]  cluster stack has all required resources
+2021-11-29 18:19:41 [ℹ]  building managed nodegroup stack &quot;eksctl-kube1-nodegroup-managed-ng-1&quot;
+2021-11-29 18:19:41 [ℹ]  deploying stack &quot;eksctl-kube1-nodegroup-managed-ng-1&quot;
+2021-11-29 18:19:41 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-nodegroup-managed-ng-1&quot;
+...
+2021-11-29 18:22:59 [ℹ]  waiting for CloudFormation stack &quot;eksctl-kube1-nodegroup-managed-ng-1&quot;
+2021-11-29 18:23:00 [ℹ]  no tasks
+2021-11-29 18:23:00 [✔]  created 0 nodegroup(s) in cluster &quot;kube1&quot;
+2021-11-29 18:23:00 [ℹ]  nodegroup &quot;managed-ng-1&quot; has 3 node(s)
+2021-11-29 18:23:00 [ℹ]  node &quot;ip-192-168-31-11.eu-west-1.compute.internal&quot; is ready
+2021-11-29 18:23:00 [ℹ]  node &quot;ip-192-168-56-82.eu-west-1.compute.internal&quot; is ready
+2021-11-29 18:23:00 [ℹ]  node &quot;ip-192-168-60-184.eu-west-1.compute.internal&quot; is ready
+2021-11-29 18:23:00 [ℹ]  waiting for at least 2 node(s) to become ready in &quot;managed-ng-1&quot;
+2021-11-29 18:23:00 [ℹ]  nodegroup &quot;managed-ng-1&quot; has 3 node(s)
+2021-11-29 18:23:00 [ℹ]  node &quot;ip-192-168-31-11.eu-west-1.compute.internal&quot; is ready
+2021-11-29 18:23:00 [ℹ]  node &quot;ip-192-168-56-82.eu-west-1.compute.internal&quot; is ready
+2021-11-29 18:23:00 [ℹ]  node &quot;ip-192-168-60-184.eu-west-1.compute.internal&quot; is ready
+2021-11-29 18:23:00 [✔]  created 1 managed nodegroup(s) in cluster &quot;kube1&quot;
+2021-11-29 18:23:12 [ℹ]  checking security group configuration for all nodegroups
+2021-11-29 18:23:12 [ℹ]  all nodegroups have up-to-date cloudformation templates
+</code></pre></div><p>When the cluster is ready it immediately start pushing logs to CloudWatch under
+<code>/aws/eks/kube1/cluster</code>.</p> <p>Add add the user or role to the aws-auth ConfigMap. This is handy if you are
+using different user for cli operations and different user/role for accessing
+the AWS Console to see EKS Workloads in Cluster's tab.</p> <div class="language-bash extra-class"><pre class="language-bash"><code><span class="token keyword">if</span> <span class="token operator">!</span> eksctl get iamidentitymapping <span class="token parameter variable">--cluster</span><span class="token operator">=</span><span class="token string">&quot;<span class="token variable">${CLUSTER_NAME}</span>&quot;</span> <span class="token parameter variable">--region</span><span class="token operator">=</span><span class="token string">&quot;<span class="token variable">${AWS_DEFAULT_REGION}</span>&quot;</span> <span class="token parameter variable">--arn</span><span class="token operator">=</span><span class="token variable">${AWS_CONSOLE_ADMIN_ROLE_ARN}</span><span class="token punctuation">;</span> <span class="token keyword">then</span>
+  eksctl create iamidentitymapping <span class="token parameter variable">--cluster</span><span class="token operator">=</span><span class="token string">&quot;<span class="token variable">${CLUSTER_NAME}</span>&quot;</span> <span class="token parameter variable">--region</span><span class="token operator">=</span><span class="token string">&quot;<span class="token variable">${AWS_DEFAULT_REGION}</span>&quot;</span> <span class="token parameter variable">--arn</span><span class="token operator">=</span><span class="token string">&quot;<span class="token variable">${AWS_CONSOLE_ADMIN_ROLE_ARN}</span>&quot;</span> <span class="token parameter variable">--group</span> system:masters <span class="token parameter variable">--username</span> admin
+<span class="token keyword">fi</span>
+</code></pre></div><p>Output:</p> <div class="language-text extra-class"><pre class="language-text"><code>2021-11-29 18:23:13 [ℹ]  eksctl version 0.75.0
+2021-11-29 18:23:13 [ℹ]  using region eu-west-1
+2021-11-29 18:23:14 [ℹ]  adding identity &quot;arn:aws:iam::7xxxxxxxxxx7:role/AxxxxxxxxxxxxN&quot; to auth ConfigMap
+</code></pre></div><p>Check the nodes+pods and max number of nodes which can be scheduled on one node:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>kubectl get nodes,pods <span class="token parameter variable">-o</span> wide --all-namespaces
+</code></pre></div><p>Output:</p> <div class="language-text extra-class"><pre class="language-text"><code>NAME                                                STATUS   ROLES    AGE   VERSION   INTERNAL-IP      EXTERNAL-IP     OS-IMAGE                               KERNEL-VERSION   CONTAINER-RUNTIME
+node/ip-192-168-31-11.eu-west-1.compute.internal    Ready    &amp;lt;none&gt;   81s   v1.21.6   192.168.31.11    54.194.69.158   Bottlerocket OS 1.4.1 (aws-k8s-1.21)   5.10.68          containerd://1.5.5+bottlerocket
+node/ip-192-168-56-82.eu-west-1.compute.internal    Ready    &amp;lt;none&gt;   86s   v1.21.6   192.168.56.82    3.250.52.238    Bottlerocket OS 1.4.1 (aws-k8s-1.21)   5.10.68          containerd://1.5.5+bottlerocket
+node/ip-192-168-60-184.eu-west-1.compute.internal   Ready    &amp;lt;none&gt;   84s   v1.21.6   192.168.60.184   54.75.89.58     Bottlerocket OS 1.4.1 (aws-k8s-1.21)   5.10.68          containerd://1.5.5+bottlerocket
+
+NAMESPACE     NAME                                           READY   STATUS    RESTARTS   AGE     IP               NODE                                           NOMINATED NODE   READINESS GATES
+kube-system   pod/calico-kube-controllers-6c85b56fcb-5g5cq   1/1     Running   0          4m16s   172.16.166.130   ip-192-168-56-82.eu-west-1.compute.internal    &amp;lt;none&gt;           &amp;lt;none&gt;
+kube-system   pod/calico-node-4whs8                          1/1     Running   0          84s     192.168.60.184   ip-192-168-60-184.eu-west-1.compute.internal   &amp;lt;none&gt;           &amp;lt;none&gt;
+kube-system   pod/calico-node-nbjsn                          1/1     Running   0          86s     192.168.56.82    ip-192-168-56-82.eu-west-1.compute.internal    &amp;lt;none&gt;           &amp;lt;none&gt;
+kube-system   pod/calico-node-nnhwz                          1/1     Running   0          81s     192.168.31.11    ip-192-168-31-11.eu-west-1.compute.internal    &amp;lt;none&gt;           &amp;lt;none&gt;
+kube-system   pod/coredns-7cc879f8db-ct5bp                   1/1     Running   0          21m     172.16.166.131   ip-192-168-56-82.eu-west-1.compute.internal    &amp;lt;none&gt;           &amp;lt;none&gt;
+kube-system   pod/coredns-7cc879f8db-h4mbs                   1/1     Running   0          21m     172.16.166.129   ip-192-168-56-82.eu-west-1.compute.internal    &amp;lt;none&gt;           &amp;lt;none&gt;
+kube-system   pod/kube-proxy-9c9wk                           1/1     Running   0          86s     192.168.56.82    ip-192-168-56-82.eu-west-1.compute.internal    &amp;lt;none&gt;           &amp;lt;none&gt;
+kube-system   pod/kube-proxy-gqbt7                           1/1     Running   0          81s     192.168.31.11    ip-192-168-31-11.eu-west-1.compute.internal    &amp;lt;none&gt;           &amp;lt;none&gt;
+kube-system   pod/kube-proxy-q7pzh                           1/1     Running   0          84s     192.168.60.184   ip-192-168-60-184.eu-west-1.compute.internal   &amp;lt;none&gt;           &amp;lt;none&gt;
+</code></pre></div></div> <footer class="page-edit"><div class="edit-link"><a href="https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/edit/main/docs/part-01/README.md" target="_blank" rel="noopener noreferrer">Edit this page</a> <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></div> <div class="last-updated"><span class="prefix">Last Updated:</span> <span class="time">6/30/2024, 4:19:34 AM</span></div></footer> <div class="page-nav"><p class="inner"><span class="prev">
+      ←
+      <a href="/k8s-eks-bottlerocket-fargate/" class="prev router-link-active">
+        Amazon EKS Bottlerocket and Fargate
+      </a></span> <span class="next"><a href="/k8s-eks-bottlerocket-fargate/part-02/">
+        AWS
+      </a>
+      →
+    </span></p></div> </main></div><div class="global-ui"><!----><!----></div></div>
+    <script src="/k8s-eks-bottlerocket-fargate/assets/js/app.cd5c61da.js" defer></script><script src="/k8s-eks-bottlerocket-fargate/assets/js/2.a27de003.js" defer></script><script src="/k8s-eks-bottlerocket-fargate/assets/js/1.30a6593f.js" defer></script><script src="/k8s-eks-bottlerocket-fargate/assets/js/23.a21f8ae6.js" defer></script>
+  </body>
+</html>

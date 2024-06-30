@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Drupal | Amazon EKS Bottlerocket and Fargate</title>
+    <meta name="generator" content="VuePress 1.9.10">
+    <link rel="icon" href="https://raw.githubusercontent.com/kubernetes/kubernetes/d9a58a39b69a0eaec5797e0f7a0f9472b4829ab0/logo/logo.svg">
+    <meta name="description" content="Amazon EKS Bottlerocket and Fargate">
+    
+    <link rel="preload" href="/k8s-eks-bottlerocket-fargate/assets/css/0.styles.61693ea3.css" as="style"><link rel="preload" href="/k8s-eks-bottlerocket-fargate/assets/js/app.cd5c61da.js" as="script"><link rel="preload" href="/k8s-eks-bottlerocket-fargate/assets/js/2.a27de003.js" as="script"><link rel="preload" href="/k8s-eks-bottlerocket-fargate/assets/js/1.30a6593f.js" as="script"><link rel="preload" href="/k8s-eks-bottlerocket-fargate/assets/js/31.ee8b8daa.js" as="script"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/10.340b7a91.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/11.6724c971.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/12.0f6b2c7f.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/13.0f6f4ef5.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/14.28b41666.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/15.d3972987.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/16.4c24402c.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/17.6cd3a12a.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/18.8d7e6487.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/19.78b16bd4.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/20.a3f134b4.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/21.3fb0cd72.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/22.f5ea0076.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/23.a21f8ae6.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/24.c557dbf6.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/25.3d2180e6.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/26.8ac7134b.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/27.050bbf87.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/28.f566dccc.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/29.3e3635d0.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/3.6b4152e0.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/30.7ac4c6d1.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/32.85f54686.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/33.b5ef35a1.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/34.6e2c7bbd.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/35.301a3049.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/4.bea5e217.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/5.ac8fedb2.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/6.76ff54c2.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/7.98538131.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/vendors~docsearch.d098b00c.js">
+    <link rel="stylesheet" href="/k8s-eks-bottlerocket-fargate/assets/css/0.styles.61693ea3.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div class="theme-container"><header class="navbar"><div class="sidebar-button"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" viewBox="0 0 448 512" class="icon"><path fill="currentColor" d="M436 124H12c-6.627 0-12-5.373-12-12V80c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12z"></path></svg></div> <a href="/k8s-eks-bottlerocket-fargate/" class="home-link router-link-active"><img src="https://raw.githubusercontent.com/kubernetes/kubernetes/d9a58a39b69a0eaec5797e0f7a0f9472b4829ab0/logo/logo.svg" alt="Amazon EKS Bottlerocket and Fargate" class="logo"> <span class="site-name can-hide">Amazon EKS Bottlerocket and Fargate</span></a> <div class="links"><div class="search-box"><input aria-label="Search" autocomplete="off" spellcheck="false" value=""> <!----></div> <nav class="nav-links can-hide"><div class="nav-item"><a href="/k8s-eks-bottlerocket-fargate/" class="nav-link">
+  Home
+</a></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="Links" class="dropdown-title"><span class="title">Links</span> <span class="arrow down"></span></button> <button type="button" aria-label="Links" class="mobile-dropdown-title"><span class="title">Links</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="https://aws.amazon.com/eks/" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  Amazon EKS
+  <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></li><li class="dropdown-item"><!----> <a href="https://aws.amazon.com/bottlerocket/" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  Bottlerocket
+  <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></li></ul></div></div> <a href="https://github.com/ruzickap/k8s-eks-bottlerocket-fargate" target="_blank" rel="noopener noreferrer" class="repo-link">
+    GitHub
+    <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></nav></div></header> <div class="sidebar-mask"></div> <aside class="sidebar"><nav class="nav-links"><div class="nav-item"><a href="/k8s-eks-bottlerocket-fargate/" class="nav-link">
+  Home
+</a></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="Links" class="dropdown-title"><span class="title">Links</span> <span class="arrow down"></span></button> <button type="button" aria-label="Links" class="mobile-dropdown-title"><span class="title">Links</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="https://aws.amazon.com/eks/" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  Amazon EKS
+  <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></li><li class="dropdown-item"><!----> <a href="https://aws.amazon.com/bottlerocket/" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  Bottlerocket
+  <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></li></ul></div></div> <a href="https://github.com/ruzickap/k8s-eks-bottlerocket-fargate" target="_blank" rel="noopener noreferrer" class="repo-link">
+    GitHub
+    <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></nav>  <ul class="sidebar-links"><li><a href="/k8s-eks-bottlerocket-fargate/" aria-current="page" class="sidebar-link">Amazon EKS Bottlerocket and Fargate</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/#requirements" class="sidebar-link">Requirements</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/#content" class="sidebar-link">Content</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-01/" class="sidebar-link">Amazon EKS Bottlerocket and Fargate</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-01/#requirements" class="sidebar-link">Requirements</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-01/#prepare-the-local-working-environment" class="sidebar-link">Prepare the local working environment</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-01/#configure-aws-route-53-domain-delegation" class="sidebar-link">Configure AWS Route 53 Domain delegation</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-01/#add-new-domain-to-route-53-policies-s3-ebs" class="sidebar-link">Add new domain to Route 53, Policies, S3, EBS</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-01/#create-amazon-eks" class="sidebar-link">Create Amazon EKS</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-02/" class="sidebar-link">AWS</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#fargate" class="sidebar-link">Fargate</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#aws-load-balancer-controller" class="sidebar-link">aws-load-balancer-controller</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#aws-for-fluent-bit" class="sidebar-link">aws-for-fluent-bit</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#aws-cloudwatch-metrics" class="sidebar-link">aws-cloudwatch-metrics</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#aws-efs-csi-driver" class="sidebar-link">aws-efs-csi-driver</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#install-external-snapshotter" class="sidebar-link">Install external-snapshotter</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#aws-ebs-csi-driver" class="sidebar-link">aws-ebs-csi-driver</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#test-amazon-eks-pod-limits" class="sidebar-link">Test Amazon EKS pod limits</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#amazon-managed-prometheus-amazon-managed-grafana" class="sidebar-link">Amazon Managed Prometheus + Amazon Managed Grafana</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#test-eks-access" class="sidebar-link">Test EKS access</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#capsule" class="sidebar-link">Capsule</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-03/" class="sidebar-link">Monitoring and Logging</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#metrics-server" class="sidebar-link">metrics-server</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#prometheus-adapter" class="sidebar-link">prometheus-adapter</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#kube-prometheus-stack" class="sidebar-link">kube-prometheus-stack</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#enable-calico-monitoring" class="sidebar-link">Enable calico monitoring</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#loki" class="sidebar-link">loki</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#aws-node-termination-handler" class="sidebar-link">aws-node-termination-handler</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#kyverno" class="sidebar-link">kyverno</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#nri-bundle" class="sidebar-link">nri-bundle</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#splunk-connect" class="sidebar-link">splunk-connect</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#aqua-security-enforcer" class="sidebar-link">Aqua Security Enforcer</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#sysdig-agent" class="sidebar-link">sysdig-agent</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-04/" class="sidebar-link">DNS, Ingress, Certificates</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#cert-manager" class="sidebar-link">cert-manager</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#kubed" class="sidebar-link">kubed</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#ingress-nginx" class="sidebar-link">ingress-nginx</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#istio-and-related-tools" class="sidebar-link">Istio and related tools</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#external-dns" class="sidebar-link">external-dns</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#mailhog" class="sidebar-link">mailhog</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#kubewatch-obsolete" class="sidebar-link">kubewatch - obsolete</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#calico-commands" class="sidebar-link">Calico commands</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-05/" class="sidebar-link">Authentication</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-05/#keycloak" class="sidebar-link">Keycloak</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-05/#oauth2-proxy-keycloak" class="sidebar-link">oauth2-proxy - Keycloak</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-05/#dex" class="sidebar-link">Dex</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-05/#oauth2-proxy" class="sidebar-link">oauth2-proxy</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-05/#gangway" class="sidebar-link">Gangway</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-05/#kube-oidc-proxy" class="sidebar-link">kube-oidc-proxy</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-06/" class="sidebar-link">Others</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-06/#cluster-autoscaler" class="sidebar-link">cluster-autoscaler</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-06/#descheduler" class="sidebar-link">Descheduler</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-06/#rancher" class="sidebar-link">Rancher</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-07/" class="sidebar-link">Workloads</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#podinfo" class="sidebar-link">podinfo</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#polaris" class="sidebar-link">Polaris</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#kubei" class="sidebar-link">kubei</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#kube-bench" class="sidebar-link">kube-bench</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#kubernetes-dashboard" class="sidebar-link">kubernetes-dashboard</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#kubeview" class="sidebar-link">kubeview</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#kube-ops-view" class="sidebar-link">kube-ops-view</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#s3-upload-test" class="sidebar-link">S3 upload test</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-08/" class="sidebar-link">Other workloads</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-08/#cluster-api" class="sidebar-link">Cluster API</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-08/#hashicorp-vault" class="sidebar-link">HashiCorp Vault</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-08/#podinfo-with-vault-certificate" class="sidebar-link">podinfo with vault certificate</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-08/#secrets-store-csi-driver" class="sidebar-link">secrets-store-csi-driver</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-08/#kuard" class="sidebar-link">kuard</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-09/" aria-current="page" class="active sidebar-link">Drupal</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-09/#drupal-installation" class="sidebar-link">Drupal installation</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-10/" class="sidebar-link">Harbor</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-10/#cloudwatch-retention" class="sidebar-link">CloudWatch retention</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-11/" class="sidebar-link">Velero</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-11/#backup-vault-using-csi-volume-snapshotting" class="sidebar-link">Backup Vault using CSI Volume Snapshotting</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-11/#delete-restore-vault-using-csi-volume-snapshotting" class="sidebar-link">Delete + Restore Vault using CSI Volume Snapshotting</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-11/#backup-delete-restore-app-with-efs-storage-using-restic" class="sidebar-link">Backup + Delete + Restore app with EFS storage using restic</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-12/" class="sidebar-link">GitOps tools</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-12/#argocd" class="sidebar-link">ArgoCD</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-12/#flux" class="sidebar-link">Flux</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-13/" class="sidebar-link">Clean-up</a></li></ul> </aside> <main class="page"> <div class="theme-default-content content__default"><h1 id="drupal"><a href="#drupal" class="header-anchor">#</a> Drupal</h1> <p>Few notes about Drupal installation with RDS + EFS.</p> <h2 id="drupal-installation"><a href="#drupal-installation" class="header-anchor">#</a> Drupal installation</h2> <p>Get details about AWS environment where is the EKS cluster and store it into
+variables:</p> <div class="language-bash extra-class"><pre class="language-bash"><code><span class="token assign-left variable">RDS_DB_USERNAME</span><span class="token operator">=</span><span class="token string">&quot;root&quot;</span>
+</code></pre></div><h3 id="rds"><a href="#rds" class="header-anchor">#</a> RDS</h3> <p>Apply CloudFormation template to create Amazon RDS MySQL database.
+The template below is inspired by: <a href="https://github.com/aquasecurity/marketplaces/blob/master/aws/cloudformation/AquaRDS.yaml" target="_blank" rel="noopener noreferrer">https://github.com/aquasecurity/marketplaces/blob/master/aws/cloudformation/AquaRDS.yaml<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></p> <div class="language-bash extra-class"><pre class="language-bash"><code><span class="token function">cat</span> <span class="token operator">&gt;</span> <span class="token string">&quot;tmp/<span class="token variable">${CLUSTER_FQDN}</span>/cf_rds.yml&quot;</span> <span class="token operator">&lt;&lt;</span> <span class="token punctuation">\</span>EOF
+AWSTemplateFormatVersion: <span class="token number">2010</span>-09-09
+Description: This AWS CloudFormation template installs the AWS RDS MySQL database.
+Parameters:
+  ClusterName:
+    Default: <span class="token string">&quot;kube1&quot;</span>
+    Description: K8s Cluster name
+    Type: String
+  KmsKeyId:
+    Description: The ARN of the AWS Key Management Service <span class="token punctuation">(</span>AWS KMS<span class="token punctuation">)</span> master key that is used to encrypt the DB instance
+    Type: String
+  MultiAzDatabase:
+    Default: <span class="token string">&quot;false&quot;</span>
+    Type: String
+    AllowedValues:
+      - <span class="token string">&quot;true&quot;</span>
+      - <span class="token string">&quot;false&quot;</span>
+    ConstraintDescription: Must be either <span class="token boolean">true</span> or false.
+  RdsMasterUsername:
+    Description: Enter the master username <span class="token keyword">for</span> the RDS instance.
+    Type: String
+    MinLength: <span class="token string">&quot;1&quot;</span>
+    MaxLength: <span class="token string">&quot;63&quot;</span>
+    AllowedPattern: <span class="token string">&quot;^[a-zA-Z0-9]*$&quot;</span>
+    ConstraintDescription: <span class="token operator">&gt;</span>-
+      Must be <span class="token number">1</span> to <span class="token number">63</span> characters long, begin with a letter, contain only
+      alphanumeric characters, and not be a reserved word by PostgreSQL engine.
+  RdsInstanceClass:
+    Type: String
+    Default: db.t2.medium
+    AllowedValues:
+      - db.t2.micro
+      - db.t2.small
+      - db.t2.medium
+      - db.t2.large
+      - db.t2.xlarge
+      - db.t2.2xlarge
+      - db.m4.large
+      - db.m4.xlarge
+      - db.m4.2xlarge
+      - db.m4.4xlarge
+      - db.m4.10xlarge
+      - db.m4.16xlarge
+      - db.r4.large
+      - db.r4.xlarge
+      - db.r4.2xlarge
+      - db.r4.4xlarge
+      - db.r4.8xlarge
+      - db.r4.16xlarge
+      - db.r3.large
+      - db.r3.2xlarge
+      - db.r3.4xlarge
+      - db.r3.8xlarge
+    ConstraintDescription: Must be a valid EC2 RDS instance <span class="token builtin class-name">type</span>
+  RdsMasterPassword:
+    NoEcho: <span class="token string">&quot;true&quot;</span>
+    Description: <span class="token operator">&gt;</span>-
+      Enter the master password <span class="token keyword">for</span> the RDS instance. This password must contain
+      <span class="token number">8</span> to <span class="token number">128</span> characters and can be any printable ASCII character except @, /,
+      or <span class="token string">&quot;.
+    Type: String
+    MinLength: &quot;</span><span class="token number">8</span><span class="token string">&quot;
+    MaxLength: &quot;</span><span class="token number">128</span><span class="token string">&quot;
+    AllowedPattern: &gt;-
+      ^<span class="token variable"><span class="token punctuation">((</span><span class="token operator">?</span><span class="token operator">=</span>.<span class="token operator">*</span>[<span class="token number">0</span><span class="token operator">-</span><span class="token number">9</span>]<span class="token punctuation">)</span><span class="token punctuation">(</span><span class="token operator">?</span><span class="token operator">=</span>.<span class="token operator">*</span>[a<span class="token operator">-</span>z]<span class="token punctuation">)</span><span class="token punctuation">(</span><span class="token operator">?</span><span class="token operator">=</span>.<span class="token operator">*</span>[A<span class="token operator">-</span>Z]<span class="token punctuation">)</span><span class="token operator">|</span><span class="token punctuation">(</span><span class="token operator">?</span><span class="token operator">=</span>.<span class="token operator">*</span>[<span class="token number">0</span><span class="token operator">-</span><span class="token number">9</span>]<span class="token punctuation">)</span><span class="token punctuation">(</span><span class="token operator">?</span><span class="token operator">=</span>.<span class="token operator">*</span>[a<span class="token operator">-</span>z]<span class="token punctuation">)</span><span class="token punctuation">(</span><span class="token operator">?</span><span class="token operator">=</span>.<span class="token operator">*</span>[<span class="token operator">!</span>@#$<span class="token operator">%</span><span class="token operator">^</span><span class="token operator">&amp;</span><span class="token operator">*</span>]<span class="token punctuation">)</span><span class="token operator">|</span><span class="token punctuation">(</span><span class="token operator">?</span><span class="token operator">=</span>.<span class="token operator">*</span>[<span class="token number">0</span><span class="token operator">-</span><span class="token number">9</span>]<span class="token punctuation">)</span><span class="token punctuation">(</span><span class="token operator">?</span><span class="token operator">=</span>.<span class="token operator">*</span>[A<span class="token operator">-</span>Z]<span class="token punctuation">)</span><span class="token punctuation">(</span><span class="token operator">?</span><span class="token operator">=</span>.<span class="token operator">*</span>[<span class="token operator">!</span>@#$<span class="token operator">%</span><span class="token operator">^</span><span class="token operator">&amp;</span><span class="token operator">*</span>]<span class="token punctuation">)</span><span class="token operator">|</span><span class="token punctuation">(</span><span class="token operator">?</span><span class="token operator">=</span>.<span class="token operator">*</span>[a<span class="token operator">-</span>z]<span class="token punctuation">)</span><span class="token punctuation">(</span><span class="token operator">?</span><span class="token operator">=</span>.<span class="token operator">*</span>[A<span class="token operator">-</span>Z]<span class="token punctuation">)</span><span class="token punctuation">(</span><span class="token operator">?</span><span class="token operator">=</span>.<span class="token operator">*</span>[<span class="token operator">!</span>@#$<span class="token operator">%</span><span class="token operator">^</span><span class="token operator">&amp;</span><span class="token operator">*</span>]<span class="token punctuation">))</span></span>.{8,128}$
+    ConstraintDescription: &gt;-
+      Password must be at least 9 characters long and have 3 out of the
+      following: one number, one lower case, one upper case, or one special
+      character.
+  RdsStorage:
+    Default: &quot;</span><span class="token number">40</span><span class="token string">&quot;
+    Type: Number
+    MinValue: &quot;</span><span class="token number">40</span><span class="token string">&quot;
+    MaxValue: &quot;</span><span class="token number">1024</span><span class="token string">&quot;
+    ConstraintDescription: Must be set to between 40 and 1024GB.
+  VpcIPCidr:
+    Description: &quot;</span>Enter VPC CIDR that hosts the EKS cluster. Ex: <span class="token number">10.0</span>.0.0/16<span class="token string">&quot;
+    Type: String
+Resources:
+  DBMonitoringRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: &quot;</span>/<span class="token string">&quot;
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - monitoring.rds.amazonaws.com
+            Action:
+              - sts:AssumeRole
+  RdsInstance:
+    Type: AWS::RDS::DBInstance
+    DependsOn:
+      - DbSecurityGroup
+      - RdsInstanceSubnetGroup
+    DeletionPolicy: Delete
+    Properties:
+      AllocatedStorage: !Ref RdsStorage
+      AutoMinorVersionUpgrade: &quot;</span><span class="token boolean">true</span><span class="token string">&quot;
+      VPCSecurityGroups:
+        - !Ref DbSecurityGroup
+      DBName: !Sub &quot;</span><span class="token variable">${ClusterName}</span>db<span class="token string">&quot;
+      BackupRetentionPeriod: &quot;</span><span class="token number">0</span><span class="token string">&quot;
+      DBInstanceIdentifier: !Sub &quot;</span><span class="token variable">${ClusterName}</span>db<span class="token string">&quot;
+      DBInstanceClass: !Ref RdsInstanceClass
+      DBSubnetGroupName: !Ref RdsInstanceSubnetGroup
+      CopyTagsToSnapshot: true
+      EnableCloudwatchLogsExports:
+        - slowquery
+      EnableIAMDatabaseAuthentication: true
+      Engine: mysql
+      EngineVersion: 8.0.23
+      KmsKeyId: !Ref KmsKeyId
+      MasterUsername: !Ref RdsMasterUsername
+      MasterUserPassword: !Ref RdsMasterPassword
+      MonitoringInterval: 60
+      MonitoringRoleArn: !GetAtt DBMonitoringRole.Arn
+      MultiAZ: !Ref MultiAzDatabase
+      StorageEncrypted: true
+      # gp3 is not supported yet (2021-01-30)
+      StorageType: gp2
+  RdsInstanceSubnetGroup:
+    Type: &quot;</span>AWS::RDS::DBSubnetGroup<span class="token string">&quot;
+    Properties:
+      DBSubnetGroupDescription: Source subnet
+      SubnetIds:
+      - Fn::Select:
+        - 0
+        - Fn::Split:
+          - &quot;</span>,<span class="token string">&quot;
+          - Fn::ImportValue: !Sub &quot;</span>eksctl-<span class="token variable">${ClusterName}</span>-cluster::SubnetsPrivate<span class="token string">&quot;
+      - Fn::Select:
+        - 1
+        - Fn::Split:
+          - &quot;</span>,<span class="token string">&quot;
+          - Fn::ImportValue: !Sub &quot;</span>eksctl-<span class="token variable">${ClusterName}</span>-cluster::SubnetsPrivate<span class="token string">&quot;
+  # Create DB Security Group
+  DbSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: For RDS Instance
+      VpcId:
+        Fn::ImportValue:
+          Fn::Sub: &quot;</span>eksctl-<span class="token variable">${ClusterName}</span>-cluster::VPC<span class="token string">&quot;
+  # Attach Security Group Rule
+  DbIngress1:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref DbSecurityGroup
+      IpProtocol: tcp
+      FromPort: &quot;</span><span class="token number">3306</span><span class="token string">&quot;
+      ToPort: &quot;</span><span class="token number">3306</span><span class="token string">&quot;
+      CidrIp: !Ref &quot;</span>VpcIPCidr<span class="token string">&quot;
+Outputs:
+  RdsInstanceEndpoint:
+    Description: MySQL endpoint
+    Value: !GetAtt RdsInstance.Endpoint.Address
+    Export:
+      Name:
+        Fn::Sub: &quot;</span><span class="token variable">${AWS<span class="token operator">:</span><span class="token operator">:</span>StackName}</span>-RdsInstanceEndpoint<span class="token string">&quot;
+  RdsInstancePort:
+    Description: MySQL port
+    Value: !GetAtt RdsInstance.Endpoint.Port
+    Export:
+      Name:
+        Fn::Sub: &quot;</span><span class="token variable">${AWS<span class="token operator">:</span><span class="token operator">:</span>StackName}</span>-RdsInstancePort<span class="token string">&quot;
+  RdsInstanceUser:
+    Description: Username for the MySQL instance
+    Value: !Ref RdsMasterUsername
+    Export:
+      Name:
+        Fn::Sub: &quot;</span><span class="token variable">${AWS<span class="token operator">:</span><span class="token operator">:</span>StackName}</span>-RdsInstanceUser<span class="token string">&quot;
+  RdsMasterPassword:
+    Description: Password for the MySQL instance
+    Value: !Ref RdsMasterPassword
+    Export:
+      Name:
+        Fn::Sub: &quot;</span><span class="token variable">${AWS<span class="token operator">:</span><span class="token operator">:</span>StackName}</span>-RdsMasterPassword<span class="token string">&quot;
+EOF
+
+eval aws cloudformation deploy --capabilities CAPABILITY_NAMED_IAM --stack-name &quot;</span><span class="token variable">${CLUSTER_NAME}</span>-rds<span class="token string">&quot; --parameter-overrides &quot;</span>ClusterName<span class="token operator">=</span><span class="token variable">${CLUSTER_NAME}</span> <span class="token assign-left variable">KmsKeyId</span><span class="token operator">=</span><span class="token variable">${KMS_KEY_ID}</span> <span class="token assign-left variable">RdsMasterPassword</span><span class="token operator">=</span><span class="token variable">${MY_PASSWORD}</span> <span class="token assign-left variable">RdsMasterUsername</span><span class="token operator">=</span><span class="token variable">${RDS_DB_USERNAME}</span> <span class="token assign-left variable">VpcIPCidr</span><span class="token operator">=</span><span class="token variable">${EKS_VPC_CIDR}</span><span class="token string">&quot; --template-file &quot;</span>tmp/<span class="token variable">${CLUSTER_FQDN}</span>/cf_rds.yml<span class="token string">&quot; --tags &quot;</span><span class="token variable">${TAGS}</span>&quot;
+
+<span class="token assign-left variable">RDS_DB_HOST</span><span class="token operator">=</span><span class="token variable"><span class="token variable">$(</span>aws rds describe-db-instances <span class="token parameter variable">--query</span> <span class="token string">&quot;DBInstances[?DBInstanceIdentifier==\<span class="token variable"><span class="token variable">`</span>$<span class="token punctuation">{</span>CLUSTER_NAME<span class="token punctuation">}</span>db<span class="token punctuation">\</span><span class="token variable">`</span></span>].[Endpoint.Address]&quot;</span> <span class="token parameter variable">--output</span> text<span class="token variable">)</span></span>
+<span class="token assign-left variable">RDS_DB_RESOURCE_ID</span><span class="token operator">=</span><span class="token variable"><span class="token variable">$(</span>aws rds describe-db-instances <span class="token parameter variable">--query</span> <span class="token string">&quot;DBInstances[?DBInstanceIdentifier==\<span class="token variable"><span class="token variable">`</span>$<span class="token punctuation">{</span>CLUSTER_NAME<span class="token punctuation">}</span>db<span class="token punctuation">\</span><span class="token variable">`</span></span>].DbiResourceId&quot;</span> <span class="token parameter variable">--output</span> text<span class="token variable">)</span></span>
+</code></pre></div><p>Initialize database:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>kubectl get pods mysql-client-drupal <span class="token operator">||</span> kubectl run <span class="token parameter variable">--env</span> <span class="token assign-left variable">MYSQL_PWD</span><span class="token operator">=</span><span class="token string">&quot;<span class="token variable">${MY_PASSWORD}</span>&quot;</span> <span class="token parameter variable">--image</span><span class="token operator">=</span>mysql:8.0 <span class="token parameter variable">--restart</span><span class="token operator">=</span>Never mysql-client-drupal -- <span class="token punctuation">\</span>
+  mysql <span class="token parameter variable">-h</span> <span class="token string">&quot;<span class="token variable">${RDS_DB_HOST}</span>&quot;</span> <span class="token parameter variable">-u</span> <span class="token string">&quot;<span class="token variable">${RDS_DB_USERNAME}</span>&quot;</span> <span class="token parameter variable">-e</span> <span class="token string">&quot;
+    CREATE USER <span class="token entity" title="\&quot;">\&quot;</span>exporter<span class="token entity" title="\&quot;">\&quot;</span>@<span class="token entity" title="\&quot;">\&quot;</span>%<span class="token entity" title="\&quot;">\&quot;</span> IDENTIFIED BY <span class="token entity" title="\&quot;">\&quot;</span><span class="token variable">${MY_PASSWORD}</span><span class="token entity" title="\&quot;">\&quot;</span> WITH MAX_USER_CONNECTIONS 3;
+    CREATE USER <span class="token entity" title="\&quot;">\&quot;</span>drupal<span class="token entity" title="\&quot;">\&quot;</span>@<span class="token entity" title="\&quot;">\&quot;</span>%<span class="token entity" title="\&quot;">\&quot;</span> IDENTIFIED BY <span class="token entity" title="\&quot;">\&quot;</span><span class="token variable">${MY_PASSWORD}</span><span class="token entity" title="\&quot;">\&quot;</span>;
+    CREATE USER <span class="token entity" title="\&quot;">\&quot;</span>drupal2<span class="token entity" title="\&quot;">\&quot;</span>@<span class="token entity" title="\&quot;">\&quot;</span>%<span class="token entity" title="\&quot;">\&quot;</span> IDENTIFIED BY <span class="token entity" title="\&quot;">\&quot;</span><span class="token variable">${MY_PASSWORD}</span><span class="token entity" title="\&quot;">\&quot;</span>;
+    CREATE USER <span class="token entity" title="\&quot;">\&quot;</span>iamtest<span class="token entity" title="\&quot;">\&quot;</span>@<span class="token entity" title="\&quot;">\&quot;</span>%<span class="token entity" title="\&quot;">\&quot;</span> IDENTIFIED WITH AWSAuthenticationPlugin AS <span class="token entity" title="\&quot;">\&quot;</span>RDS<span class="token entity" title="\&quot;">\&quot;</span> REQUIRE SSL;
+    CREATE DATABASE drupal;
+    CREATE DATABASE drupal2;
+    CREATE DATABASE iamtest;
+    GRANT PROCESS, REPLICATION CLIENT, SELECT ON *.* TO <span class="token entity" title="\&quot;">\&quot;</span>exporter<span class="token entity" title="\&quot;">\&quot;</span>@<span class="token entity" title="\&quot;">\&quot;</span>%<span class="token entity" title="\&quot;">\&quot;</span>;
+    GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, CREATE TEMPORARY TABLES ON drupal.* TO <span class="token entity" title="\&quot;">\&quot;</span>drupal<span class="token entity" title="\&quot;">\&quot;</span>@<span class="token entity" title="\&quot;">\&quot;</span>%<span class="token entity" title="\&quot;">\&quot;</span>;
+    GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, CREATE TEMPORARY TABLES ON drupal2.* TO <span class="token entity" title="\&quot;">\&quot;</span>drupal2<span class="token entity" title="\&quot;">\&quot;</span>@<span class="token entity" title="\&quot;">\&quot;</span>%<span class="token entity" title="\&quot;">\&quot;</span>;
+    GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, CREATE TEMPORARY TABLES ON iamtest.* TO <span class="token entity" title="\&quot;">\&quot;</span>iamtest<span class="token entity" title="\&quot;">\&quot;</span>@<span class="token entity" title="\&quot;">\&quot;</span>%<span class="token entity" title="\&quot;">\&quot;</span>;
+  &quot;</span>
+</code></pre></div><h3 id="prometheus-mysql-exporter"><a href="#prometheus-mysql-exporter" class="header-anchor">#</a> Prometheus MySQL Exporter</h3> <p>Install <a href="https://github.com/prometheus/mysqld_exporter" target="_blank" rel="noopener noreferrer">Prometheus MySQL Exporter<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>
+using Helm Chart.</p> <p>Install <code>prometheus-mysql-exporter</code> <a href="https://artifacthub.io/packages/helm/prometheus-community/prometheus-mysql-exporter" target="_blank" rel="noopener noreferrer">helm chart<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>
+and modify the
+<a href="https://github.com/prometheus-community/helm-charts/blob/main/charts/prometheus-mysql-exporter/values.yaml" target="_blank" rel="noopener noreferrer">default values<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>.</p> <div class="language-bash extra-class"><pre class="language-bash"><code>helm upgrade <span class="token parameter variable">--install</span> <span class="token parameter variable">--version</span> <span class="token number">1.2</span>.1 <span class="token parameter variable">--namespace</span> prometheus-mysql-exporter --create-namespace <span class="token parameter variable">--values</span> - prometheus-mysql-exporter prometheus-community/prometheus-mysql-exporter <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+serviceMonitor:
+  enabled: true
+mysql:
+  host: &quot;<span class="token variable">${RDS_DB_HOST}</span>&quot;
+  pass: &quot;<span class="token variable">${MY_PASSWORD}</span>&quot;
+  user: &quot;exporter&quot;
+EOF</span>
+</code></pre></div><h3 id="phpmyadmin"><a href="#phpmyadmin" class="header-anchor">#</a> phpMyAdmin</h3> <p>Install <a href="https://www.phpmyadmin.net/" target="_blank" rel="noopener noreferrer">phpMyAdmin<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a> using Helm Chart.</p> <p>Install <code>phpmyadmin</code> <a href="https://artifacthub.io/packages/helm/bitnami/phpmyadmin" target="_blank" rel="noopener noreferrer">helm chart<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>
+and modify the
+<a href="https://github.com/bitnami/charts/blob/master/bitnami/phpmyadmin/values.yaml" target="_blank" rel="noopener noreferrer">default values<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>.</p> <div class="language-bash extra-class"><pre class="language-bash"><code>helm upgrade <span class="token parameter variable">--install</span> <span class="token parameter variable">--version</span> <span class="token number">8.2</span>.11 <span class="token parameter variable">--namespace</span> phpmyadmin --create-namespace <span class="token parameter variable">--values</span> - phpmyadmin bitnami/phpmyadmin <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+ingress:
+  enabled: true
+  hostname: phpmyadmin.<span class="token variable">${CLUSTER_FQDN}</span>
+  annotations:
+    nginx.ingress.kubernetes.io/auth-url: https://oauth2-proxy.<span class="token variable">${CLUSTER_FQDN}</span>/oauth2/auth
+    nginx.ingress.kubernetes.io/auth-signin: https://oauth2-proxy.<span class="token variable">${CLUSTER_FQDN}</span>/oauth2/start?rd=\<span class="token variable">$scheme</span>://\<span class="token variable">$host</span>\<span class="token variable">$request_uri</span>
+  extraTls:
+  - hosts:
+      - phpmyadmin.<span class="token variable">${CLUSTER_FQDN}</span>
+    secretName: ingress-cert-<span class="token variable">${LETSENCRYPT_ENVIRONMENT}</span>
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+db:
+  allowArbitraryServer: false
+  host: <span class="token variable">${RDS_DB_HOST}</span>
+  enableSsl: true
+  ssl:
+    caCertificate: |-
+<span class="token variable"><span class="token variable">$(</span><span class="token function">curl</span> <span class="token parameter variable">-s</span> <span class="token string">&quot;https://s3.amazonaws.com/rds-downloads/rds-ca-2019-root.pem&quot;</span> <span class="token operator">|</span> <span class="token function">sed</span> <span class="token string">&quot;s/^/      /&quot;</span><span class="token variable">)</span></span>
+EOF</span>
+</code></pre></div><h3 id="connect-to-the-db-using-iam-role"><a href="#connect-to-the-db-using-iam-role" class="header-anchor">#</a> Connect to the DB using IAM role</h3> <p>Try to connect to the MySQL database from Kubernetes pod using IAM role:</p> <ul><li><a href="https://repost.aws/knowledge-center/users-connect-rds-iam" target="_blank" rel="noopener noreferrer">How do I allow users to authenticate to an Amazon RDS MySQL DB instance using their IAM credentials?<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></li> <li><a href="https://github.com/prometheus-community/postgres_exporter/issues/326" target="_blank" rel="noopener noreferrer">AWS/EKS: Support for IAM authentication<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></li></ul> <p>Create Service Account <code>rds-sa</code> for accessing the MySQL RDS DB :</p> <div class="language-bash extra-class"><pre class="language-bash"><code><span class="token function">sed</span> <span class="token parameter variable">-i</span> <span class="token string">&quot;/  serviceAccounts:/a \
+\ \ \ \ - metadata: <span class="token entity" title="\n">\n</span>\
+        name: rds-sa <span class="token entity" title="\n">\n</span>\
+        namespace: default <span class="token entity" title="\n">\n</span>\
+      attachPolicy: <span class="token entity" title="\n">\n</span>\
+        Version: 2012-10-17 <span class="token entity" title="\n">\n</span>\
+        Statement: <span class="token entity" title="\n">\n</span>\
+          Effect: Allow <span class="token entity" title="\n">\n</span>\
+          Action: <span class="token entity" title="\n">\n</span>\
+            - rds-db:connect <span class="token entity" title="\n">\n</span>\
+          Resource: <span class="token entity" title="\n">\n</span>\
+            - arn:aws:rds-db:<span class="token variable">${AWS_DEFAULT_REGION}</span>:*:dbuser:<span class="token variable">${RDS_DB_RESOURCE_ID}</span>/iamtest
+&quot;</span> <span class="token string">&quot;tmp/<span class="token variable">${CLUSTER_FQDN}</span>/eksctl.yaml&quot;</span>
+
+eksctl create iamserviceaccount --config-file <span class="token string">&quot;tmp/<span class="token variable">${CLUSTER_FQDN}</span>/eksctl.yaml&quot;</span> <span class="token parameter variable">--approve</span>
+</code></pre></div><div class="language-bash extra-class"><pre class="language-bash"><code>kubectl apply <span class="token parameter variable">-f</span> - <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mysql-iam-test
+spec:
+  serviceAccountName: rds-sa
+  containers:
+  - name: ubuntu
+    image: ubuntu:20.04
+    command:
+      - /bin/bash
+      - -c
+      - |
+        set -x
+        apt update
+        apt install -y unzip less mysql-client wget telnet &amp;&gt; /dev/null
+        wget -q &quot;https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip&quot; -O &quot;awscliv2.zip&quot;
+        unzip awscliv2.zip &gt; /dev/null
+        ./aws/install
+        aws sts get-caller-identity
+        wget -q https://s3.amazonaws.com/rds-downloads/rds-ca-2019-root.pem
+        TOKEN=&quot;\<span class="token variable"><span class="token variable">$(</span>aws rds generate-db-auth-token <span class="token parameter variable">--hostname</span> $<span class="token punctuation">{</span>RDS_DB_HOST<span class="token punctuation">}</span> <span class="token parameter variable">--port</span> <span class="token number">3306</span> <span class="token parameter variable">--region</span> $<span class="token punctuation">{</span>AWS_DEFAULT_REGION<span class="token punctuation">}</span> <span class="token parameter variable">--username</span> iamtest<span class="token variable">)</span></span>&quot;
+        mysql -h &quot;<span class="token variable">${RDS_DB_HOST}</span>&quot; -u &quot;iamtest&quot; --password=&quot;<span class="token variable">${MY_PASSWORD}</span>&quot; -e &quot;show databases;&quot;
+        mysql -h &quot;<span class="token variable">${RDS_DB_HOST}</span>&quot; -u &quot;iamtest&quot; --password=&quot;\<span class="token variable">${TOKEN}</span>&quot; --enable-cleartext-plugin --ssl-ca=rds-ca-2019-root.pem -e &quot;show databases;&quot;
+        mysql -h &quot;<span class="token variable">${RDS_DB_HOST}</span>&quot; -u &quot;iamtest&quot; --password=&quot;\<span class="token variable">${TOKEN}</span>&quot; --enable-cleartext-plugin --ssl-ca=amazon-root-CA-1.pem --ssl-mode=REQUIRED -e &quot;show databases;&quot;
+    resources:
+      requests:
+        memory: &quot;64Mi&quot;
+        cpu: &quot;250m&quot;
+      limits:
+        memory: &quot;128Mi&quot;
+        cpu: &quot;500m&quot;
+  restartPolicy: Never
+EOF</span>
+<span class="token function">sleep</span> <span class="token number">50</span>
+</code></pre></div><p>Check the logs:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>kubectl logs mysql-iam-test <span class="token parameter variable">--tail</span><span class="token operator">=</span><span class="token number">5</span>
+</code></pre></div><p>Output:</p> <div class="language-text extra-class"><pre class="language-text"><code>+ aws sts get-caller-identity
+{
+    &quot;UserId&quot;: &quot;xxxxxxxxxxxxxxxxxxxxx:botocore-session-1638296138&quot;,
+    &quot;Account&quot;: &quot;7xxxxxxxxxx7&quot;,
+    &quot;Arn&quot;: &quot;arn:aws:sts::7xxxxxxxxxx7:assumed-role/eksctl-kube1-addon-iamserviceaccount-default-Role1-ZOKCKAOF74H0/botocore-session-1638296138&quot;
+}
++ wget -q https://s3.amazonaws.com/rds-downloads/rds-ca-2019-root.pem
+++ aws rds generate-db-auth-token --hostname kube1db.cbpu7ikafk2a.eu-west-1.rds.amazonaws.com --port 3306 --region eu-west-1 --username iamtest
++ TOKEN='kube1db.cbpu7ikafk2a.eu-west-1.rds.amazonaws.com:3306/?Action=connect&amp;amp;DBUser=iamtest&amp;amp;X-Amz-Algorithm=AWS4-HMAC-SHA256&amp;amp;X-Amz-Credential=xxxxxxxxxxxxxxxxxxxx%2F20211130%2Feu-west-1%2Frds-db%2Faws4_request&amp;amp;X-Amz-Date=20211130T181540Z&amp;amp;X-Amz-Expires=900&amp;amp;X-Amz-SignedHeaders=host&amp;amp;X-Amz-Security-Token=IQo...6e917'
++ mysql -h kube1db.cbpu7ikafk2a.eu-west-1.rds.amazonaws.com -u iamtest --password=MyAdmin123,. -e 'show databases;'
+mysql: [Warning] Using a password on the command line interface can be insecure.
+ERROR 2059 (HY000): Authentication plugin 'mysql_clear_password' cannot be loaded: plugin not enabled
++ mysql -h kube1db.cbpu7ikafk2a.eu-west-1.rds.amazonaws.com -u iamtest '--password=kube1db.cbpu7ikafk2a.eu-west-1.rds.amazonaws.com:3306/?Action=connect&amp;amp;DBUser=iamtest&amp;amp;X-Amz-Algorithm=AWS4-HMAC-SHA256&amp;amp;X-Amz-Credential=xxxxxxxxxxxxxxxxxxxx%2F20211130%2Feu-west-1%2Frds-db%2Faws4_request&amp;amp;X-Amz-Date=20211130T181540Z&amp;amp;X-Amz-Expires=900&amp;amp;X-Amz-SignedHeaders=host&amp;amp;X-Amz-Security-Token=IQoJb3J...e917' --enable-cleartext-plugin --ssl-ca=rds-ca-2019-root.pem -e 'show databases;'
+mysql: [Warning] Using a password on the command line interface can be insecure.
+Database
+iamtest
+information_schema
++ mysql -h kube1db.cbpu7ikafk2a.eu-west-1.rds.amazonaws.com -u iamtest '--password=kube1db.cbpu7ikafk2a.eu-west-1.rds.amazonaws.com:3306/?Action=connect&amp;amp;DBUser=iamtest&amp;amp;X-Amz-Algorithm=AWS4-HMAC-SHA256&amp;amp;X-Amz-Credential=xxxxxxxxxxxxxxxxxxxx%2F20211130%2Feu-west-1%2Frds-db%2Faws4_request&amp;amp;X-Amz-Date=20211130T181540Z&amp;amp;X-Amz-Expires=900&amp;amp;X-Amz-SignedHeaders=host&amp;amp;X-Amz-Security-Token=IQo...6e917' --enable-cleartext-plugin --ssl-ca=amazon-root-CA-1.pem --ssl-mode=REQUIRED -e 'show databases;'
+mysql: [Warning] Using a password on the command line interface can be insecure.
+WARNING: no verification of server certificate will be done. Use --ssl-mode=VERIFY_CA or VERIFY_IDENTITY.
+Database
+iamtest
+information_schema
+</code></pre></div><h3 id="install-drupal"><a href="#install-drupal" class="header-anchor">#</a> Install Drupal</h3> <p>The variables containing <code>FileSystemId</code> and <code>AccessPointId</code> like
+<code>EFS_FS_ID_DRUPAL</code> and <code>EFS_AP_ID_DRUPAL1</code>  were defined previously.</p> <p>Create ReadWriteMany persistent volume like described <a href="https://github.com/kubernetes-sigs/aws-efs-csi-driver/blob/master/examples/kubernetes/multiple_pods/README.md" target="_blank" rel="noopener noreferrer">here<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>kubectl get namespace drupal <span class="token operator">&amp;&gt;</span> /dev/null <span class="token operator">||</span> kubectl create namespace drupal
+kubectl apply <span class="token parameter variable">-f</span> - <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: efs-drupal-pv
+spec:
+  storageClassName: efs-drupal-static
+  capacity:
+    storage: 1Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Delete
+  csi:
+    driver: efs.csi.aws.com
+    volumeHandle: <span class="token variable">${EFS_FS_ID_DRUPAL}</span>::<span class="token variable">${EFS_AP_ID_DRUPAL1}</span>
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: drupal-efs-pvc
+  namespace: drupal
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: efs-drupal-static
+  volumeName: efs-drupal-pv
+  resources:
+    requests:
+      storage: 1Gi
+EOF</span>
+</code></pre></div><p>Install <code>drupal</code> <a href="https://artifacthub.io/packages/helm/bitnami/drupal" target="_blank" rel="noopener noreferrer">helm chart<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>
+and modify the
+<a href="https://github.com/bitnami/charts/blob/master/bitnami/drupal/values.yaml" target="_blank" rel="noopener noreferrer">default values<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>.</p> <div class="language-bash extra-class"><pre class="language-bash"><code>helm repo <span class="token function">add</span> --force-update bitnami https://charts.bitnami.com/bitnami
+helm upgrade <span class="token parameter variable">--install</span> <span class="token parameter variable">--version</span> <span class="token number">10.2</span>.24 <span class="token parameter variable">--namespace</span> drupal <span class="token parameter variable">--values</span> - drupal bitnami/drupal <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+replicaCount: 2
+drupalUsername: admin
+drupalPassword: <span class="token variable">${MY_PASSWORD}</span>
+drupalEmail: <span class="token variable">${MY_EMAIL}</span>
+externalDatabase:
+  host: <span class="token variable">${RDS_DB_HOST}</span>
+  user: drupal
+  password: <span class="token variable">${MY_PASSWORD}</span>
+  database: drupal
+smtpHost: mailhog.mailhog.svc.cluster.local
+smtpPort: 1025
+smtpUser: &quot;x&quot;
+smtpPassword: &quot;x&quot;
+mariadb:
+  enabled: false
+service:
+  type: ClusterIP
+ingress:
+  enabled: true
+  annotations:
+    nginx.ingress.kubernetes.io/auth-url: https://oauth2-proxy.<span class="token variable">${CLUSTER_FQDN}</span>/oauth2/auth
+    nginx.ingress.kubernetes.io/auth-signin: https://oauth2-proxy.<span class="token variable">${CLUSTER_FQDN}</span>/oauth2/start?rd=\<span class="token variable">$scheme</span>://\<span class="token variable">$host</span>\<span class="token variable">$request_uri</span>
+  hostname: drupal.<span class="token variable">${CLUSTER_FQDN}</span>
+  tls:
+    - secretName: ingress-cert-<span class="token variable">${LETSENCRYPT_ENVIRONMENT}</span>
+      hosts:
+        - drupal.<span class="token variable">${CLUSTER_FQDN}</span>
+persistence:
+  enabled: true
+  # EFS dynamic provisioning can not be used due to UID/GID issue when EFS assign
+  # randomly GID to the NFS share and then Drupal can not write to it
+  # (chown to such directory is not working - prohibited by AWS)
+  # storageClass: efs-drupal
+  # accessMode: ReadWriteMany
+  # size: 1Gi
+  existingClaim: drupal-efs-pvc
+EOF</span>
+</code></pre></div><h3 id="install-drupal2"><a href="#install-drupal2" class="header-anchor">#</a> Install Drupal2</h3> <p>The variables containing <code>FileSystemId</code> and <code>AccessPointId</code> like
+<code>EFS_FS_ID_DRUPAL</code> and <code>EFS_AP_ID_DRUPAL2</code> were defined previously.</p> <p>Create ReadWriteMany persistent volume like described <a href="https://github.com/kubernetes-sigs/aws-efs-csi-driver/blob/master/examples/kubernetes/multiple_pods/README.md" target="_blank" rel="noopener noreferrer">here<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>kubectl get namespace drupal2 <span class="token operator">&amp;&gt;</span> /dev/null <span class="token operator">||</span> kubectl create namespace drupal2
+kubectl apply <span class="token parameter variable">-f</span> - <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: efs-drupal2-pv
+spec:
+  storageClassName: efs-drupal-static
+  capacity:
+    storage: 1Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Delete
+  csi:
+    driver: efs.csi.aws.com
+    volumeHandle: <span class="token variable">${EFS_FS_ID_DRUPAL}</span>::<span class="token variable">${EFS_AP_ID_DRUPAL2}</span>
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: drupal2-efs-pvc
+  namespace: drupal2
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: efs-drupal-static
+  volumeName: efs-drupal2-pv
+  resources:
+    requests:
+      storage: 1Gi
+EOF</span>
+</code></pre></div><p>Enable Istio for namespace <code>drupal2</code>:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>kubectl label namespace drupal2 istio-injection<span class="token operator">=</span>enabled kiali.io/member-of<span class="token operator">=</span>kiali <span class="token parameter variable">--overwrite</span>
+</code></pre></div><p>Install <code>drupal2</code>:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>helm upgrade <span class="token parameter variable">--install</span> <span class="token parameter variable">--version</span> <span class="token number">10.2</span>.24 <span class="token parameter variable">--namespace</span> drupal2 <span class="token parameter variable">--values</span> - drupal2 bitnami/drupal <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+replicaCount: 2
+drupalUsername: admin
+drupalPassword: <span class="token variable">${MY_PASSWORD}</span>
+drupalEmail: <span class="token variable">${MY_EMAIL}</span>
+commonLabels:
+  app: &quot;{{ .Release.Name }}&quot;
+  version: &quot;{{ .Chart.AppVersion }}&quot;
+externalDatabase:
+  host: <span class="token variable">${RDS_DB_HOST}</span>
+  user: drupal2
+  password: <span class="token variable">${MY_PASSWORD}</span>
+  database: drupal2
+smtpHost: mailhog.mailhog.svc.cluster.local
+smtpPort: 1025
+smtpUser: &quot;x&quot;
+smtpPassword: &quot;x&quot;
+mariadb:
+  enabled: false
+service:
+  type: ClusterIP
+persistence:
+  enabled: true
+  existingClaim: drupal2-efs-pvc
+EOF</span>
+</code></pre></div><p>Create Istio components to allow accessing Drupal:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>kubectl apply <span class="token parameter variable">-f</span> - <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: drupal-destination-rule
+  namespace: drupal2
+spec:
+  host: drupal2.drupal2.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: drupal2-virtual-service
+  namespace: drupal2
+spec:
+  hosts:
+    - drupal2.<span class="token variable">${CLUSTER_FQDN}</span>
+  gateways:
+    - drupal2-gateway
+  http:
+    - route:
+        - destination:
+            host: drupal2.drupal2.svc.cluster.local
+            port:
+              number: 80
+---
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: drupal2-gateway
+  namespace: drupal2
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 443
+        name: https-drupal2
+        protocol: HTTPS
+      tls:
+        mode: SIMPLE
+        credentialName: ingress-cert-<span class="token variable">${LETSENCRYPT_ENVIRONMENT}</span>
+      hosts:
+        - drupal2.<span class="token variable">${CLUSTER_FQDN}</span>
+EOF</span>
+</code></pre></div><p>Generate traffic going to Drupal2:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>hey <span class="token parameter variable">-n</span> <span class="token number">2000</span> <span class="token parameter variable">-c</span> <span class="token number">1</span> <span class="token parameter variable">-q</span> <span class="token number">1</span> <span class="token parameter variable">-h2</span> <span class="token string">&quot;https://drupal2.<span class="token variable">${CLUSTER_FQDN}</span>&quot;</span> <span class="token operator">&gt;</span> /dev/null <span class="token operator">&amp;</span>
+</code></pre></div></div> <footer class="page-edit"><div class="edit-link"><a href="https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/edit/main/docs/part-09/README.md" target="_blank" rel="noopener noreferrer">Edit this page</a> <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></div> <div class="last-updated"><span class="prefix">Last Updated:</span> <span class="time">6/30/2024, 4:19:34 AM</span></div></footer> <div class="page-nav"><p class="inner"><span class="prev">
+      ←
+      <a href="/k8s-eks-bottlerocket-fargate/part-08/" class="prev">
+        Other workloads
+      </a></span> <span class="next"><a href="/k8s-eks-bottlerocket-fargate/part-10/">
+        Harbor
+      </a>
+      →
+    </span></p></div> </main></div><div class="global-ui"><!----><!----></div></div>
+    <script src="/k8s-eks-bottlerocket-fargate/assets/js/app.cd5c61da.js" defer></script><script src="/k8s-eks-bottlerocket-fargate/assets/js/2.a27de003.js" defer></script><script src="/k8s-eks-bottlerocket-fargate/assets/js/1.30a6593f.js" defer></script><script src="/k8s-eks-bottlerocket-fargate/assets/js/31.ee8b8daa.js" defer></script>
+  </body>
+</html>

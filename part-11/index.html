@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Velero | Amazon EKS Bottlerocket and Fargate</title>
+    <meta name="generator" content="VuePress 1.9.10">
+    <link rel="icon" href="https://raw.githubusercontent.com/kubernetes/kubernetes/d9a58a39b69a0eaec5797e0f7a0f9472b4829ab0/logo/logo.svg">
+    <meta name="description" content="Amazon EKS Bottlerocket and Fargate">
+    
+    <link rel="preload" href="/k8s-eks-bottlerocket-fargate/assets/css/0.styles.61693ea3.css" as="style"><link rel="preload" href="/k8s-eks-bottlerocket-fargate/assets/js/app.cd5c61da.js" as="script"><link rel="preload" href="/k8s-eks-bottlerocket-fargate/assets/js/2.a27de003.js" as="script"><link rel="preload" href="/k8s-eks-bottlerocket-fargate/assets/js/1.30a6593f.js" as="script"><link rel="preload" href="/k8s-eks-bottlerocket-fargate/assets/js/33.b5ef35a1.js" as="script"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/10.340b7a91.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/11.6724c971.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/12.0f6b2c7f.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/13.0f6f4ef5.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/14.28b41666.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/15.d3972987.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/16.4c24402c.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/17.6cd3a12a.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/18.8d7e6487.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/19.78b16bd4.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/20.a3f134b4.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/21.3fb0cd72.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/22.f5ea0076.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/23.a21f8ae6.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/24.c557dbf6.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/25.3d2180e6.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/26.8ac7134b.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/27.050bbf87.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/28.f566dccc.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/29.3e3635d0.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/3.6b4152e0.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/30.7ac4c6d1.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/31.ee8b8daa.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/32.85f54686.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/34.6e2c7bbd.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/35.301a3049.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/4.bea5e217.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/5.ac8fedb2.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/6.76ff54c2.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/7.98538131.js"><link rel="prefetch" href="/k8s-eks-bottlerocket-fargate/assets/js/vendors~docsearch.d098b00c.js">
+    <link rel="stylesheet" href="/k8s-eks-bottlerocket-fargate/assets/css/0.styles.61693ea3.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div class="theme-container"><header class="navbar"><div class="sidebar-button"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" viewBox="0 0 448 512" class="icon"><path fill="currentColor" d="M436 124H12c-6.627 0-12-5.373-12-12V80c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12z"></path></svg></div> <a href="/k8s-eks-bottlerocket-fargate/" class="home-link router-link-active"><img src="https://raw.githubusercontent.com/kubernetes/kubernetes/d9a58a39b69a0eaec5797e0f7a0f9472b4829ab0/logo/logo.svg" alt="Amazon EKS Bottlerocket and Fargate" class="logo"> <span class="site-name can-hide">Amazon EKS Bottlerocket and Fargate</span></a> <div class="links"><div class="search-box"><input aria-label="Search" autocomplete="off" spellcheck="false" value=""> <!----></div> <nav class="nav-links can-hide"><div class="nav-item"><a href="/k8s-eks-bottlerocket-fargate/" class="nav-link">
+  Home
+</a></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="Links" class="dropdown-title"><span class="title">Links</span> <span class="arrow down"></span></button> <button type="button" aria-label="Links" class="mobile-dropdown-title"><span class="title">Links</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="https://aws.amazon.com/eks/" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  Amazon EKS
+  <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></li><li class="dropdown-item"><!----> <a href="https://aws.amazon.com/bottlerocket/" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  Bottlerocket
+  <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></li></ul></div></div> <a href="https://github.com/ruzickap/k8s-eks-bottlerocket-fargate" target="_blank" rel="noopener noreferrer" class="repo-link">
+    GitHub
+    <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></nav></div></header> <div class="sidebar-mask"></div> <aside class="sidebar"><nav class="nav-links"><div class="nav-item"><a href="/k8s-eks-bottlerocket-fargate/" class="nav-link">
+  Home
+</a></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="Links" class="dropdown-title"><span class="title">Links</span> <span class="arrow down"></span></button> <button type="button" aria-label="Links" class="mobile-dropdown-title"><span class="title">Links</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="https://aws.amazon.com/eks/" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  Amazon EKS
+  <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></li><li class="dropdown-item"><!----> <a href="https://aws.amazon.com/bottlerocket/" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  Bottlerocket
+  <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></li></ul></div></div> <a href="https://github.com/ruzickap/k8s-eks-bottlerocket-fargate" target="_blank" rel="noopener noreferrer" class="repo-link">
+    GitHub
+    <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></nav>  <ul class="sidebar-links"><li><a href="/k8s-eks-bottlerocket-fargate/" aria-current="page" class="sidebar-link">Amazon EKS Bottlerocket and Fargate</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/#requirements" class="sidebar-link">Requirements</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/#content" class="sidebar-link">Content</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-01/" class="sidebar-link">Amazon EKS Bottlerocket and Fargate</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-01/#requirements" class="sidebar-link">Requirements</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-01/#prepare-the-local-working-environment" class="sidebar-link">Prepare the local working environment</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-01/#configure-aws-route-53-domain-delegation" class="sidebar-link">Configure AWS Route 53 Domain delegation</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-01/#add-new-domain-to-route-53-policies-s3-ebs" class="sidebar-link">Add new domain to Route 53, Policies, S3, EBS</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-01/#create-amazon-eks" class="sidebar-link">Create Amazon EKS</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-02/" class="sidebar-link">AWS</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#fargate" class="sidebar-link">Fargate</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#aws-load-balancer-controller" class="sidebar-link">aws-load-balancer-controller</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#aws-for-fluent-bit" class="sidebar-link">aws-for-fluent-bit</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#aws-cloudwatch-metrics" class="sidebar-link">aws-cloudwatch-metrics</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#aws-efs-csi-driver" class="sidebar-link">aws-efs-csi-driver</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#install-external-snapshotter" class="sidebar-link">Install external-snapshotter</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#aws-ebs-csi-driver" class="sidebar-link">aws-ebs-csi-driver</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#test-amazon-eks-pod-limits" class="sidebar-link">Test Amazon EKS pod limits</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#amazon-managed-prometheus-amazon-managed-grafana" class="sidebar-link">Amazon Managed Prometheus + Amazon Managed Grafana</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#test-eks-access" class="sidebar-link">Test EKS access</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-02/#capsule" class="sidebar-link">Capsule</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-03/" class="sidebar-link">Monitoring and Logging</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#metrics-server" class="sidebar-link">metrics-server</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#prometheus-adapter" class="sidebar-link">prometheus-adapter</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#kube-prometheus-stack" class="sidebar-link">kube-prometheus-stack</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#enable-calico-monitoring" class="sidebar-link">Enable calico monitoring</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#loki" class="sidebar-link">loki</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#aws-node-termination-handler" class="sidebar-link">aws-node-termination-handler</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#kyverno" class="sidebar-link">kyverno</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#nri-bundle" class="sidebar-link">nri-bundle</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#splunk-connect" class="sidebar-link">splunk-connect</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#aqua-security-enforcer" class="sidebar-link">Aqua Security Enforcer</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-03/#sysdig-agent" class="sidebar-link">sysdig-agent</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-04/" class="sidebar-link">DNS, Ingress, Certificates</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#cert-manager" class="sidebar-link">cert-manager</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#kubed" class="sidebar-link">kubed</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#ingress-nginx" class="sidebar-link">ingress-nginx</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#istio-and-related-tools" class="sidebar-link">Istio and related tools</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#external-dns" class="sidebar-link">external-dns</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#mailhog" class="sidebar-link">mailhog</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#kubewatch-obsolete" class="sidebar-link">kubewatch - obsolete</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-04/#calico-commands" class="sidebar-link">Calico commands</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-05/" class="sidebar-link">Authentication</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-05/#keycloak" class="sidebar-link">Keycloak</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-05/#oauth2-proxy-keycloak" class="sidebar-link">oauth2-proxy - Keycloak</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-05/#dex" class="sidebar-link">Dex</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-05/#oauth2-proxy" class="sidebar-link">oauth2-proxy</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-05/#gangway" class="sidebar-link">Gangway</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-05/#kube-oidc-proxy" class="sidebar-link">kube-oidc-proxy</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-06/" class="sidebar-link">Others</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-06/#cluster-autoscaler" class="sidebar-link">cluster-autoscaler</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-06/#descheduler" class="sidebar-link">Descheduler</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-06/#rancher" class="sidebar-link">Rancher</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-07/" class="sidebar-link">Workloads</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#podinfo" class="sidebar-link">podinfo</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#polaris" class="sidebar-link">Polaris</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#kubei" class="sidebar-link">kubei</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#kube-bench" class="sidebar-link">kube-bench</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#kubernetes-dashboard" class="sidebar-link">kubernetes-dashboard</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#kubeview" class="sidebar-link">kubeview</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#kube-ops-view" class="sidebar-link">kube-ops-view</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-07/#s3-upload-test" class="sidebar-link">S3 upload test</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-08/" class="sidebar-link">Other workloads</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-08/#cluster-api" class="sidebar-link">Cluster API</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-08/#hashicorp-vault" class="sidebar-link">HashiCorp Vault</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-08/#podinfo-with-vault-certificate" class="sidebar-link">podinfo with vault certificate</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-08/#secrets-store-csi-driver" class="sidebar-link">secrets-store-csi-driver</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-08/#kuard" class="sidebar-link">kuard</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-09/" class="sidebar-link">Drupal</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-09/#drupal-installation" class="sidebar-link">Drupal installation</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-10/" class="sidebar-link">Harbor</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-10/#cloudwatch-retention" class="sidebar-link">CloudWatch retention</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-11/" aria-current="page" class="active sidebar-link">Velero</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-11/#backup-vault-using-csi-volume-snapshotting" class="sidebar-link">Backup Vault using CSI Volume Snapshotting</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-11/#delete-restore-vault-using-csi-volume-snapshotting" class="sidebar-link">Delete + Restore Vault using CSI Volume Snapshotting</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-11/#backup-delete-restore-app-with-efs-storage-using-restic" class="sidebar-link">Backup + Delete + Restore app with EFS storage using restic</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-12/" class="sidebar-link">GitOps tools</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-12/#argocd" class="sidebar-link">ArgoCD</a></li><li class="sidebar-sub-header"><a href="/k8s-eks-bottlerocket-fargate/part-12/#flux" class="sidebar-link">Flux</a></li></ul></li><li><a href="/k8s-eks-bottlerocket-fargate/part-13/" class="sidebar-link">Clean-up</a></li></ul> </aside> <main class="page"> <div class="theme-default-content content__default"><h1 id="velero"><a href="#velero" class="header-anchor">#</a> Velero</h1> <p>Velero helps with backup/restore of Kubernetes objects.</p> <p>Install <code>velero</code> <a href="https://artifacthub.io/packages/helm/vmware-tanzu/velero" target="_blank" rel="noopener noreferrer">helm chart<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>
+and modify the
+<a href="https://github.com/vmware-tanzu/helm-charts/blob/main/charts/velero/values.yaml" target="_blank" rel="noopener noreferrer">default values<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>.</p> <div class="language-bash extra-class"><pre class="language-bash"><code>helm repo <span class="token function">add</span> --force-update vmware-tanzu https://vmware-tanzu.github.io/helm-charts
+helm upgrade <span class="token parameter variable">--install</span> <span class="token parameter variable">--version</span> <span class="token number">2.23</span>.5 <span class="token parameter variable">--namespace</span> velero --create-namespace <span class="token parameter variable">--values</span> - velero vmware-tanzu/velero <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+initContainers:
+  - name: velero-plugin-for-aws
+    image: velero/velero-plugin-for-aws:v1.2.0
+    imagePullPolicy: Always
+    volumeMounts:
+      - mountPath: /target
+        name: plugins
+  - name: velero-plugin-for-csi
+    image: velero/velero-plugin-for-csi:v0.1.2
+    imagePullPolicy: Always
+    volumeMounts:
+      - mountPath: /target
+        name: plugins
+metrics:
+  serviceMonitor:
+    enabled: true
+configuration:
+  provider: aws
+  backupStorageLocation:
+    bucket: <span class="token variable">${CLUSTER_FQDN}</span>
+    prefix: velero
+    config:
+      region: <span class="token variable">${AWS_DEFAULT_REGION}</span>
+  volumeSnapshotLocation:
+    name: aws
+    config:
+      region: <span class="token variable">${AWS_DEFAULT_REGION}</span>
+  features: EnableCSI
+serviceAccount:
+  server:
+    create: false
+    name: velero
+credentials:
+  useSecret: false
+deployRestic: true
+EOF</span>
+</code></pre></div><h2 id="backup-vault-using-csi-volume-snapshotting"><a href="#backup-vault-using-csi-volume-snapshotting" class="header-anchor">#</a> Backup Vault using CSI Volume Snapshotting</h2> <p>This example showing Velero backup using snapshots <code>features: EnableCSI</code>:</p> <p>Run backup of <code>vault</code> namespace:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>velero backup create backup-vault <span class="token parameter variable">--ttl</span> 24h --include-namespaces<span class="token operator">=</span>vault <span class="token parameter variable">--wait</span>
+<span class="token function">sleep</span> <span class="token number">10</span>
+</code></pre></div><p>Output:</p> <div class="language-text extra-class"><pre class="language-text"><code>Backup request &quot;backup-vault&quot; submitted successfully.
+Waiting for backup to complete. You may safely press ctrl-c to stop waiting - your backup will continue in the background.
+.............................
+Backup completed with status: Completed. You may check for more information using the commands `velero backup describe backup-vault` and `velero backup logs backup-vault`.
+</code></pre></div><p>Check the backups:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>velero get backups
+</code></pre></div><p>Output:</p> <div class="language-text extra-class"><pre class="language-text"><code>NAME           STATUS      ERRORS   WARNINGS   CREATED                         EXPIRES   STORAGE LOCATION   SELECTOR
+backup-vault   Completed   0        0          2021-11-29 19:35:48 +0100 CET   23h       default            &amp;lt;none&gt;
+</code></pre></div><p>See the details of the <code>backup-vault</code>:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>velero backup describe backup-vault <span class="token parameter variable">--details</span> <span class="token parameter variable">--features</span><span class="token operator">=</span>EnableCSI
+</code></pre></div><p>Output:</p> <div class="language-text extra-class"><pre class="language-text"><code>Name:         backup-vault
+Namespace:    velero
+Labels:       velero.io/storage-location=default
+Annotations:  velero.io/source-cluster-k8s-gitversion=v1.21.2-eks-06eac09
+              velero.io/source-cluster-k8s-major-version=1
+              velero.io/source-cluster-k8s-minor-version=21+
+
+Phase:  Completed
+
+Errors:    0
+Warnings:  0
+
+Namespaces:
+  Included:  vault
+  Excluded:  &amp;lt;none&gt;
+
+Resources:
+  Included:        *
+  Excluded:        &amp;lt;none&gt;
+  Cluster-scoped:  auto
+
+Label selector:  &amp;lt;none&gt;
+
+Storage Location:  default
+
+Velero-Native Snapshot PVs:  auto
+
+TTL:  24h0m0s
+
+Hooks:  &amp;lt;none&gt;
+
+Backup Format Version:  1.1.0
+
+Started:    2021-11-29 19:35:48 +0100 CET
+Completed:  2021-11-29 19:36:13 +0100 CET
+
+Expiration:  2021-11-30 19:35:47 +0100 CET
+
+Total items to be backed up:  50
+Items backed up:              50
+
+Resource List:
+  apiextensions.k8s.io/v1/CustomResourceDefinition:
+    - apps.catalog.cattle.io
+    - policyreports.wgpolicyk8s.io
+  apps/v1/ControllerRevision:
+    - vault/vault-5d64bdf4c
+  apps/v1/StatefulSet:
+    - vault/vault
+  catalog.cattle.io/v1/App:
+    - vault/vault
+  discovery.k8s.io/v1/EndpointSlice:
+    - vault/vault-internal-jmw6b
+    - vault/vault-k4bsj
+  extensions/v1beta1/Ingress:
+    - vault/vault
+  networking.k8s.io/v1/Ingress:
+    - vault/vault
+  rbac.authorization.k8s.io/v1/ClusterRole:
+    - system:auth-delegator
+  rbac.authorization.k8s.io/v1/ClusterRoleBinding:
+    - vault-server-binding
+  snapshot.storage.k8s.io/v1/VolumeSnapshot:
+    - vault/velero-data-vault-0-tjzmn
+  snapshot.storage.k8s.io/v1/VolumeSnapshotClass:
+    - csi-ebs-snapclass
+  snapshot.storage.k8s.io/v1/VolumeSnapshotContent:
+    - snapcontent-4590ab05-9985-46d1-b933-9ac6cbf8f273
+  v1/ConfigMap:
+    - vault/istio-ca-root-cert
+    - vault/kube-root-ca.crt
+    - vault/vault-config
+  v1/Endpoints:
+    - vault/vault
+    - vault/vault-internal
+  v1/Event:
+    - vault/data-vault-0.16bc16518e27caa7
+    - vault/data-vault-0.16bc1651a2cec15e
+    - vault/data-vault-0.16bc1651a472319d
+    - vault/data-vault-0.16bc165276a2e75e
+    - vault/vault-0.16bc16528ff1897e
+    - vault/vault-0.16bc1653507ef368
+    - vault/vault-0.16bc1655a8f8ba2c
+    - vault/vault-0.16bc1657c6ec0ccf
+    - vault/vault-0.16bc1657d8e90a9b
+    - vault/vault-0.16bc1657e8e0c068
+    - vault/vault-0.16bc16599ccee60e
+    - vault/vault.16bc16517c637f61
+    - vault/vault.16bc16518e5caae2
+    - vault/vault.16bc16519b84095f
+    - vault/vault.16bc16519cec3f09
+    - vault/vault.16bc16677d87006d
+    - vault/vault.16bc181570c799e4
+    - vault/vault.16bc1825c7e610bc
+  v1/Namespace:
+    - vault
+  v1/PersistentVolume:
+    - pvc-7c542be7-2c63-4c44-9634-19ac2f1b291c
+  v1/PersistentVolumeClaim:
+    - vault/data-vault-0
+  v1/Pod:
+    - vault/vault-0
+  v1/Secret:
+    - vault/default-token-vbfds
+    - vault/ingress-cert-staging
+    - vault/sh.helm.release.v1.vault.v1
+    - vault/vault-token-v7px6
+  v1/Service:
+    - vault/vault
+    - vault/vault-internal
+  v1/ServiceAccount:
+    - vault/default
+    - vault/vault
+  wgpolicyk8s.io/v1alpha1/PolicyReport:
+    - vault/polr-ns-vault
+
+Velero-Native Snapshots: &amp;lt;none included&gt;
+
+CSI Volume Snapshots:
+Snapshot Content Name: snapcontent-4590ab05-9985-46d1-b933-9ac6cbf8f273
+  Storage Snapshot ID: snap-00bbc8da2281aeac8
+  Snapshot Size (bytes): 1073741824
+  Ready to use: true
+</code></pre></div><p>List all the <code>VolumeSnapshot</code> objects:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>kubectl get volumesnapshots --all-namespaces
+</code></pre></div><p>Output:</p> <div class="language-text extra-class"><pre class="language-text"><code>NAMESPACE   NAME                        READYTOUSE   SOURCEPVC      SOURCESNAPSHOTCONTENT   RESTORESIZE   SNAPSHOTCLASS       SNAPSHOTCONTENT                                    CREATIONTIME   AGE
+vault       velero-data-vault-0-tjzmn   true         data-vault-0                           1Gi           csi-ebs-snapclass   snapcontent-4590ab05-9985-46d1-b933-9ac6cbf8f273   9s             10s
+</code></pre></div><p>Check the <code>VolumeSnapshot</code> details:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>kubectl describe volumesnapshots <span class="token parameter variable">-n</span> vault
+</code></pre></div><p>Output:</p> <div class="language-text extra-class"><pre class="language-text"><code>Name:         velero-data-vault-0-tjzmn
+Namespace:    vault
+Labels:       velero.io/backup-name=backup-vault
+Annotations:  &amp;lt;none&gt;
+API Version:  snapshot.storage.k8s.io/v1
+Kind:         VolumeSnapshot
+Metadata:
+  Creation Timestamp:  2021-11-29T18:36:08Z
+  Finalizers:
+    snapshot.storage.kubernetes.io/volumesnapshot-as-source-protection
+  Generate Name:  velero-data-vault-0-
+  Generation:     1
+  Managed Fields:
+    API Version:  snapshot.storage.k8s.io/v1beta1
+    Fields Type:  FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:generateName:
+        f:labels:
+          .:
+          f:velero.io/backup-name:
+      f:spec:
+        .:
+        f:source:
+          .:
+          f:persistentVolumeClaimName:
+        f:volumeSnapshotClassName:
+    Manager:      velero-plugin-for-csi
+    Operation:    Update
+    Time:         2021-11-29T18:36:08Z
+    API Version:  snapshot.storage.k8s.io/v1
+    Fields Type:  FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:finalizers:
+          .:
+          v:&quot;snapshot.storage.kubernetes.io/volumesnapshot-as-source-protection&quot;:
+      f:status:
+        .:
+        f:boundVolumeSnapshotContentName:
+        f:creationTime:
+        f:readyToUse:
+        f:restoreSize:
+    Manager:         snapshot-controller
+    Operation:       Update
+    Time:            2021-11-29T18:36:09Z
+  Resource Version:  58212
+  UID:               4590ab05-9985-46d1-b933-9ac6cbf8f273
+Spec:
+  Source:
+    Persistent Volume Claim Name:  data-vault-0
+  Volume Snapshot Class Name:      csi-ebs-snapclass
+Status:
+  Bound Volume Snapshot Content Name:  snapcontent-4590ab05-9985-46d1-b933-9ac6cbf8f273
+  Creation Time:                       2021-11-29T18:36:09Z
+  Ready To Use:                        true
+  Restore Size:                        1Gi
+Events:
+  Type    Reason            Age   From                 Message
+  ----    ------            ----  ----                 -------
+  Normal  CreatingSnapshot  11s   snapshot-controller  Waiting for a snapshot vault/velero-data-vault-0-tjzmn to be created by the CSI driver.
+  Normal  SnapshotCreated   10s   snapshot-controller  Snapshot vault/velero-data-vault-0-tjzmn was successfully created by the CSI driver.
+  Normal  SnapshotReady     5s    snapshot-controller  Snapshot vault/velero-data-vault-0-tjzmn is ready to use.
+</code></pre></div><p>Get the <code>VolumeSnapshotContent</code>:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>kubectl get volumesnapshotcontent
+</code></pre></div><p>Output:</p> <div class="language-text extra-class"><pre class="language-text"><code>NAME                                               READYTOUSE   RESTORESIZE   DELETIONPOLICY   DRIVER            VOLUMESNAPSHOTCLASS   VOLUMESNAPSHOT              VOLUMESNAPSHOTNAMESPACE   AGE
+snapcontent-4590ab05-9985-46d1-b933-9ac6cbf8f273   true         1073741824    Retain           ebs.csi.aws.com   csi-ebs-snapclass     velero-data-vault-0-tjzmn   vault                     12s
+</code></pre></div><div class="language-bash extra-class"><pre class="language-bash"><code>kubectl describe volumesnapshotcontent <span class="token string">&quot;<span class="token variable"><span class="token variable">$(</span>kubectl get volumesnapshotcontent <span class="token parameter variable">-o</span> <span class="token assign-left variable">jsonpath</span><span class="token operator">=</span><span class="token string">&quot;{.items[*].metadata.name}&quot;</span><span class="token variable">)</span></span>&quot;</span>
+</code></pre></div><p>Output:</p> <div class="language-text extra-class"><pre class="language-text"><code>Name:         snapcontent-4590ab05-9985-46d1-b933-9ac6cbf8f273
+Namespace:
+Labels:       velero.io/backup-name=backup-vault
+Annotations:  &amp;lt;none&gt;
+API Version:  snapshot.storage.k8s.io/v1
+Kind:         VolumeSnapshotContent
+Metadata:
+  Creation Timestamp:  2021-11-29T18:36:08Z
+  Finalizers:
+    snapshot.storage.kubernetes.io/volumesnapshotcontent-bound-protection
+  Generation:  1
+  Managed Fields:
+    API Version:  snapshot.storage.k8s.io/v1
+    Fields Type:  FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:finalizers:
+          .:
+          v:&quot;snapshot.storage.kubernetes.io/volumesnapshotcontent-bound-protection&quot;:
+      f:spec:
+        .:
+        f:deletionPolicy:
+        f:driver:
+        f:source:
+          .:
+          f:volumeHandle:
+        f:volumeSnapshotClassName:
+        f:volumeSnapshotRef:
+          .:
+          f:apiVersion:
+          f:kind:
+          f:name:
+          f:namespace:
+          f:resourceVersion:
+          f:uid:
+    Manager:      snapshot-controller
+    Operation:    Update
+    Time:         2021-11-29T18:36:08Z
+    API Version:  snapshot.storage.k8s.io/v1beta1
+    Fields Type:  FieldsV1
+    fieldsV1:
+      f:status:
+        .:
+        f:creationTime:
+        f:readyToUse:
+        f:restoreSize:
+        f:snapshotHandle:
+    Manager:      csi-snapshotter
+    Operation:    Update
+    Time:         2021-11-29T18:36:12Z
+    API Version:  snapshot.storage.k8s.io/v1beta1
+    Fields Type:  FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:labels:
+          .:
+          f:velero.io/backup-name:
+    Manager:         velero-plugin-for-csi
+    Operation:       Update
+    Time:            2021-11-29T18:36:13Z
+  Resource Version:  58204
+  UID:               ac2e744b-a973-43f7-94f2-0a19e96fbded
+Spec:
+  Deletion Policy:  Retain
+  Driver:           ebs.csi.aws.com
+  Source:
+    Volume Handle:             vol-02eaf309a1814296b
+  Volume Snapshot Class Name:  csi-ebs-snapclass
+  Volume Snapshot Ref:
+    API Version:       snapshot.storage.k8s.io/v1
+    Kind:              VolumeSnapshot
+    Name:              velero-data-vault-0-tjzmn
+    Namespace:         vault
+    Resource Version:  58099
+    UID:               4590ab05-9985-46d1-b933-9ac6cbf8f273
+Status:
+  Creation Time:    1638210969214000000
+  Ready To Use:     true
+  Restore Size:     1073741824
+  Snapshot Handle:  snap-00bbc8da2281aeac8
+Events:             &amp;lt;none&gt;
+</code></pre></div><p>Check the snapshots in AWS:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>aws ec2 describe-snapshots <span class="token parameter variable">--filter</span> <span class="token string">&quot;Name=tag:kubernetes.io/cluster/<span class="token variable">${CLUSTER_FQDN}</span>,Values=owned&quot;</span> <span class="token operator">|</span> jq
+</code></pre></div><p>Output:</p> <div class="language-json extra-class"><pre class="language-json"><code><span class="token punctuation">{</span>
+  <span class="token property">&quot;Snapshots&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">{</span>
+      <span class="token property">&quot;Description&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Created by AWS EBS CSI driver for volume vol-011280587cf55688f&quot;</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;Encrypted&quot;</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;KmsKeyId&quot;</span><span class="token operator">:</span> <span class="token string">&quot;arn:aws:kms:eu-central-1:7xxxxxxxxxx7:key/a753d4d9-5006-4bea-8351-34092cd7b34e&quot;</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;OwnerId&quot;</span><span class="token operator">:</span> <span class="token string">&quot;7xxxxxxxxxx7&quot;</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;Progress&quot;</span><span class="token operator">:</span> <span class="token string">&quot;99%&quot;</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;SnapshotId&quot;</span><span class="token operator">:</span> <span class="token string">&quot;snap-0203474147721b8f6&quot;</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;StartTime&quot;</span><span class="token operator">:</span> <span class="token string">&quot;2021-03-20T09:33:18.023000+00:00&quot;</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;State&quot;</span><span class="token operator">:</span> <span class="token string">&quot;pending&quot;</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;VolumeId&quot;</span><span class="token operator">:</span> <span class="token string">&quot;vol-011280587cf55688f&quot;</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;VolumeSize&quot;</span><span class="token operator">:</span> <span class="token number">1</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;Tags&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+        <span class="token punctuation">{</span>
+          <span class="token property">&quot;Key&quot;</span><span class="token operator">:</span> <span class="token string">&quot;CSIVolumeSnapshotName&quot;</span><span class="token punctuation">,</span>
+          <span class="token property">&quot;Value&quot;</span><span class="token operator">:</span> <span class="token string">&quot;snapshot-99d118b4-ff11-4a3b-b1cf-c641ce4c034c&quot;</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span>
+          <span class="token property">&quot;Key&quot;</span><span class="token operator">:</span> <span class="token string">&quot;kubernetes.io/cluster/kube1.k8s.mylabs.dev&quot;</span><span class="token punctuation">,</span>
+          <span class="token property">&quot;Value&quot;</span><span class="token operator">:</span> <span class="token string">&quot;owned&quot;</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span>
+          <span class="token property">&quot;Key&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Name&quot;</span><span class="token punctuation">,</span>
+          <span class="token property">&quot;Value&quot;</span><span class="token operator">:</span> <span class="token string">&quot;kube1.k8s.mylabs.dev-dynamic-snapshot-99d118b4-ff11-4a3b-b1cf-c641ce4c034c&quot;</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">]</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">]</span>
+<span class="token punctuation">}</span>
+</code></pre></div><p>See the files in S3 bucket:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>aws s3 <span class="token function">ls</span> <span class="token parameter variable">--recursive</span> <span class="token string">&quot;s3://<span class="token variable">${CLUSTER_FQDN}</span>/velero/&quot;</span>
+</code></pre></div><p>Output:</p> <div class="language-text extra-class"><pre class="language-text"><code>2021-11-29 19:36:14        740 velero/backups/backup-vault/backup-vault-csi-volumesnapshotcontents.json.gz
+2021-11-29 19:36:14        539 velero/backups/backup-vault/backup-vault-csi-volumesnapshots.json.gz
+2021-11-29 19:36:14       8189 velero/backups/backup-vault/backup-vault-logs.gz
+2021-11-29 19:36:14         29 velero/backups/backup-vault/backup-vault-podvolumebackups.json.gz
+2021-11-29 19:36:14        772 velero/backups/backup-vault/backup-vault-resource-list.json.gz
+2021-11-29 19:36:14         29 velero/backups/backup-vault/backup-vault-volumesnapshots.json.gz
+2021-11-29 19:36:14     180977 velero/backups/backup-vault/backup-vault.tar.gz
+2021-11-29 19:36:14       2089 velero/backups/backup-vault/velero-backup.json
+</code></pre></div><h2 id="delete-restore-vault-using-csi-volume-snapshotting"><a href="#delete-restore-vault-using-csi-volume-snapshotting" class="header-anchor">#</a> Delete + Restore Vault using CSI Volume Snapshotting</h2> <p>Check the <code>vault</code> namespace and it's objects:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>kubectl get pods,deployments,services,ingress,secrets,pvc,statefulset,service,configmap <span class="token parameter variable">-n</span> vault
+</code></pre></div><p>Output:</p> <div class="language-text extra-class"><pre class="language-text"><code>NAME          READY   STATUS    RESTARTS   AGE
+pod/vault-0   1/1     Running   0          34m
+
+NAME                     TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)             AGE
+service/vault            ClusterIP   10.100.171.190   &amp;lt;none&gt;        8200/TCP,8201/TCP   34m
+service/vault-internal   ClusterIP   None             &amp;lt;none&gt;        8200/TCP,8201/TCP   34m
+
+NAME                              CLASS    HOSTS                        ADDRESS                                                                         PORTS     AGE
+ingress.networking.k8s.io/vault   &amp;lt;none&gt;   vault.kube1.k8s.mylabs.dev   a3eb1591c3e6146ef99ccb15b1f35f50-fb80a50b84de3021.elb.eu-west-1.amazonaws.com   80, 443   34m
+
+NAME                                 TYPE                                  DATA   AGE
+secret/default-token-vbfds           kubernetes.io/service-account-token   3      77m
+secret/ingress-cert-staging          kubernetes.io/tls                     2      61m
+secret/sh.helm.release.v1.vault.v1   helm.sh/release.v1                    1      34m
+secret/vault-token-v7px6             kubernetes.io/service-account-token   3      77m
+
+NAME                                 STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+persistentvolumeclaim/data-vault-0   Bound    pvc-7c542be7-2c63-4c44-9634-19ac2f1b291c   1Gi        RWO            gp3            34m
+
+NAME                     READY   AGE
+statefulset.apps/vault   1/1     34m
+
+NAME                           DATA   AGE
+configmap/istio-ca-root-cert   1      58m
+configmap/kube-root-ca.crt     1      77m
+configmap/vault-config         1      34m
+</code></pre></div><p>Remove <code>vault</code> namespace - simulate unfortunate deletion of namespace:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>kubectl delete namespace vault
+</code></pre></div><p>Restore namespace `vault:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>velero restore create restore-vault --from-backup backup-vault --include-namespaces vault <span class="token parameter variable">--wait</span>
+</code></pre></div><p>Output:</p> <div class="language-text extra-class"><pre class="language-text"><code>Restore request &quot;restore-vault&quot; submitted successfully.
+Waiting for restore to complete. You may safely press ctrl-c to stop waiting - your restore will continue in the background.
+....
+Restore completed with status: Completed. You may check for more information using the commands `velero restore describe restore-vault` and `velero restore logs restore-vault`.
+</code></pre></div><p>Get recovery list:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>velero restore get
+</code></pre></div><p>Output:</p> <div class="language-text extra-class"><pre class="language-text"><code>NAME            BACKUP         STATUS      STARTED                         COMPLETED                       ERRORS   WARNINGS   CREATED                         SELECTOR
+restore-vault   backup-vault   Completed   2021-11-29 19:36:47 +0100 CET   2021-11-29 19:36:51 +0100 CET   0        1          2021-11-29 19:36:46 +0100 CET   &amp;lt;none&gt;
+</code></pre></div><p>Get the details about recovery:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>velero restore describe restore-vault
+kubectl <span class="token function">wait</span> <span class="token parameter variable">--namespace</span> vault <span class="token parameter variable">--for</span><span class="token operator">=</span>condition<span class="token operator">=</span>Ready <span class="token parameter variable">--timeout</span><span class="token operator">=</span>5m pod vault-0
+</code></pre></div><p>Output:</p> <div class="language-text extra-class"><pre class="language-text"><code>Name:         restore-vault
+Namespace:    velero
+Labels:       &amp;lt;none&gt;
+Annotations:  &amp;lt;none&gt;
+
+Phase:                       Completed
+Total items to be restored:  26
+Items restored:              26
+
+Started:    2021-11-29 19:36:47 +0100 CET
+Completed:  2021-11-29 19:36:51 +0100 CET
+
+Warnings:
+  Velero:     &amp;lt;none&gt;
+  Cluster:    &amp;lt;none&gt;
+  Namespaces:
+    vault:  could not restore, apps.catalog.cattle.io &quot;vault&quot; already exists. Warning: the in-cluster version is different than the backed-up version.
+
+Backup:  backup-vault
+
+Namespaces:
+  Included:  vault
+  Excluded:  &amp;lt;none&gt;
+
+Resources:
+  Included:        *
+  Excluded:        nodes, events, events.events.k8s.io, backups.velero.io, restores.velero.io, resticrepositories.velero.io
+  Cluster-scoped:  auto
+
+Namespace mappings:  &amp;lt;none&gt;
+
+Label selector:  &amp;lt;none&gt;
+
+Restore PVs:  auto
+
+Preserve Service NodePorts:  auto
+</code></pre></div><p>Verify the restored vault status. You should see &quot;Initialized: true&quot; and
+&quot;Sealed: false&quot;:</p> <div class="language-bash extra-class"><pre class="language-bash"><code>kubectl <span class="token builtin class-name">exec</span> <span class="token parameter variable">-n</span> vault vault-0 -- vault status <span class="token operator">||</span> <span class="token boolean">true</span>
+</code></pre></div><p>Output:</p> <div class="language-text extra-class"><pre class="language-text"><code>Key                      Value
+---                      -----
+Recovery Seal Type       shamir
+Initialized              true
+Sealed                   false
+Total Recovery Shares    5
+Threshold                3
+Version                  1.8.1
+Storage Type             file
+Cluster Name             vault-cluster-35710bf5
+Cluster ID               4b7168eb-6bfc-30fa-8ab9-060477394dc6
+HA Enabled               false
+</code></pre></div><p>Delete the backup</p> <div class="language-bash extra-class"><pre class="language-bash"><code>velero backup delete backup-vault <span class="token parameter variable">--confirm</span>
+</code></pre></div><p>Output:</p> <div class="language-text extra-class"><pre class="language-text"><code>Request to delete backup &quot;backup-vault&quot; submitted successfully.
+The backup will be fully deleted after all associated data (disk snapshots, backup files, restores) are removed.
+</code></pre></div><h2 id="backup-delete-restore-app-with-efs-storage-using-restic"><a href="#backup-delete-restore-app-with-efs-storage-using-restic" class="header-anchor">#</a> Backup + Delete + Restore app with EFS storage using restic</h2> <p>Run pod writing to the EFS storage:</p> <div class="language-shell extra-class"><pre class="language-shell"><code>kubectl apply <span class="token parameter variable">-f</span> - <span class="token operator">&lt;&lt;</span> <span class="token string">EOF
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: backup-test
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: efs-backup-test-pv
+  namespace: backup-test
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: efs-drupal
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-app
+  namespace: backup-test
+spec:
+  containers:
+  - name: app
+    image: alpine:3
+    securityContext:
+      runAsUser: 1000
+      runAsGroup: 3000
+      readOnlyRootFilesystem: true
+    command: [&quot;/bin/sh&quot;]
+    args: [&quot;-c&quot;, &quot;while true; do date &gt;&gt; /data/out.txt; sleep 5; done&quot;]
+    volumeMounts:
+    - name: persistent-storage
+      mountPath: /data
+    resources:
+      requests:
+        memory: &quot;64Mi&quot;
+        cpu: &quot;250m&quot;
+      limits:
+        memory: &quot;128Mi&quot;
+        cpu: &quot;500m&quot;
+  volumes:
+  - name: persistent-storage
+    persistentVolumeClaim:
+      claimName: efs-backup-test-pv
+EOF</span>
+kubectl <span class="token function">wait</span> <span class="token parameter variable">--namespace</span> backup-test <span class="token parameter variable">--for</span><span class="token operator">=</span>condition<span class="token operator">=</span>Ready <span class="token parameter variable">--timeout</span><span class="token operator">=</span>5m pod test-app
+<span class="token function">sleep</span> <span class="token number">10</span>
+</code></pre></div><p>The file is being continuously updated</p> <div class="language-shell extra-class"><pre class="language-shell"><code>kubectl <span class="token builtin class-name">exec</span> <span class="token parameter variable">-it</span> <span class="token parameter variable">-n</span> backup-test test-app -- <span class="token function">cat</span> /data/out.txt
+</code></pre></div><p>Output:</p> <div class="language-text extra-class"><pre class="language-text"><code></code></pre></div><p>Run backup of &quot;backup-test&quot; namespace:</p> <div class="language-shell extra-class"><pre class="language-shell"><code>velero backup create backup-test --default-volumes-to-restic <span class="token parameter variable">--ttl</span> 24h --include-namespaces<span class="token operator">=</span>backup-test <span class="token parameter variable">--wait</span>
+</code></pre></div><p>Output:</p> <div class="language-text extra-class"><pre class="language-text"><code></code></pre></div><p>Check the backups:</p> <div class="language-shell extra-class"><pre class="language-shell"><code>velero get backups
+</code></pre></div><p>Output:</p> <div class="language-text extra-class"><pre class="language-text"><code></code></pre></div><p>See the details of the &quot;backup-test&quot;:</p> <div class="language-shell extra-class"><pre class="language-shell"><code>velero backup describe backup-test <span class="token parameter variable">--details</span>
+</code></pre></div><p>Output:</p> <div class="language-text extra-class"><pre class="language-text"><code></code></pre></div><p>See the files in S3 bucket:</p> <div class="language-shell extra-class"><pre class="language-shell"><code>aws s3 <span class="token function">ls</span> <span class="token parameter variable">--recursive</span> <span class="token string">&quot;s3://<span class="token variable">${CLUSTER_FQDN}</span>/velero/backups/backup-test/&quot;</span>
+</code></pre></div><p>Output:</p> <div class="language-text extra-class"><pre class="language-text"><code></code></pre></div><p>Check the &quot;backup-test&quot; namespace and it's objects:</p> <div class="language-shell extra-class"><pre class="language-shell"><code>kubectl get pods,pvc,secret <span class="token parameter variable">-n</span> backup-test
+</code></pre></div><p>Output:</p> <div class="language-text extra-class"><pre class="language-text"><code></code></pre></div><p>Remove &quot;backup-test&quot; namespace - simulate unfortunate deletion of namespace:</p> <div class="language-shell extra-class"><pre class="language-shell"><code>kubectl delete namespace backup-test
+</code></pre></div><p>Restore the object in the &quot;backup-test&quot; namespace:</p> <div class="language-shell extra-class"><pre class="language-shell"><code>velero restore create restore-backup-test --from-backup backup-test --include-namespaces backup-test <span class="token parameter variable">--wait</span>
+kubectl <span class="token function">wait</span> <span class="token parameter variable">--namespace</span> backup-test <span class="token parameter variable">--for</span><span class="token operator">=</span>condition<span class="token operator">=</span>Ready <span class="token parameter variable">--timeout</span><span class="token operator">=</span>5m pod test-app
+</code></pre></div><p>Output:</p> <div class="language-text extra-class"><pre class="language-text"><code></code></pre></div><p>Get recovery list:</p> <div class="language-shell extra-class"><pre class="language-shell"><code>velero restore get
+</code></pre></div><p>Output:</p> <div class="language-text extra-class"><pre class="language-text"><code></code></pre></div><p>Get the details about recovery:</p> <div class="language-shell extra-class"><pre class="language-shell"><code>velero restore describe restore-backup-test
+</code></pre></div><p>Output:</p> <div class="language-text extra-class"><pre class="language-text"><code></code></pre></div><p>Check the &quot;backup-test&quot; namespace and it's objects:</p> <div class="language-shell extra-class"><pre class="language-shell"><code>kubectl get pods,pvc,secret <span class="token parameter variable">-n</span> backup-test
+</code></pre></div><p>Output:</p> <div class="language-text extra-class"><pre class="language-text"><code></code></pre></div><p>Check if the file &quot;/data/out.txt&quot; is being updated and see the &quot;time gap&quot;:</p> <div class="language-shell extra-class"><pre class="language-shell"><code>kubectl <span class="token builtin class-name">exec</span> <span class="token parameter variable">-it</span> <span class="token parameter variable">-n</span> backup-test test-app -- <span class="token function">cat</span> /data/out.txt
+</code></pre></div><p>Output:</p> <div class="language-text extra-class"><pre class="language-text"><code></code></pre></div><p>Delete the backup</p> <div class="language-shell extra-class"><pre class="language-shell"><code>velero backup delete backup-test <span class="token parameter variable">--confirm</span>
+</code></pre></div><p>Output:</p> <div class="language-text extra-class"><pre class="language-text"><code></code></pre></div><p>Delete namespace:</p> <div class="language-shell extra-class"><pre class="language-shell"><code>kubectl delete namespace backup-test
+</code></pre></div></div> <footer class="page-edit"><div class="edit-link"><a href="https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/edit/main/docs/part-11/README.md" target="_blank" rel="noopener noreferrer">Edit this page</a> <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></div> <div class="last-updated"><span class="prefix">Last Updated:</span> <span class="time">6/30/2024, 4:19:34 AM</span></div></footer> <div class="page-nav"><p class="inner"><span class="prev">
+      ←
+      <a href="/k8s-eks-bottlerocket-fargate/part-10/" class="prev">
+        Harbor
+      </a></span> <span class="next"><a href="/k8s-eks-bottlerocket-fargate/part-12/">
+        GitOps tools
+      </a>
+      →
+    </span></p></div> </main></div><div class="global-ui"><!----><!----></div></div>
+    <script src="/k8s-eks-bottlerocket-fargate/assets/js/app.cd5c61da.js" defer></script><script src="/k8s-eks-bottlerocket-fargate/assets/js/2.a27de003.js" defer></script><script src="/k8s-eks-bottlerocket-fargate/assets/js/1.30a6593f.js" defer></script><script src="/k8s-eks-bottlerocket-fargate/assets/js/33.b5ef35a1.js" defer></script>
+  </body>
+</html>
