@@ -1,5 +1,42 @@
 # Changelog
 
+## [0.2.0](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/compare/v0.1.0...v0.2.0) (2024-07-02)
+
+
+### Features
+
+* **dependabot:** remove dependabot, fix URLs ([6bda639](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/commit/6bda639be5a7bc0cdeadfb480d2e124c2705bbae))
+* **gh_actions:** add renovate ([1d76540](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/commit/1d765408ee603bc0ca03d41355fe752cdeb177ea))
+* **gh-actions:** add lint-pr-title ([0700554](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/commit/0700554cd77d888fe9d600db4a03fd4e652f8ef3))
+* **gh:** add default GitHub repo files ([#177](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/issues/177)) ([e9cba45](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/commit/e9cba452b335f7d695e3c284df418f8c9b97be58))
+* **gh:** add default GitHub repo files ([#178](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/issues/178)) ([9b9b588](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/commit/9b9b588aaf8518b77265a45dea5c44b84f9904f4))
+* **gh:** add default GitHub repo files ([#179](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/issues/179)) ([c1ea90b](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/commit/c1ea90bb8d71a07f7840b35c667fc12688cb73eb))
+* **gh:** add default GitHub repo files ([#182](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/issues/182)) ([51f15d8](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/commit/51f15d8cdc2e20cefc7918884f8fd2092c96fd62))
+* **gh:** add default GitHub repo files ([#198](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/issues/198)) ([911d104](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/commit/911d104a05fd8909733082e43a0eb370dd5d3793))
+* **gha:** improve vuepress build and link checks ([#171](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/issues/171)) ([dc848f2](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/commit/dc848f28d32ba4646a318c761a308c427474ac52))
+* **gha:** move kube-linter config to root ([#173](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/issues/173)) ([ba844f2](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/commit/ba844f23c9777612a900b0a6419e283a0c28a5d0))
+* **gha:** unify GHA - renovate, megalinter, markdown, and others ([#168](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/issues/168)) ([e49cd96](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/commit/e49cd9683148825c73266d60d2ad89ff9d68f5e7))
+* **gha:** update gha + add ignore-unfixed to trivy ([#208](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/issues/208)) ([261052c](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/commit/261052cfcca146260d3ad780bdb79854c7b4b469))
+* improve vuepress-build ([#220](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/issues/220)) ([2dec781](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/commit/2dec7814b490bce0327e676e160aaef483bf9714))
+* **linters:** remove lint-pr-title due to dependabot ([bad178c](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/commit/bad178c730491c56ffbb71c8c598fd39f8b311af))
+* **renovate:** add lockFileMaintenance ([#172](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/issues/172)) ([d06bb4e](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/commit/d06bb4ef9baeea9396e0b94c9cb2d230ec603c84))
+
+
+### Bug Fixes
+
+* add CVE-2024-4068 to .trivyignore.yaml ([#219](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/issues/219)) ([576182f](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/commit/576182f205747404aea7650e7cc7cc2b7e08851b))
+* **doc:** fix k8s logo url ([#212](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/issues/212)) ([0ebb0c5](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/commit/0ebb0c552b9d612c318fdc51100591b8de9c3f81))
+* **gha:** add ignore-fragments parameter to muffet ([#199](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/issues/199)) ([ac2de82](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/commit/ac2de82663b6fa962b523943e377299f08f7fab4))
+* **gha:** fix issue with renovate extends ([#193](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/issues/193)) ([8d1a44d](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/commit/8d1a44d0673a05a2d3f9fb972c2ae93b95c0ce83))
+* **gha:** fix issues with trivy and grype ([#174](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/issues/174)) ([badaace](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/commit/badaace08568bf182c1ab1efe0d057bff12e4a5e))
+* **url:** disable stackoverflow checks ([#185](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/issues/185)) ([a5c33a9](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/commit/a5c33a974da16ae49018e41b7d9fd5793c0f5234))
+* **url:** exclude package-lock.json from URL checks ([#216](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/issues/216)) ([4386226](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/commit/438622698e32bf838c58b6aa53e35d5d781dacca))
+* **url:** fix AWS users-connect-rds-iam url ([#161](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/issues/161)) ([287f8f3](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/commit/287f8f302b65d705db4b39fc83b2f238284a27e1))
+* **url:** fix broken URL(s) ([#190](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/issues/190)) ([9fe5e77](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/commit/9fe5e778c8ceaf7cd079efe87078ee5d08ac7845))
+* **url:** fix kubed url and simplify periodic-broken-link-checks gha ([#166](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/issues/166)) ([3ffa629](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/commit/3ffa629848058017f6fa76bb17b10dca155f1529))
+* **url:** fix url for eni-max-pods ([#211](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/issues/211)) ([e0f4ed7](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/commit/e0f4ed7e6fb6bce533f83ac4bed64b5f2c350717))
+* **url:** remove calicoctl url which doesn't exist anymore ([4a4d109](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/commit/4a4d1094643e8342c655681cc71c54d015c723d2))
+
 ## v0.1.0 (2021-12-25)
 
 - Update awscli URL [`#106`](https://github.com/ruzickap/k8s-eks-bottlerocket-fargate/pull/106)
